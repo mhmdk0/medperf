@@ -4,6 +4,7 @@ from typing import Optional
 import medperf.config as config
 from medperf.decorators import clean_except
 from medperf.commands.view import EntityView
+from medperf.commands.delete_local import EntityDelete
 from medperf.entities.result import Result
 from medperf.commands.list import EntityList
 from medperf.commands.result.create import BenchmarkExecution
@@ -114,3 +115,12 @@ def view(
     EntityView.run(
         entity_id, Result, format, unregistered, mine, output, benchmark=benchmark
     )
+
+
+@app.command("delete_local")
+@clean_except
+def delete_local(
+    entity_id: int = typer.Argument(..., help="Result ID to delete from local files")
+):
+    EntityDelete.run(entity_id, Result)
+    config.ui.print("✅ Done!")

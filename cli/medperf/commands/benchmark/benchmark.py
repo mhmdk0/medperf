@@ -6,6 +6,7 @@ from medperf.decorators import clean_except
 from medperf.entities.benchmark import Benchmark
 from medperf.commands.list import EntityList
 from medperf.commands.view import EntityView
+from medperf.commands.delete_local import EntityDelete
 from medperf.commands.benchmark.submit import SubmitBenchmark
 from medperf.commands.benchmark.associate import AssociateBenchmark
 from medperf.commands.result.create import BenchmarkExecution
@@ -183,3 +184,12 @@ def view(
 ):
     """Displays the information of one or more benchmarks"""
     EntityView.run(entity_id, Benchmark, format, unregistered, mine, output)
+
+
+@app.command("delete_local")
+@clean_except
+def delete_local(
+    entity_id: int = typer.Argument(..., help="Benchmark ID to delete from local files")
+):
+    EntityDelete.run(entity_id, Benchmark)
+    config.ui.print("✅ Done!")

@@ -6,6 +6,7 @@ from medperf.decorators import clean_except
 from medperf.entities.cube import Cube
 from medperf.commands.list import EntityList
 from medperf.commands.view import EntityView
+from medperf.commands.delete_local import EntityDelete
 from medperf.commands.mlcube.create import CreateCube
 from medperf.commands.mlcube.submit import SubmitCube
 from medperf.commands.mlcube.associate import AssociateCube
@@ -169,3 +170,12 @@ def view(
 ):
     """Displays the information of one or more mlcubes"""
     EntityView.run(entity_id, Cube, format, unregistered, mine, output)
+
+
+@app.command("delete_local")
+@clean_except
+def delete_local(
+    entity_id: int = typer.Argument(..., help="MLCube ID to delete from local files")
+):
+    EntityDelete.run(entity_id, Cube)
+    config.ui.print("✅ Done!")

@@ -6,6 +6,7 @@ from medperf.decorators import clean_except
 from medperf.entities.dataset import Dataset
 from medperf.commands.list import EntityList
 from medperf.commands.view import EntityView
+from medperf.commands.delete_local import EntityDelete
 from medperf.commands.dataset.submit import DataCreation
 from medperf.commands.dataset.prepare import DataPreparation
 from medperf.commands.dataset.set_operational import DatasetSetOperational
@@ -170,3 +171,12 @@ def view(
 ):
     """Displays the information of one or more datasets"""
     EntityView.run(entity_id, Dataset, format, unregistered, mine, output)
+
+
+@app.command("delete_local")
+@clean_except
+def delete_local(
+    entity_id: int = typer.Argument(..., help="Dataset ID to delete from local files")
+):
+    EntityDelete.run(entity_id, Dataset)
+    config.ui.print("✅ Done!")
