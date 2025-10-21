@@ -4,7 +4,7 @@ from .base_page import BasePage
 
 class SecurityPage(BasePage):
     FORM = (By.ID, "security-check-form")
-    TITLE = (By.CSS_SELECTOR, ".card-body h2")
+    HEADER = (By.CSS_SELECTOR, 'h2[data-testid="page-header"]')
     TOKEN_LABEL = (By.CSS_SELECTOR, 'label[for="token"]')
     TOKEN = (By.ID, "token")
     SUBMIT = (By.ID, "security-check-btn")

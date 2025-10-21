@@ -10,7 +10,7 @@
 {% block content %}
 {% set dataset_register_running = (task_running and request.app.state.task.name == "dataset_registration") %}
 <div class="container">
-    <h1 class="text-center">Register a New Dataset</h1>
+    <h1 class="text-center" data-testid="page-header">Register a New Dataset</h1>
     <form class="my-5" id="dataset-register-form">
         <div class="form-group my-5">
             <label class="form-label h4" for="benchmark">Select Benchmark</label>
@@ -59,7 +59,7 @@
                     placeholder="{{ placeholders.register_dataset_description }}"
                     {% if task_running %} disabled {% endif %}
                     maxlength="256"
-                >{% if dataset_register_running %} {{ task_formData.get('description', '') }} {% endif %}</textarea>
+                >{% if dataset_register_running %}{{ task_formData.get('description', '') }}{% endif %}</textarea>
                 <i
                     class="tooltip-info input-group-text fa fa-info-circle fs-4"
                     data-bs-toggle="tooltip"
@@ -182,7 +182,7 @@
 <script src="{{ url_for('static', path='js/folder_browsing.js') }}"></script>
 
 {% if task_running and request.app.state.task.name == "dataset_registration" %}
-<script>
+<script data-testid="resume-dataset-registration">
     $(document).ready(() => {
         resumeRunningTask(
             "#register-dataset-btn",

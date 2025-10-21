@@ -1,6 +1,7 @@
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 
 
 class BasePage:
@@ -24,6 +25,7 @@ class BasePage:
     def __init__(self, driver):
         self.driver = driver
         self.wait = WebDriverWait(driver, 5)
+        self.actions = ActionChains(driver)
 
     def open(self, url):
         self.driver.get(url)
@@ -101,6 +103,9 @@ class BasePage:
             "})(arguments[0]);",
             element,
         )
+
+    def move_to_element(self, element):
+        self.actions.move_to_element(element).perform()
 
     def is_prompt_received(self):
         return self.driver.execute_script("return window.isPromptReceived")

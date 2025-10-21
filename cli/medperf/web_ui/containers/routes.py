@@ -86,12 +86,8 @@ def create_container_ui(
     request: Request,
     current_user: bool = Depends(check_user_ui),
 ):
-    # Fetch the list of benchmarks to populate the benchmark dropdown
-    benchmarks = Benchmark.all()
-    # Render the dataset creation form with the list of benchmarks
     return templates.TemplateResponse(
-        "container/register_container.html",
-        {"request": request, "benchmarks": benchmarks},
+        "container/register_container.html", {"request": request}
     )
 
 
@@ -102,7 +98,7 @@ def compatibilty_test_ui(
 ):
     # Fetch the list of benchmarks to populate the benchmark dropdown
     benchmarks = Benchmark.all()
-    # Render the dataset creation form with the list of benchmarks
+    # Render the container compatibility test form with the list of benchmarks
     return templates.TemplateResponse(
         "container/compatibility_test.html",
         {"request": request, "benchmarks": benchmarks},

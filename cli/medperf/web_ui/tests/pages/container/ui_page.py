@@ -4,9 +4,9 @@ from ..base_page import BasePage
 
 class ContainersPage(BasePage):
     REG_DSET_BTN = (By.CSS_SELECTOR, 'a[data-testid="reg-cont-btn"]')
-    TITLE = (By.CSS_SELECTOR, 'h1[data-testid="page-header"]')
-    MINE_LABEL = (By.ID, "switch")
-    MINE_SWITCH = (By.CSS_SELECTOR, 'label[for="switch"]')
+    HEADER = (By.CSS_SELECTOR, 'h1[data-testid="page-header"]')
+    MINE_LABEL = (By.CSS_SELECTOR, 'label[for="switch"]')
+    MINE_SWITCH = (By.ID, "switch")
     CARDS_CONTAINER = (By.CSS_SELECTOR, 'div[data-testid="cards-container"] div.card')
     CARD_TITLE = (By.CSS_SELECTOR, 'h5 > a[data-testid="cont-name"]')
     CARD_ID = (By.CSS_SELECTOR, 'h6[data-testid="cont-id"]')
@@ -22,4 +22,4 @@ class ContainersPage(BasePage):
         return "?mine_only=true" in self.current_url
 
     def not_mine(self):
-        return "?mine_only=true" in self.current_url
+        return "?mine_only=false" in self.current_url

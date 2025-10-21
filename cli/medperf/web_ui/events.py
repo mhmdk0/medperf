@@ -50,14 +50,19 @@ def delete_notification(
             return
 
 
-@router.get("/current_task", response_class=JSONResponse)
-def get_task_id(request: Request, current_user: bool = Depends(check_user_api)):
+def _get_task_id():
     start_time = time.monotonic()
     while not config.ui.task_id:
         time.sleep(0.1)
         if time.monotonic() - start_time >= 2:
             break
-    return {"task_id": config.ui.task_id}
+    return config.ui.task_id
+
+
+@router.get("/current_task", response_class=JSONResponse)
+def get_task_id(request: Request, current_user: bool = Depends(check_user_api)):
+    task_id = _get_task_id()
+    return {"task_id": task_id}
 
 
 def process_event(request: Request, event: EventBase):
@@ -114,7 +119,7 @@ def stream_events(
     current_user: bool = Depends(check_user_api),
 ):
     return StreamingResponse(
-        event_generator(request, stream_old),
+        event_generator(request=request, stream_old=stream_old),
         media_type="text/event-stream; charset=utf-8",
     )
 
