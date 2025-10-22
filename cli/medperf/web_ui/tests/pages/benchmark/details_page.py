@@ -3,6 +3,82 @@ from ..base_page import BasePage
 
 
 class BenchmarkDetailsPage(BasePage):
+    HEADER = (By.CSS_SELECTOR, 'h1[data-testid="page-header"]')
+    SUB_HEADER_1 = (By.CSS_SELECTOR, 'h5[data-testid="sub-header-1"]')
+
+    STATE = (By.CSS_SELECTOR, 'span[data-testid="bmk-state"].badge')
+    VALID = (By.CSS_SELECTOR, 'span[data-testid="bmk-is-valid"].badge')
+
+    ID_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="id-label"]')
+    ID = (By.CSS_SELECTOR, 'span[data-testid="id"]')
+
+    DESCRIPTION_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="description-label"]')
+    DESCRIPTION = (By.CSS_SELECTOR, 'span[data-testid="description"]')
+
+    DOCUMENTATION_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="documentation-label"]')
+    DOCUMENTATION = (By.CSS_SELECTOR, 'span[data-testid="documentation"]')
+
+    REF_DATASET_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="ref-dataset-tarball-label"]',
+    )
+    REF_DATASET = (By.CSS_SELECTOR, 'a[data-testid="ref-dataset-tarball"]')
+
+    DATA_PREP_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="data-prep-label"]')
+    DATA_PREP = (By.CSS_SELECTOR, 'span[data-testid="data-prep"] > strong > a')
+    DATA_PREP_DATE = (By.CSS_SELECTOR, 'span[data-testid="data-prep"] > small')
+    DATA_PREP_STATE = (By.CSS_SELECTOR, 'span[data-testid="data-prep"] > span > i')
+
+    REF_MODEL_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="ref-model-label"]')
+    REF_MODEL = (By.CSS_SELECTOR, 'span[data-testid="ref-model"] > strong > a')
+    REF_MODEL_DATE = (By.CSS_SELECTOR, 'span[data-testid="ref-model"] > small')
+    REF_MODEL_STATE = (By.CSS_SELECTOR, 'span[data-testid="ref-model"] > span > i')
+
+    METRICS_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="metrics-label"]')
+    METRICS = (By.CSS_SELECTOR, 'span[data-testid="metrics"] > strong > a')
+    METRICS_DATE = (By.CSS_SELECTOR, 'span[data-testid="metrics"] > small')
+    METRICS_STATE = (By.CSS_SELECTOR, 'span[data-testid="metrics"] > span > i')
+
+    OWNER_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="owner-label"]')
+    OWNER = (By.CSS_SELECTOR, 'span[data-testid="owner"]')
+
+    CREATED_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="created-at-label"]')
+    CREATED = (By.CSS_SELECTOR, 'span[data-testid="created-at"]')
+
+    MODIFIED_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="modified-at-label"]')
+    MODIFIED = (By.CSS_SELECTOR, 'span[data-testid="modified-at"]')
+
+    SUB_HEADER_2 = (By.CSS_SELECTOR, 'h5[data-testid="sub-header-2"]')
+    POLICY_FORM = (By.ID, "association-policy-form")
+
+    DSET_AUTO_APPROVE_LABEL = (
+        By.CSS_SELECTOR,
+        'label[for="dataset-auto-approve-mode"]',
+    )
+    DSET_AUTO_APPROVE = (By.ID, "dataset-auto-approve-mode")
+    DSET_ALLOW_LIST_CONTAINER = (By.ID, "dataset-allow-list-container")
+    DSET_ALLOW_LIST_EMAILS = (By.ID, "dataset-allow-list-emails")
+    DSET_ALLOW_LIST_LABEL = (
+        By.CSS_SELECTOR,
+        'label[for="dataset-allow-list-text-input"]',
+    )
+    DSET_ALLOW_LIST = (By.ID, "dataset-allow-list-text-input")
+
+    CONT_AUTO_APPROVE_LABEL = (
+        By.CSS_SELECTOR,
+        'label[for="dataset-auto-approve-mode"]',
+    )
+    CONT_AUTO_APPROVE = (By.ID, "dataset-auto-approve-mode")
+    CONT_ALLOW_LIST_CONTAINER = (By.ID, "dataset-allow-list-container")
+    CONT_ALLOW_LIST_EMAILS = (By.ID, "dataset-allow-list-emails")
+    CONT_ALLOW_LIST_LABEL = (
+        By.CSS_SELECTOR,
+        'label[for="dataset-allow-list-text-input"]',
+    )
+    CONT_ALLOW_LIST = (By.ID, "dataset-allow-list-text-input")
+
+    SAVE = (By.ID, "save-policy-btn")
+
     DATASETS_TITLE = (By.ID, "datasets-associations-title")
     DATASETS_ASSOCIATIONS = (By.ID, "datasets-associations")
 
