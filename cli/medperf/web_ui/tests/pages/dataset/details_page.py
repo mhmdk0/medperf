@@ -3,6 +3,44 @@ from ..base_page import BasePage
 
 
 class DatasetDetailsPage(BasePage):
+    HEADER = (By.CSS_SELECTOR, 'h1[data-testid="page-header"]')
+    EXPORT = (By.CSS_SELECTOR, "#redirect-export-form input[value='Export Dataset']")
+    SUB_HEADER_1 = (By.CSS_SELECTOR, 'h5[data-testid="sub-header-1"]')
+
+    STATE = (By.CSS_SELECTOR, 'span[data-testid="dataset-state"].badge')
+    VALID = (By.CSS_SELECTOR, 'span[data-testid="dataset-is-valid"].badge')
+
+    ID_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="id-label"]')
+    ID = (By.CSS_SELECTOR, 'span[data-testid="id"]')
+
+    DESCRIPTION_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="description-label"]')
+    DESCRIPTION = (By.CSS_SELECTOR, 'span[data-testid="description"]')
+
+    LOCATION_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="location-label"]')
+    LOCATION = (By.CSS_SELECTOR, 'span[data-testid="location"]')
+
+    DATA_PREP_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="data-prep-label"]')
+    DATA_PREP = (By.CSS_SELECTOR, 'span[data-testid="data-prep"] > strong > a')
+    DATA_PREP_DATE = (By.CSS_SELECTOR, 'span[data-testid="data-prep"] > small')
+    DATA_PREP_STATE = (By.CSS_SELECTOR, 'span[data-testid="data-prep"] > span > i')
+
+    STATISTICS_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="statistics-label"]')
+    STATISTICS = (By.CSS_SELECTOR, 'span[data-testid="statistics"]')
+
+    REPORT_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="report-label"]')
+    REPORT = (By.CSS_SELECTOR, 'span[data-testid="report"]')
+
+    PREPARED_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="prepared-label"]')
+    PREPARED = (By.CSS_SELECTOR, 'span[data-testid="prepared"]')
+
+    OWNER_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="owner-label"]')
+    OWNER = (By.CSS_SELECTOR, 'span[data-testid="owner"]')
+
+    CREATED_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="created-at-label"]')
+    CREATED = (By.CSS_SELECTOR, 'span[data-testid="created-at"]')
+
+    MODIFIED_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="modified-at-label"]')
+    MODIFIED = (By.CSS_SELECTOR, 'span[data-testid="modified-at"]')
 
     PREPARE_BTN = (By.ID, "prepare-dataset")
     PREPARED_TEXT = (
