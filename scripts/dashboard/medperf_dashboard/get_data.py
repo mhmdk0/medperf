@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 import numpy as np
 
+from medperf.entities.benchmark import Benchmark
 from medperf.entities.dataset import Dataset
 from medperf import config
 
@@ -10,12 +11,21 @@ from .utils import get_institution_from_email, get_reports_path, stage_id2name
 
 
 def get_dsets(mlcube_id):
-    dsets = Dataset.all(filters={"mlcube": mlcube_id})
-    dsets = [dset.todict() for dset in dsets]
-    for dset in dsets:
-        user_id = dset["owner"]
-        dset["user"] = config.comms.get_user(user_id)
+    # dsets = Dataset.all(filters={"mlcube": mlcube_id})
+    # dsets = [dset.todict() for dset in dsets]
+    # for dset in dsets:
+    #     user_id = dset["owner"]
+    #     dset["user"] = config.comms.get_user(user_id)
 
+    # return dsets
+    dsets = []
+    dsets_associations = Benchmark.get_datasets_associations(benchmark_uid=mlcube_id)
+    for assoc in dsets_associations:
+        owner = assoc.get("initiated_by", None)
+        dset = Dataset.get(assoc["dataset"]).todict()
+        dset["owner"] = owner
+        dset["user"] = config.comms.get_user(owner)
+        dsets.append(dset)
     return dsets
 
 
@@ -32,6 +42,14 @@ def build_dset_df(dsets, user2institution, stages_df):
             "created_at": dset["created_at"],
             "modified_at": dset["modified_at"],
             "institution": institution,
+        }
+        dset["report"] = {
+            "progress": {
+                "Stage -2.101": "100.0%",
+                "Stage 3": "78%",
+                "Stage 8.0": "50%",
+            },
+            "execution_status": "finished",
         }
         if len(dset["report"]):
             # Contains a readable report

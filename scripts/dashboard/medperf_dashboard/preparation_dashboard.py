@@ -243,9 +243,19 @@ def get_sites_dicts(sites_path, latest_table):
     return sites_dicts
 
 
-def build_dash_app(registered_df, stages_colors, latest_table, stages, full_path):
+def _build_dash_app(
+    registered_df,
+    stages_colors,
+    latest_table,
+    stages,
+    full_path,
+    prefix,
+):
+
     app = Dash(
         __name__,
+        title="Preparation Dashboard",
+        requests_pathname_prefix=prefix,
         external_stylesheets=[dbc.themes.LUMEN],
         meta_tags=[
             {
@@ -267,23 +277,12 @@ def build_dash_app(registered_df, stages_colors, latest_table, stages, full_path
     return app
 
 
-@t_app.command()
-def main(
-    mlcube_id: int = Option(
-        ..., "-m", "--mlcube", help="MLCube ID to inspect prparation from"
-    ),
-    stages_path: str = Option(
-        ..., "-s", "--stages", help="Path to stages.csv"
-    ),
-    institutions_path: str = Option(
-        ...,
-        "-i",
-        "--institutions",
-        help="Path to a CSV file containing institution-email information",
-    ),
-    out_path: str = Option(
-        None, "-o", "--out-path", help="location to store progress CSVs"
-    ),
+def build_app(
+    mlcube_id,
+    stages_path,
+    institutions_path,
+    out_path=None,
+    prefix=None,
 ):
     cur_path = os.path.dirname(__file__)
     if out_path is None:
@@ -307,7 +306,33 @@ def main(
     )
     stages_colors["Unknown"] = "silver"
 
-    app = build_dash_app(registered_df, stages_colors, latest_table, stages, full_path)
+    return _build_dash_app(
+        registered_df,
+        stages_colors,
+        latest_table,
+        stages,
+        full_path,
+        prefix,
+    )
+
+
+@t_app.command()
+def main(
+    mlcube_id: int = Option(
+        ..., "-m", "--mlcube", help="MLCube ID to inspect prparation from"
+    ),
+    stages_path: str = Option(..., "-s", "--stages", help="Path to stages.csv"),
+    institutions_path: str = Option(
+        ...,
+        "-i",
+        "--institutions",
+        help="Path to a CSV file containing institution-email information",
+    ),
+    out_path: str = Option(
+        None, "-o", "--out-path", help="location to store progress CSVs"
+    ),
+):
+    app = build_app(mlcube_id, stages_path, institutions_path, out_path)
     app.run_server(debug=True)
 
 

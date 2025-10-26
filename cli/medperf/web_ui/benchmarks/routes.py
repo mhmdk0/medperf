@@ -30,6 +30,9 @@ from medperf.commands.benchmark.update_associations_poilcy import (
     UpdateAssociationsPolicy,
 )
 
+from medperf_dashboard.preparation_dashboard import build_app
+from starlette.middleware.wsgi import WSGIMiddleware
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -350,3 +353,31 @@ def update_associations_policy(
         url=f"/benchmarks/ui/display/{benchmark_id}",
     )
     return return_response
+
+
+@router.get("/ui/display/{benchmark_id}/dashboard", response_class=HTMLResponse)
+def preparation_dashboard(
+    request: Request,
+    benchmark_id: int,
+    current_user: bool = Depends(check_user_ui),
+):
+
+    dashbaord_app = build_app(
+        benchmark_id,
+        "scripts/dashboard/medperf_dashboard/stages.csv",
+        "scripts/dashboard/medperf_dashboard/institutions.csv",
+        prefix=f"/ui/display/{benchmark_id}/dashboard/app/",
+    )
+    request.app.mount(
+        f"/ui/display/{benchmark_id}/dashboard/app",
+        WSGIMiddleware(dashbaord_app.server),
+    )
+    return templates.TemplateResponse(
+        "dashboard_wrapper.html",
+        {
+            "request": request,
+            "mount_point": f"/ui/display/{benchmark_id}/dashboard/app",
+            "benchmark_id": benchmark_id,
+            "prev_url": f"/benchmarks/ui/display/{benchmark_id}/",
+        },
+    )
