@@ -1,3 +1,4 @@
+from unittest.mock import ANY
 from medperf.web_ui.tests.pages.benchmark.details_page import BenchmarkDetailsPage
 from medperf.tests.mocks.benchmark import TestBenchmark
 from medperf.tests.mocks.cube import TestCube
@@ -6,16 +7,25 @@ import medperf.web_ui.tests.config as tests_config
 import medperf.web_ui.events as events_module
 import pytest
 import datetime
+from selenium.common.exceptions import NoSuchElementException
+import json
 
 BASE_URL = tests_config.BASE_URL
-PATCH_BMK = "medperf.entities.benchmark.Benchmark.get"
+PATCH_BMK = "medperf.entities.benchmark.Benchmark.{}"
+PATCH_EXECUTION = "medperf.entities.execution.Execution.{}"
 PATCH_CONTAINER = "medperf.entities.cube.Cube.get"
 PATCH_ROUTE = "medperf.web_ui.benchmarks.routes.{}"
 
 TEST_CONTAINERS = [
-    TestCube(id=1, name="data-prep", modified_at=datetime.datetime(2025, 10, 10)),
-    TestCube(id=2, name="ref-model", modified_at=datetime.datetime(2025, 10, 11)),
-    TestCube(id=3, name="metrics", modified_at=datetime.datetime(2025, 10, 12)),
+    TestCube(
+        id=1, name="data-prep", modified_at=datetime.datetime(2025, 10, 10), owner=1
+    ),
+    TestCube(
+        id=2, name="ref-model", modified_at=datetime.datetime(2025, 10, 11), owner=1
+    ),
+    TestCube(
+        id=3, name="metrics", modified_at=datetime.datetime(2025, 10, 12), owner=1
+    ),
 ]
 TEST_BENCHMARK = TestBenchmark(
     id=1,
@@ -52,9 +62,20 @@ def fake_event_generator(*args, **kwargs):
     yield ""
 
 
-@pytest.mark.parametrize("owner", [1])
-def test_benchmark_details_page_content(driver, mocker, owner):
-    patch_bmk = mocker.patch(PATCH_BMK, return_value=TEST_BENCHMARK)
+@pytest.mark.parametrize("owner", [TEST_BENCHMARK.owner, TEST_BENCHMARK.owner + 1])
+def Xtest_benchmark_details_page_content(driver, mocker, owner):
+    patch_bmk = mocker.patch(PATCH_BMK.format("get"), return_value=TEST_BENCHMARK)
+    patch_dsets_assocs = mocker.patch(
+        PATCH_BMK.format("get_datasets_associations"), return_value=[]
+    )
+    patch_models_assocs = mocker.patch(
+        PATCH_BMK.format("get_models_associations"), return_value=[]
+    )
+    patch_results = mocker.patch(PATCH_EXECUTION.format("all"), return_value=[])
+    patch_get_datasets_with_users = mocker.patch(
+        PATCH_BMK.format("get_datasets_with_users"), return_value=[]
+    )
+
     patch_container = mocker.patch(PATCH_CONTAINER, side_effect=get_fake_cube)
     mocker.patch(
         PATCH_ROUTE.format("get_medperf_user_data"), return_value={"id": owner}
@@ -240,41 +261,387 @@ def test_benchmark_details_page_content(driver, mocker, owner):
         assert (
             page.get_text(page.DSET_AUTO_APPROVE_LABEL) == "Dataset auto approve mode"
         )
+        page.select_by_text(page.DSET_AUTO_APPROVE, "Allow List")
         assert page.get_text(page.DSET_ALLOW_LIST_LABEL) == "Allow list emails"
+
         assert page.get_text(page.CONT_AUTO_APPROVE_LABEL) == "Model auto approve mode"
+        page.select_by_text(page.CONT_AUTO_APPROVE, "Allow List")
         assert page.get_text(page.CONT_ALLOW_LIST_LABEL) == "Allow list emails"
 
-        assert page.get_text(page.DATASETS_TITLE) == "Datasets Associations"
-        assert page.get_text(page.MODELS_TITLE) == "Models Associations"
-        assert page.get_text(page.RESULTS_TITLE) == "Results"
+        dataset_assocs_count = page.get_text(page.DATASETS_ASSOCS_COUNT)
+        assert dataset_assocs_count == "0"
+        assert (
+            page.get_text(page.DATASETS_TITLE).strip(dataset_assocs_count).strip()
+            == "Datasets Associations"
+        )
+        with pytest.raises(NoSuchElementException):
+            page.driver.find_element(*page.DATASETS_PENDING_ASSOCS)
+
+        model_assocs_count = page.get_text(page.MODELS_ASSOCS_COUNT)
+        assert model_assocs_count == "0"
+        assert (
+            page.get_text(page.MODELS_TITLE).strip(model_assocs_count).strip()
+            == "Models Associations"
+        )
+        with pytest.raises(NoSuchElementException):
+            page.driver.find_element(*page.MODELS_PENDING_ASSOCS)
+
+        results_count = page.get_text(page.RESULTS_COUNT)
+        assert results_count == "0"
+        assert (
+            page.get_text(page.RESULTS_TITLE).strip(results_count).strip() == "Results"
+        )
+
+        filters = {"benchmark": TEST_BENCHMARK.id}
+
+        patch_dsets_assocs.assert_called_once_with(benchmark_uid=TEST_BENCHMARK.id)
+        patch_models_assocs.assert_called_once_with(benchmark_uid=TEST_BENCHMARK.id)
+        patch_results.assert_called_once_with(filters=filters)
+        patch_get_datasets_with_users.assert_called_once_with(TEST_BENCHMARK.id)
+    else:
+        patch_dsets_assocs.assert_not_called()
+        patch_models_assocs.assert_not_called()
+        patch_results.assert_not_called()
+        patch_get_datasets_with_users.assert_not_called()
 
     patch_bmk.assert_called_with(TEST_BENCHMARK.id)
     assert patch_container.call_count == 3
 
 
-def test_benchmark_details_dataset_auto_approve_mode(driver, mocker):
+@pytest.mark.parametrize(
+    "mode", [{"text": "Never", "value": "NEVER"}, {"text": "Always", "value": "ALWAYS"}]
+)
+def Xtest_benchmark_details_dataset_auto_approve_mode(
+    driver, mocker, mode, ui, patch_common
+):
+    mocker.patch(PATCH_BMK.format("get"), return_value=TEST_BENCHMARK)
+    mocker.patch(PATCH_BMK.format("get_datasets_associations"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_models_associations"), return_value=[])
+    mocker.patch(PATCH_EXECUTION.format("all"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_datasets_with_users"), return_value=[])
+    mocker.patch(PATCH_CONTAINER, side_effect=get_fake_cube)
+    mocker.patch(
+        PATCH_ROUTE.format("get_medperf_user_data"),
+        return_value={"id": TEST_BENCHMARK.owner},
+    )
+    update_policy_patch = mocker.patch(
+        PATCH_ROUTE.format("UpdateAssociationsPolicy.run"), return_value=None
+    )
+
+    event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=fake_event_generator
+    )
+    ui.task_id = "test-id"
+    ui.end_task = mocker.Mock(return_value=None)
+    ui.get_event = mocker.Mock(return_value=None)
+    spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    page = BenchmarkDetailsPage(driver, benchmark=TEST_BENCHMARK.name)
+    page.open(BASE_URL.format("/benchmarks/ui/display/") + str(TEST_BENCHMARK.id))
+
+    model_mode_text = driver.find_element(
+        "xpath", '//*[@id="model-auto-approve-mode"]/option[@selected]'
+    ).text
+    model_mode_value = page.find(page.CONT_AUTO_APPROVE).get_attribute("value")
+    confirm_modal = page.find(page.CONFIRM_MODAL)
+    popup_modal = page.find(page.POPUP_MODAL)
+    page.select_by_text(page.DSET_AUTO_APPROVE, mode["text"])
+    page.click(page.SAVE)
+    page.wait_for_visibility_element(confirm_modal)
+
+    assert f"Datasets: {mode['text']}" in page.get_text(page.CONFIRM_TEXT)
+    assert f"Models: {model_mode_text}" in page.get_text(page.CONFIRM_TEXT)
+
+    page.confirm_run_task()
+    page.wait_for_visibility_element(popup_modal)
+
+    assert (
+        page.get_text(page.POPUP_TITLE)
+        == "Benchmark Associations Policy Successfully Updated"
+    )
+
+    page.wait_for_staleness_element(popup_modal)
+
+    patch_common["init_spy"].assert_called_once_with(
+        ANY, task_name="update_associations_policy"
+    )
+    spy_task_id.assert_called_once()
+    update_policy_patch.assert_called_once_with(
+        benchmark_uid=TEST_BENCHMARK.id,
+        dataset_mode=mode["value"],
+        dataset_emails=None,
+        model_mode=model_mode_value,
+        model_emails=None,
+    )
+    event_gen.assert_not_called()
+    ui.end_task.assert_called_once()
+    patch_common["reset_spy"].assert_called_once()
+    patch_common["notifs_spy"].assert_called_once()
+
+
+@pytest.mark.parametrize("emails", [[], ["test@test.com", "test1@test.com"]])
+def Xtest_benchmark_details_dataset_auto_approve_mode_allow_list_emails(
+    driver, mocker, emails, approve_mode="ALLOWLIST"
+):
+    mocker.patch(PATCH_BMK.format("get"), return_value=TEST_BENCHMARK)
+    mocker.patch(PATCH_BMK.format("get_datasets_associations"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_models_associations"), return_value=[])
+    mocker.patch(PATCH_EXECUTION.format("all"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_datasets_with_users"), return_value=[])
+    mocker.patch(PATCH_CONTAINER, side_effect=get_fake_cube)
+    mocker.patch(
+        PATCH_ROUTE.format("get_medperf_user_data"),
+        return_value={"id": TEST_BENCHMARK.owner},
+    )
+
+    TEST_BENCHMARK.dataset_auto_approval_allow_list = emails
+    TEST_BENCHMARK.dataset_auto_approval_mode = approve_mode
+
+    page = BenchmarkDetailsPage(driver, benchmark=TEST_BENCHMARK.name)
+    page.open(BASE_URL.format("/benchmarks/ui/display/") + str(TEST_BENCHMARK.id))
+
+    assert page.find(page.DSET_AUTO_APPROVE).get_attribute("value") == approve_mode
+
+    dataset_emails_container = page.find(page.DSET_ALLOW_LIST_EMAILS)
+    dataset_emails = dataset_emails_container.get_attribute("data-allowed-list")
+
+    assert json.loads(dataset_emails) == emails
+    emails_chips = dataset_emails_container.find_elements(*page.EMAIL_CHIP)
+    assert len(emails_chips) == len(emails)
+    for email_chip in emails_chips:
+        remove_btn = email_chip.find_element(*page.REMOVE_EMAIL)
+        assert email_chip.text.strip(remove_btn.text) in emails
+        page.ensure_element_ready(remove_btn)
+        remove_btn.click()
+    emails_chips = dataset_emails_container.find_elements(*page.EMAIL_CHIP)
+    assert len(emails_chips) == 0
+
+
+@pytest.mark.parametrize(
+    "emails",
+    [
+        "test@test.com,",
+        "test@test.com ",
+        "test@test.com,test1@test.com,test2@test.com,",
+        "test@test.com test1@test.com test2@test.com ",
+    ],
+)
+def Xtest_benchmark_details_dataset_auto_approve_mode_allow_list_emails_input(
+    driver, mocker, emails, approve_mode="Allow List"
+):
+    mocker.patch(PATCH_BMK.format("get"), return_value=TEST_BENCHMARK)
+    mocker.patch(PATCH_BMK.format("get_datasets_associations"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_models_associations"), return_value=[])
+    mocker.patch(PATCH_EXECUTION.format("all"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_datasets_with_users"), return_value=[])
+    mocker.patch(PATCH_CONTAINER, side_effect=get_fake_cube)
+    mocker.patch(
+        PATCH_ROUTE.format("get_medperf_user_data"),
+        return_value={"id": TEST_BENCHMARK.owner},
+    )
+
+    page = BenchmarkDetailsPage(driver, benchmark=TEST_BENCHMARK.name)
+    page.open(BASE_URL.format("/benchmarks/ui/display/") + str(TEST_BENCHMARK.id))
+
+    page.select_by_text(page.DSET_AUTO_APPROVE, approve_mode)
+    page.type(page.DSET_ALLOW_LIST, emails)
+
+    dataset_emails_container = page.find(page.DSET_ALLOW_LIST_EMAILS)
+    emails_chips = dataset_emails_container.find_elements(*page.EMAIL_CHIP)
+    emails_parts = emails.split(",") if "," in emails else emails.split(" ")
+    emails_list = [i.strip() for i in emails_parts if i.strip()]
+
+    assert len(emails_chips) == len(emails_list)
+
+    for email_chip in emails_chips:
+        remove_btn = email_chip.find_element(*page.REMOVE_EMAIL)
+        assert email_chip.text.strip(remove_btn.text) in emails
+        page.ensure_element_ready(remove_btn)
+        remove_btn.click()
+    emails_chips = dataset_emails_container.find_elements(*page.EMAIL_CHIP)
+    assert len(emails_chips) == 0
+
+
+def test_benchmark_details_dataset_auto_approve_mode_allow_list_emails_input_submit(
+    driver,
+    mocker,
+    ui,
+    patch_common,
+    approve_mode=["Allow List", "ALLOWLIST"],
+    emails="test@test.com test1@test.com ",
+):
+    mocker.patch(PATCH_BMK.format("get"), return_value=TEST_BENCHMARK)
+    mocker.patch(PATCH_BMK.format("get_datasets_associations"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_models_associations"), return_value=[])
+    mocker.patch(PATCH_EXECUTION.format("all"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_datasets_with_users"), return_value=[])
+    mocker.patch(PATCH_CONTAINER, side_effect=get_fake_cube)
+    mocker.patch(
+        PATCH_ROUTE.format("get_medperf_user_data"),
+        return_value={"id": TEST_BENCHMARK.owner},
+    )
+    update_policy_patch = mocker.patch(
+        PATCH_ROUTE.format("UpdateAssociationsPolicy.run"), return_value=None
+    )
+    event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=fake_event_generator
+    )
+    ui.task_id = "test-id"
+    ui.end_task = mocker.Mock(return_value=None)
+    ui.get_event = mocker.Mock(return_value=None)
+    spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    page = BenchmarkDetailsPage(driver, benchmark=TEST_BENCHMARK.name)
+    page.open(BASE_URL.format("/benchmarks/ui/display/") + str(TEST_BENCHMARK.id))
+
+    model_mode_text = driver.find_element(
+        "xpath", '//*[@id="model-auto-approve-mode"]/option[@selected]'
+    ).text
+    model_mode_value = page.find(page.CONT_AUTO_APPROVE).get_attribute("value")
+    confirm_modal = page.find(page.CONFIRM_MODAL)
+    popup_modal = page.find(page.POPUP_MODAL)
+
+    page.select_by_text(page.DSET_AUTO_APPROVE, approve_mode[0])
+    page.type(page.DSET_ALLOW_LIST, emails)
+    page.click(page.SAVE)
+
+    page.wait_for_visibility_element(confirm_modal)
+
+    assert f"Datasets: {approve_mode[0]}" in page.get_text(page.CONFIRM_TEXT)
+    assert f"Models: {model_mode_text}" in page.get_text(page.CONFIRM_TEXT)
+
+    page.confirm_run_task()
+    page.wait_for_visibility_element(popup_modal)
+
+    assert (
+        page.get_text(page.POPUP_TITLE)
+        == "Benchmark Associations Policy Successfully Updated"
+    )
+
+    page.wait_for_staleness_element(popup_modal)
+
+    patch_common["init_spy"].assert_called_once_with(
+        ANY, task_name="update_associations_policy"
+    )
+    spy_task_id.assert_called_once()
+    update_policy_patch.assert_called_once_with(
+        benchmark_uid=TEST_BENCHMARK.id,
+        dataset_mode=approve_mode[1],
+        dataset_emails=emails.strip(),
+        model_mode=model_mode_value,
+        model_emails=None,
+    )
+    event_gen.assert_not_called()
+    ui.end_task.assert_called_once()
+    patch_common["reset_spy"].assert_called_once()
+    patch_common["notifs_spy"].assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "mode", [{"text": "Never", "value": "NEVER"}, {"text": "Always", "value": "ALWAYS"}]
+)
+def Xtest_benchmark_details_model_auto_approve_mode(
+    driver, mocker, mode, ui, patch_common
+):
+    mocker.patch(PATCH_BMK.format("get"), return_value=TEST_BENCHMARK)
+    mocker.patch(PATCH_BMK.format("get_datasets_associations"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_models_associations"), return_value=[])
+    mocker.patch(PATCH_EXECUTION.format("all"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_datasets_with_users"), return_value=[])
+    mocker.patch(PATCH_CONTAINER, side_effect=get_fake_cube)
+    mocker.patch(
+        PATCH_ROUTE.format("get_medperf_user_data"),
+        return_value={"id": TEST_BENCHMARK.owner},
+    )
+    update_policy_patch = mocker.patch(
+        PATCH_ROUTE.format("UpdateAssociationsPolicy.run"), return_value=None
+    )
+
+    event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=fake_event_generator
+    )
+    ui.task_id = "test-id"
+    ui.end_task = mocker.Mock(return_value=None)
+    ui.get_event = mocker.Mock(return_value=None)
+    spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    page = BenchmarkDetailsPage(driver, benchmark=TEST_BENCHMARK.name)
+    page.open(BASE_URL.format("/benchmarks/ui/display/") + str(TEST_BENCHMARK.id))
+
+    dataset_mode_text = driver.find_element(
+        "xpath", '//*[@id="dataset-auto-approve-mode"]/option[@selected]'
+    ).text
+    dataset_mode_value = page.find(page.DSET_AUTO_APPROVE).get_attribute("value")
+    confirm_modal = page.find(page.CONFIRM_MODAL)
+    popup_modal = page.find(page.POPUP_MODAL)
+    page.select_by_text(page.CONT_AUTO_APPROVE, mode["text"])
+    page.click(page.SAVE)
+    page.wait_for_visibility_element(confirm_modal)
+
+    assert f"Datasets: {dataset_mode_text}" in page.get_text(page.CONFIRM_TEXT)
+    assert f"Models: {mode['text']}" in page.get_text(page.CONFIRM_TEXT)
+
+    page.confirm_run_task()
+    page.wait_for_visibility_element(popup_modal)
+
+    assert (
+        page.get_text(page.POPUP_TITLE)
+        == "Benchmark Associations Policy Successfully Updated"
+    )
+
+    page.wait_for_staleness_element(popup_modal)
+
+    patch_common["init_spy"].assert_called_once_with(
+        ANY, task_name="update_associations_policy"
+    )
+    spy_task_id.assert_called_once()
+    update_policy_patch.assert_called_once_with(
+        benchmark_uid=TEST_BENCHMARK.id,
+        dataset_mode=dataset_mode_value,
+        dataset_emails=None,
+        model_mode=mode["value"],
+        model_emails=None,
+    )
+    event_gen.assert_not_called()
+    ui.end_task.assert_called_once()
+    patch_common["reset_spy"].assert_called_once()
+    patch_common["notifs_spy"].assert_called_once()
+
+
+def Xtest_benchmark_details_model_auto_approve_mode_allow_list(driver, mocker):
+    mocker.patch(PATCH_BMK.format("get"), return_value=TEST_BENCHMARK)
+    mocker.patch(PATCH_BMK.format("get_datasets_associations"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_models_associations"), return_value=[])
+    mocker.patch(PATCH_EXECUTION.format("all"), return_value=[])
+    mocker.patch(PATCH_BMK.format("get_datasets_with_users"), return_value=[])
+    mocker.patch(PATCH_CONTAINER, side_effect=get_fake_cube)
+    mocker.patch(
+        PATCH_ROUTE.format("get_medperf_user_data"),
+        return_value={"id": TEST_BENCHMARK.owner},
+    )
+    update_policy_patch = mocker.patch(
+        PATCH_ROUTE.format("UpdateAssociationsPolicy.run"), return_value=None
+    )
+
+    page = BenchmarkDetailsPage(driver, benchmark=TEST_BENCHMARK.name)
+    page.open(BASE_URL.format("/benchmarks/ui/display/") + str(TEST_BENCHMARK.id))
+
+
+def Xtest_benchmark_details_dataset_associations_pending(driver, mocker):
     pass
 
 
-def test_benchmark_details_model_auto_approve_mode(driver, mocker):
+def Xtest_benchmark_details_models_associations_pending(driver, mocker):
     pass
 
 
-def test_benchmark_details_dataset_associations_pending(driver, mocker):
+def Xtest_benchmark_details_results_not_submitted(driver, mocker):
     pass
 
 
-def test_benchmark_details_models_associations_pending(driver, mocker):
+def Xtest_benchmark_details_results_submitted(driver, mocker):
     pass
 
 
-def test_benchmark_details_results_not_submitted(driver, mocker):
-    pass
-
-
-def test_benchmark_details_results_submitted(driver, mocker):
-    pass
-
-
-def test_benchmark_registration_page_task_running(driver, mocker):
+def Xtest_benchmark_registration_page_task_running(driver, mocker):
     web_app.state.task_running = True

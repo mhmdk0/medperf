@@ -250,8 +250,11 @@ $(document).ready(() => {
     });
 
     $("#save-policy-btn").on("click", (e) => {
+        let message = "want to update benchmark associations policy to the following?"
+        message += "<br/> Datasets: <strong>" + $("#dataset-auto-approve-mode option:selected").text() + "</strong>"
+        message += "<br/> Models: <strong>" + $("#model-auto-approve-mode option:selected").text() + "</strong>"
         if(checkUpdateAssociationsPolicyForm()){
-            showConfirmModal(e.currentTarget, updateAssociationsPolicy, "want to update benchmark associations policy?");
+            showConfirmModal(e.currentTarget, updateAssociationsPolicy, message);
         }
     });
 

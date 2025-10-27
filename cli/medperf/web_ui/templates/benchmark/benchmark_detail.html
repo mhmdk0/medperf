@@ -193,11 +193,11 @@
 <div id="datasets-associations-title" class="d-flex flex-row my-5 border border-secondary rounded p-3 justify-content-between">
     <h4>
         Datasets Associations
-        <span class="fs-6 ms-2 badge rounded-pill badge-notification bg-secondary">
+        <span class="fs-6 ms-2 badge rounded-pill badge-notification bg-secondary" data-testid="associations-count">
             {{ dataset_assoc_len }}
         </span>
         {% if dataset_assoc_pending %}
-        <span class="ms-2 fst-italic fs-6 text-muted">You have pending associations</span>
+        <span class="ms-2 fst-italic fs-6 text-muted" data-testid="pending-associations">You have pending associations</span>
         {% endif %}
     </h4>
     <span class="text-muted lh-lg me-3 fs-5"><i class="fas fa-caret-down bmk-detail-toggle"></i></span>
@@ -210,11 +210,11 @@
 <div id="models-associations-title" class="d-flex flex-row my-5 border border-secondary rounded p-3 justify-content-between">
     <h4>
         Models Associations
-        <span class="fs-6 ms-2 badge rounded-pill badge-notification bg-secondary">
+        <span class="fs-6 ms-2 badge rounded-pill badge-notification bg-secondary" data-testid="associations-count">
             {{ models_assoc_len }}
         </span>
         {% if model_assoc_pending %}
-        <span class="ms-2 fst-italic fs-6 text-muted">You have pending associations</span>
+        <span class="ms-2 fst-italic fs-6 text-muted" data-testid="pending-associations">You have pending associations</span>
         {% endif %}
     </h4>
     <span class="text-muted lh-lg me-3 fs-5"><i class="fas fa-caret-down bmk-detail-toggle"></i></span>
@@ -227,7 +227,7 @@
 <div id="benchmark-results-title" class="d-flex flex-row my-5 border border-secondary rounded p-3 justify-content-between">
     <h4>
         Results
-        <span class="fs-6 ms-2 badge rounded-pill badge-notification bg-secondary">
+        <span class="fs-6 ms-2 badge rounded-pill badge-notification bg-secondary" data-testid="associations-count">
             {{ results_len }}
         </span>
     </h4>

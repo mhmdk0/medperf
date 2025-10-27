@@ -66,32 +66,56 @@ class BenchmarkDetailsPage(BasePage):
 
     CONT_AUTO_APPROVE_LABEL = (
         By.CSS_SELECTOR,
-        'label[for="dataset-auto-approve-mode"]',
+        'label[for="model-auto-approve-mode"]',
     )
-    CONT_AUTO_APPROVE = (By.ID, "dataset-auto-approve-mode")
-    CONT_ALLOW_LIST_CONTAINER = (By.ID, "dataset-allow-list-container")
-    CONT_ALLOW_LIST_EMAILS = (By.ID, "dataset-allow-list-emails")
+    CONT_AUTO_APPROVE = (By.ID, "model-auto-approve-mode")
+    CONT_ALLOW_LIST_CONTAINER = (By.ID, "model-allow-list-container")
+    CONT_ALLOW_LIST_EMAILS = (By.ID, "model-allow-list-emails")
     CONT_ALLOW_LIST_LABEL = (
         By.CSS_SELECTOR,
-        'label[for="dataset-allow-list-text-input"]',
+        'label[for="model-allow-list-text-input"]',
     )
-    CONT_ALLOW_LIST = (By.ID, "dataset-allow-list-text-input")
+    CONT_ALLOW_LIST = (By.ID, "model-allow-list-text-input")
 
+    EMAIL_CHIP = (By.CSS_SELECTOR, ".email-chip")
+    REMOVE_EMAIL = (By.CSS_SELECTOR, ".remove-btn")
     SAVE = (By.ID, "save-policy-btn")
 
     DATASETS_TITLE = (By.ID, "datasets-associations-title")
     DATASETS_ASSOCIATIONS = (By.ID, "datasets-associations")
+    DATASETS_ASSOCS_COUNT = (
+        By.CSS_SELECTOR,
+        '#datasets-associations-title span[data-testid="associations-count"].badge',
+    )
+    DATASETS_PENDING_ASSOCS = (
+        By.CSS_SELECTOR,
+        '#datasets-associations-title span[data-testid="pending-associations"].fst-italic',
+    )
 
     MODELS_TITLE = (By.ID, "models-associations-title")
     MODELS_ASSOCIATIONS = (By.ID, "models-associations")
+    MODELS_ASSOCS_COUNT = (
+        By.CSS_SELECTOR,
+        '#models-associations-title span[data-testid="associations-count"].badge',
+    )
+    MODELS_PENDING_ASSOCS = (
+        By.CSS_SELECTOR,
+        '#models-associations-title span[data-testid="pending-associations"].fst-italic',
+    )
 
     RESULTS_TITLE = (By.ID, "benchmark-results-title")
     RESULTS = (By.ID, "benchmark-results")
+    RESULTS_COUNT = (
+        By.CSS_SELECTOR,
+        '#benchmark-results-title span[data-testid="associations-count"].badge',
+    )
 
     RESULT_MODAL = (By.ID, "result-modal")
     CLOSE_BTN = (By.CSS_SELECTOR, 'button[data-bs-dismiss="modal"][aria-label="Close"]')
 
     RESULT_BTN = (By.CLASS_NAME, "view-result-btn")
+
+    CONFIRM_TEXT = (By.ID, "confirm-text")
 
     def __init__(self, driver, benchmark, entity_name=""):
         super().__init__(driver)
