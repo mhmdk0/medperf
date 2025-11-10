@@ -60,7 +60,7 @@ def datasets_ui(
 
 
 @router.get("/ui/display/{dataset_id}", response_class=HTMLResponse)
-def dataset_detail_ui(
+def dataset_detail_ui(  # noqa
     request: Request,
     dataset_id: int,
     current_user: bool = Depends(check_user_ui),
@@ -92,11 +92,15 @@ def dataset_detail_ui(
     dataset_is_prepared = (
         dataset.submitted_as_prepared or dataset.is_ready() or dataset_is_operational
     )
-    approved_benchmarks = [
-        i
-        for i in benchmark_associations
-        if benchmark_associations[i]["approval_status"] == "APPROVED"
-    ]
+    approved_benchmarks = []
+    not_approved_benchmarks = []
+    for k, v in benchmark_associations.items():
+        (
+            approved_benchmarks
+            if v["approval_status"] == "APPROVED"
+            else not_approved_benchmarks
+        ).append(k)
+
     my_user_id = get_medperf_user_data()["id"]
     is_owner = my_user_id == dataset.owner
 
@@ -145,6 +149,7 @@ def dataset_detail_ui(
             "benchmarks": valid_benchmarks,  # Benchmarks that can be associated
             "benchmark_models": benchmark_models,  # Pass associated models without status
             "approved_benchmarks": approved_benchmarks,
+            "not_approved_benchmarks": not_approved_benchmarks,
             "is_owner": is_owner,
             "report_exists": report_exists,
         },
