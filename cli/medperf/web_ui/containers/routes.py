@@ -56,17 +56,18 @@ def container_detail_ui(
     current_user: bool = Depends(check_user_ui),
 ):
     container = Cube.get(cube_uid=container_id, valid_only=False)
-
-    benchmark_assocs = Cube.get_benchmarks_associations(mlcube_uid=container_id)
-
-    benchmark_associations = {}
-    for assoc in benchmark_assocs:
-        benchmark_associations[assoc["benchmark"]] = assoc
-
-    benchmarks = Benchmark.all()
-    benchmarks = {b.id: b for b in benchmarks}
-    # benchmarks_associations = sort_associations_display(benchmarks_associations)
     is_owner = container.owner == get_medperf_user_data()["id"]
+
+    benchmarks = []
+    benchmark_associations = {}
+    if is_owner:
+        benchmark_assocs = Cube.get_benchmarks_associations(mlcube_uid=container_id)
+        for assoc in benchmark_assocs:
+            benchmark_associations[assoc["benchmark"]] = assoc
+
+        benchmarks = Benchmark.all()
+        benchmarks = {b.id: b for b in benchmarks}
+        # benchmarks_associations = sort_associations_display(benchmarks_associations)
 
     return templates.TemplateResponse(
         "container/container_detail.html",
