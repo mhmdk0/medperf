@@ -1,60 +1,53 @@
-from unittest.mock import ANY
+from medperf.web_ui.tests import config as tests_config
 from medperf.web_ui.tests.pages.container.register_page import RegContainerPage
-import pytest
-from medperf.web_ui.app import web_app
 
-from selenium.common.exceptions import NoSuchElementException
-import medperf.web_ui.tests.config as tests_config
+import pytest
+from unittest.mock import ANY
 import medperf.web_ui.events as events_module
+from medperf.web_ui.app import web_app
+from selenium.common.exceptions import NoSuchElementException
+
 
 BASE_URL = tests_config.BASE_URL
-PATCH_BENCHMARKS = "medperf.entities.cube.Cube.all"
-PATCH_REGISTRATION = "medperf.commands.mlcube.submit.SubmitCube.run"
+PATCH_GET_CONTAINERS = "medperf.entities.cube.Cube.all"
+PATCH_REGISTER = "medperf.commands.mlcube.submit.SubmitCube.run"
 PATCH_ROUTE = "medperf.web_ui.containers.routes.{}"
+
+
+def stub_event_generator(*args, **kwargs):
+    yield ""
 
 
 @pytest.fixture()
 def patch_common(mocker):
-    init = mocker.patch(PATCH_ROUTE.format("initialize_state_task"), return_value=None)
-    reset = mocker.patch(PATCH_ROUTE.format("reset_state_task"), return_value=None)
-    notifs = mocker.patch(PATCH_ROUTE.format("add_notification"), return_value=None)
+    init = mocker.patch(PATCH_ROUTE.format("initialize_state_task"))
+    reset = mocker.patch(PATCH_ROUTE.format("reset_state_task"))
+    notifs = mocker.patch(PATCH_ROUTE.format("add_notification"))
 
-    return {
-        "init_spy": init,
-        "reset_spy": reset,
-        "notifs_spy": notifs,
-    }
+    return (init, reset, notifs)
 
 
-def fake_event_generator(*args, **kwargs):
-    yield ""
+@pytest.fixture(scope="module")
+def page(driver):
+    return RegContainerPage(driver)
 
 
-def test_container_registration_page_content(driver):
-    page = RegContainerPage(driver)
+def test_container_registration_page_content(page):
     page.open(BASE_URL.format("/containers/register/ui"))
-
-    page.wait_for_presence_selector(page.HEADER)
 
     page.wait_for_presence_selector(page.FORM)
 
-    page.wait_for_presence_selector(page.NAME_LABEL)
     page.wait_for_presence_selector(page.NAME)
     page.wait_for_presence_selector(page.NAME_TOOLTIP)
 
-    page.wait_for_presence_selector(page.MANIFEST_LABEL)
     page.wait_for_presence_selector(page.MANIFEST)
     page.wait_for_presence_selector(page.MANIFEST_TOOLTIP)
 
-    page.wait_for_presence_selector(page.PARAMETERS_LABEL)
     page.wait_for_presence_selector(page.PARAMETERS)
     page.wait_for_presence_selector(page.PARAMETERS_TOOLTIP)
 
-    page.wait_for_presence_selector(page.ADDITIONAL_LABEL)
     page.wait_for_presence_selector(page.ADDITIONAL)
     page.wait_for_presence_selector(page.ADDITIONAL_TOOLTIP)
-
-    page.wait_for_presence_selector(page.REGISTER)
 
     page.wait_for_presence_selector(page.CONFIRM_MODAL)
     page.wait_for_presence_selector(page.ERROR_MODAL)
@@ -67,10 +60,10 @@ def test_container_registration_page_content(driver):
     assert page.get_text(page.MANIFEST_LABEL) == "Container manifest file URL"
     assert page.get_text(page.PARAMETERS_LABEL) == "Parameters File URL"
     assert page.get_text(page.ADDITIONAL_LABEL) == "Additional Files URL"
+    assert page.get_text(page.REGISTER) == "Register"
 
 
-def test_container_registration_page_tooltips(driver):
-    page = RegContainerPage(driver)
+def test_container_registration_page_tooltips(page):
     page.open(BASE_URL.format("/containers/register/ui"))
 
     name_tooltip = page.find(page.NAME_TOOLTIP)
@@ -107,21 +100,19 @@ def test_container_registration_page_tooltips(driver):
     )
 
 
-def test_container_registration_fails(driver, mocker, ui, patch_common):
-    error_message = "Error registering container."
+def test_container_registration_fails(page, mocker, ui, patch_common):
+    error_message = "Container registration test failed"
 
-    patch_register = mocker.patch(
-        PATCH_REGISTRATION, side_effect=Exception(error_message)
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_register = mocker.patch(PATCH_REGISTER, side_effect=Exception(error_message))
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
-    )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
 
-    page = RegContainerPage(driver)
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
     page.open(BASE_URL.format("/containers/register/ui"))
 
     confirm_modal = page.find(page.CONFIRM_MODAL)
@@ -140,23 +131,17 @@ def test_container_registration_fails(driver, mocker, ui, patch_common):
     page.confirm_run_task()
 
     page.wait_for_visibility_element(error_modal)
-    page.wait_for_presence_selector(page.ERROR_TITLE)
-    page.wait_for_presence_selector(page.ERROR_TEXT)
     page.wait_for_presence_selector(page.ERROR_RELOAD)
-    page.wait_for_presence_selector(page.ERROR_HIDE)
 
     assert page.get_text(page.ERROR_TITLE) == "Failed to Register Model"
     assert error_message in page.get_text(page.ERROR_TEXT)
 
-    error_modal.find_element(*page.ERROR_HIDE).click()
+    hide_btn = error_modal.find_element(*page.ERROR_HIDE)
+    page.ensure_element_ready(hide_btn)
+    hide_btn.click()
+
     page.wait_for_invisibility_element(error_modal)
 
-    patch_common["init_spy"].assert_called_with(ANY, task_name="container_registration")
-    spy_task_id.assert_called_once()
-    event_gen.assert_called_with(request=ANY, stream_old=False)
-    ui.end_task.assert_called_once()
-    patch_common["reset_spy"].assert_called_once()
-    patch_common["notifs_spy"].assert_called_once()
     container_info = {
         "name": test_container["name"],
         "git_mlcube_url": test_container["manifest"],
@@ -169,24 +154,31 @@ def test_container_registration_fails(driver, mocker, ui, patch_common):
         "additional_files_tarball_hash": "",
         "state": "OPERATION",
     }
-    patch_register.assert_called_with(container_info)
+
+    spy_init.assert_called_with(ANY, task_name="container_registration")
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=False)
+    spy_register.assert_called_with(container_info)
+
+    spy_task_id.assert_called_once()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
 
 
-def test_container_registration_fails_with_optional(driver, mocker, ui, patch_common):
-    error_message = "Error registering container."
+def test_container_registration_fails_with_optional(page, mocker, ui, patch_common):
+    error_message = "Container registration test with optional failed"
 
-    patch_register = mocker.patch(
-        PATCH_REGISTRATION, side_effect=Exception(error_message)
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_register = mocker.patch(PATCH_REGISTER, side_effect=Exception(error_message))
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
-    )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
 
-    page = RegContainerPage(driver)
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
     page.open(BASE_URL.format("/containers/register/ui"))
 
     confirm_modal = page.find(page.CONFIRM_MODAL)
@@ -205,23 +197,17 @@ def test_container_registration_fails_with_optional(driver, mocker, ui, patch_co
     page.confirm_run_task()
 
     page.wait_for_visibility_element(error_modal)
-    page.wait_for_presence_selector(page.ERROR_TITLE)
-    page.wait_for_presence_selector(page.ERROR_TEXT)
     page.wait_for_presence_selector(page.ERROR_RELOAD)
-    page.wait_for_presence_selector(page.ERROR_HIDE)
 
     assert page.get_text(page.ERROR_TITLE) == "Failed to Register Model"
     assert error_message in page.get_text(page.ERROR_TEXT)
 
-    error_modal.find_element(*page.ERROR_HIDE).click()
+    hide_btn = error_modal.find_element(*page.ERROR_HIDE)
+    page.ensure_element_ready(hide_btn)
+    hide_btn.click()
+
     page.wait_for_invisibility_element(error_modal)
 
-    patch_common["init_spy"].assert_called_with(ANY, task_name="container_registration")
-    spy_task_id.assert_called_once()
-    event_gen.assert_called_with(request=ANY, stream_old=False)
-    ui.end_task.assert_called_once()
-    patch_common["reset_spy"].assert_called_once()
-    patch_common["notifs_spy"].assert_called_once()
     container_info = {
         "name": test_container["name"],
         "git_mlcube_url": test_container["manifest"],
@@ -234,20 +220,29 @@ def test_container_registration_fails_with_optional(driver, mocker, ui, patch_co
         "additional_files_tarball_hash": "",
         "state": "OPERATION",
     }
-    patch_register.assert_called_with(container_info)
+
+    spy_init.assert_called_with(ANY, task_name="container_registration")
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=False)
+    spy_register.assert_called_with(container_info)
+
+    spy_task_id.assert_called_once()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
 
 
-def test_container_registration_succeed(driver, mocker, ui, patch_common):
-    patch_register = mocker.patch(PATCH_REGISTRATION, return_value=1)
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
+def test_container_registration_succeed(page, mocker, ui, patch_common):
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_register = mocker.patch(PATCH_REGISTER, return_value=1)
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
 
-    page = RegContainerPage(driver)
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
     page.open(BASE_URL.format("/containers/register/ui"))
 
     confirm_modal = page.find(page.CONFIRM_MODAL)
@@ -272,12 +267,6 @@ def test_container_registration_succeed(driver, mocker, ui, patch_common):
     page.wait_for_url_change(old_url)
     assert "/containers/ui/display/1" in page.current_url
 
-    patch_common["init_spy"].assert_called_with(ANY, task_name="container_registration")
-    spy_task_id.assert_called_once()
-    event_gen.assert_called_with(request=ANY, stream_old=False)
-    ui.end_task.assert_called_once()
-    patch_common["reset_spy"].assert_called_once()
-    patch_common["notifs_spy"].assert_called_once()
     container_info = {
         "name": test_container["name"],
         "git_mlcube_url": test_container["manifest"],
@@ -290,20 +279,29 @@ def test_container_registration_succeed(driver, mocker, ui, patch_common):
         "additional_files_tarball_hash": "",
         "state": "OPERATION",
     }
-    patch_register.assert_called_with(container_info)
+
+    spy_init.assert_called_with(ANY, task_name="container_registration")
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=False)
+    spy_register.assert_called_with(container_info)
+
+    spy_task_id.assert_called_once()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
 
 
-def test_container_registration_succeed_with_optional(driver, mocker, ui, patch_common):
-    patch_register = mocker.patch(PATCH_REGISTRATION, return_value=1)
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
+def test_container_registration_succeed_with_optional(page, mocker, ui, patch_common):
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_register = mocker.patch(PATCH_REGISTER, return_value=1)
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
 
-    page = RegContainerPage(driver)
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
     page.open(BASE_URL.format("/containers/register/ui"))
 
     confirm_modal = page.find(page.CONFIRM_MODAL)
@@ -328,12 +326,6 @@ def test_container_registration_succeed_with_optional(driver, mocker, ui, patch_
     page.wait_for_url_change(old_url)
     assert "/containers/ui/display/1" in page.current_url
 
-    patch_common["init_spy"].assert_called_with(ANY, task_name="container_registration")
-    spy_task_id.assert_called_once()
-    event_gen.assert_called_with(request=ANY, stream_old=False)
-    ui.end_task.assert_called_once()
-    patch_common["reset_spy"].assert_called_once()
-    patch_common["notifs_spy"].assert_called_once()
     container_info = {
         "name": test_container["name"],
         "git_mlcube_url": test_container["manifest"],
@@ -346,20 +338,31 @@ def test_container_registration_succeed_with_optional(driver, mocker, ui, patch_
         "additional_files_tarball_hash": "",
         "state": "OPERATION",
     }
-    patch_register.assert_called_with(container_info)
+
+    spy_init.assert_called_with(ANY, task_name="container_registration")
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=False)
+    spy_register.assert_called_with(container_info)
+
+    spy_task_id.assert_called_once()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
 
 
-def test_contianer_registration_page_task_running(driver, mocker, ui, patch_common):
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
+def test_contianer_registration_page_task_running(page, mocker, ui, patch_common):
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
+    web_app.state.task_running = True
     web_app.state.task.running = True
 
-    page = RegContainerPage(driver)
     page.open(BASE_URL.format("/containers/register/ui"))
 
     name = page.find(page.NAME)
@@ -381,24 +384,25 @@ def test_contianer_registration_page_task_running(driver, mocker, ui, patch_comm
     with pytest.raises(NoSuchElementException):
         page.driver.find_element(*page.RESUME_SCRIPT)
 
-    patch_common["init_spy"].assert_not_called()
+    spy_init.assert_not_called()
+    spy_event_gen.assert_not_called()
     spy_task_id.assert_not_called()
-    event_gen.assert_not_called()
+    spy_reset.assert_not_called()
+    spy_notifs.assert_not_called()
     ui.end_task.assert_not_called()
-    patch_common["reset_spy"].assert_not_called()
-    patch_common["notifs_spy"].assert_not_called()
 
 
 def test_container_registration_page_task_running_form_data(
-    driver, mocker, ui, patch_common
+    page, mocker, ui, patch_common
 ):
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
 
     web_app.state.task_running = True
     web_app.state.task.running = True
@@ -410,7 +414,6 @@ def test_container_registration_page_task_running_form_data(
         "additional_file": "test_additional.yaml",
     }
 
-    page = RegContainerPage(driver)
     page.open(BASE_URL.format("/containers/register/ui"))
 
     name = page.find(page.NAME)
@@ -422,18 +425,23 @@ def test_container_registration_page_task_running_form_data(
     assert not manifest.is_enabled()
     assert not parameters.is_enabled()
     assert not additional.is_enabled()
-    assert not page.find(page.REGISTER).is_enabled()
 
     assert name.get_attribute("value") == "test_container"
     assert manifest.get_attribute("value") == "test_manifest.yaml"
     assert parameters.get_attribute("value") == "test_parameters.yaml"
     assert additional.get_attribute("value") == "test_additional.yaml"
 
+    register_btn = page.find(page.REGISTER)
+
+    assert not register_btn.is_enabled()
+    assert page.element_contains_spinner(register_btn)
+
     page.driver.find_element(*page.RESUME_SCRIPT)
 
-    patch_common["init_spy"].assert_not_called()
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=True)
+
+    spy_init.assert_not_called()
     spy_task_id.assert_not_called()
-    event_gen.assert_called_with(request=ANY, stream_old=True)
+    spy_reset.assert_not_called()
+    spy_notifs.assert_not_called()
     ui.end_task.assert_not_called()
-    patch_common["reset_spy"].assert_not_called()
-    patch_common["notifs_spy"].assert_not_called()

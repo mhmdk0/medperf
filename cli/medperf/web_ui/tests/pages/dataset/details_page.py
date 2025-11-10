@@ -4,7 +4,8 @@ from ..base_page import BasePage
 
 class DatasetDetailsPage(BasePage):
     HEADER = (By.CSS_SELECTOR, 'h1[data-testid="page-header"]')
-    EXPORT = (By.CSS_SELECTOR, "#redirect-export-form input[value='Export Dataset']")
+    EXPORT_FORM = (By.CSS_SELECTOR, 'form[data-testid="export-form"]')
+    EXPORT = (By.CSS_SELECTOR, "#redirect-export-form input[name='submit']")
     SUB_HEADER_1 = (By.CSS_SELECTOR, 'h5[data-testid="sub-header-1"]')
 
     STATE = (By.CSS_SELECTOR, 'span[data-testid="dataset-state"].badge')
@@ -25,10 +26,10 @@ class DatasetDetailsPage(BasePage):
     DATA_PREP_STATE = (By.CSS_SELECTOR, 'span[data-testid="data-prep"] > span > i')
 
     STATISTICS_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="statistics-label"]')
-    STATISTICS = (By.CSS_SELECTOR, 'span[data-testid="statistics"]')
+    STATISTICS = (By.CSS_SELECTOR, 'a[data-testid="statistics"]')
 
     REPORT_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="report-label"]')
-    REPORT = (By.CSS_SELECTOR, 'span[data-testid="report"]')
+    REPORT = (By.CSS_SELECTOR, 'a[data-testid="report"]')
 
     PREPARED_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="prepared-label"]')
     PREPARED = (By.CSS_SELECTOR, 'span[data-testid="prepared"]')
@@ -42,27 +43,111 @@ class DatasetDetailsPage(BasePage):
     MODIFIED_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="modified-at-label"]')
     MODIFIED = (By.CSS_SELECTOR, 'span[data-testid="modified-at"]')
 
-    PREPARE_BTN = (By.ID, "prepare-dataset")
-    PREPARED_TEXT = (
-        By.XPATH,
-        '//div[contains(@class, "bottom-buttons-panel")]'
-        + '//span[contains(@class, "text-success") and contains(text(), "Prepared")]',
+    BOTTOM_BUTTONS_CONTAINER = (
+        By.CSS_SELECTOR,
+        'div[data-testid="bottom-buttons-panel"]',
     )
 
-    SET_OPERATIONAL_BTN = (By.ID, "set-operational")
+    PREPARED_TEXT = (
+        By.CSS_SELECTOR,
+        'span.text-success[data-testid="dataset-prepared"]',
+    )
+    PREPARE_BTN = (By.ID, "prepare-dataset")
+    PERPARE_NOTE = (By.CSS_SELECTOR, 'small[data-testid="prepare-note"')
+
     SET_OPERATIONAL_TEXT = (
-        By.XPATH,
-        '//div[contains(@class, "bottom-buttons-panel")]'
-        + '//span[contains(@class, "text-success") and contains(text(), "Operational")]',
+        By.CSS_SELECTOR,
+        'span.text-success[data-testid="dataset-operational"]',
+    )
+    SET_OPERATIONAL_BTN = (By.ID, "set-operational")
+    DISABLED_SET_OPERATIONAL = (
+        By.CSS_SELECTOR,
+        'button[data-testid="disabled-set-operational"]',
+    )
+    SET_OPERATIONAL_NOTE = (
+        By.CSS_SELECTOR,
+        'small[data-testid="set-operational-note"]',
     )
 
     DROPDOWN_BTN = (By.ID, "associate-dropdown-btn")
+    DROPDOWN_CONTAINER = (By.ID, "dropdown-div")
+    BMK_DATA = (By.CSS_SELECTOR, 'strong[data-testid="bmk-data"]')
+    BMK_VIEW = (By.CSS_SELECTOR, 'a[data-testid="bmk-view"]')
+    BMK_ASSOCIATE = (By.CSS_SELECTOR, 'button[data-testid="bmk-associate"]')
+    NO_BMKS = (By.CSS_SELECTOR, 'li[data-testid="no-bmks"]')
+    DISABLED_ASSOCIATE = (By.CSS_SELECTOR, 'button[data-testid="disabled-associate"]')
+    ASSCOATE_NOTE = (By.CSS_SELECTOR, 'small[data-testid="associate-note"]')
+
+    ASSOCIATIONS_CONTAINER = (
+        By.CSS_SELECTOR,
+        'div[data-testid="associations-container"]',
+    )
+    ASSOCIATIONS_TITLE = (
+        By.CSS_SELECTOR,
+        'h4[data-testid="associations-container-title"]',
+    )
+
+    BMKS_ASSOCIATIONS = (By.CSS_SELECTOR, 'li[data-testid="assoc-card"]')
+    ASSOC_LABEL = (By.CSS_SELECTOR, 'span[data-testid="assoc-benchmark-label"]')
+    ASSOC_BMK = (By.CSS_SELECTOR, 'a[data-testid="assoc-benchmark"]')
+    ASSOC_STATUS_LABEL = (By.CSS_SELECTOR, 'span[data-testid="assoc-status-label"]')
+    ASSOC_STATUS = (By.CSS_SELECTOR, 'strong[data-testid="assoc-status"]')
+
+    APPROVED_BMKS = (By.CSS_SELECTOR, 'div[data-testid="approved-bmk"]')
+    BMK_LABEL = (By.CSS_SELECTOR, 'span[data-testid="bmk-title"]')
+    BMK_NAME = (By.CSS_SELECTOR, 'a[data-testid="bmk-name"]')
+    BMK_RUN_ALL = (By.CSS_SELECTOR, 'button[data-testid="run-all-btn"]')
+
+    REF_MODEL_CARD = (By.CSS_SELECTOR, 'li[data-testid="ref-model-card"]')
+    REF_MODEL_LABEL = (By.CSS_SELECTOR, 'small[data-testid="ref-model-label"]')
+    REF_MODEL = (By.CSS_SELECTOR, 'span[data-testid="ref-model"] > strong > a')
+    REF_MODEL_DATE = (By.CSS_SELECTOR, 'span[data-testid="ref-model"] > small')
+    REF_MODEL_STATE = (By.CSS_SELECTOR, 'span[data-testid="ref-model"] > span > i')
+
+    MODEL_CARD = (By.CSS_SELECTOR, 'li[data-testid="model-card"]')
+    MODEL_LABEL = (By.CSS_SELECTOR, 'small[data-testid="model-label"]')
+    MODEL = (By.CSS_SELECTOR, 'span[data-testid="model"] > strong > a')
+    MODEL_DATE = (By.CSS_SELECTOR, 'span[data-testid="model"] > small')
+    MODEL_STATE = (By.CSS_SELECTOR, 'span[data-testid="model"] > span > i')
+
+    RUN_MODEL_BTN = (By.CSS_SELECTOR, 'button[data-testid="run-model"]')
+    VIEW_RESULT_BTN = (By.CSS_SELECTOR, 'button[data-testid="view-result"]')
+    SUBMITTED_TEXT = (By.CSS_SELECTOR, 'span[data-testid="result-submitted"]')
+    SUBMIT_BTN = (By.CSS_SELECTOR, 'button[data-testid="result-submit"]')
+
     ASSOCIATION_CARDS = (By.CSS_SELECTOR, "div.benchmark-section li a")
 
     RESULT_MODAL = (By.ID, "result-modal")
     CLOSE_BTN = (By.CSS_SELECTOR, 'button[data-bs-dismiss="modal"][aria-label="Close"]')
 
-    def __init__(self, driver, dataset, benchmark=""):
+    RESUME_SCRIPT_PREPARE = (
+        By.CSS_SELECTOR,
+        'script[data-testid="resume-dataset-preparation"]',
+    )
+
+    RESUME_SCRIPT_SET_OPERATIONAL = (
+        By.CSS_SELECTOR,
+        'script[data-testid="resume-dataset-set-operational"]',
+    )
+
+    RESUME_SCRIPT_ASSOCIATE = (
+        By.CSS_SELECTOR,
+        'script[data-testid="resume-dataset-association"]',
+    )
+
+    RESUME_SCRIPT_RUN_EXECUTION = (
+        By.CSS_SELECTOR,
+        'script[data-testid="resume-dataset-execution"]',
+    )
+
+    RESUME_SCRIPT_SUBMIT_RESULT = (
+        By.CSS_SELECTOR,
+        'script[data-testid="resume-dataset-result-submission"]',
+    )
+
+    CONFIRM_TEXT = (By.ID, "confirm-text")
+
+    def __init__(self, driver, dataset="", benchmark=""):
         super().__init__(driver)
         self.DATASET_NAME_BTN = (
             By.XPATH,

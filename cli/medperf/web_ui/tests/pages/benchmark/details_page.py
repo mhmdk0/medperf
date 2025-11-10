@@ -16,7 +16,8 @@ class BenchmarkDetailsPage(BasePage):
     DESCRIPTION = (By.CSS_SELECTOR, 'span[data-testid="description"]')
 
     DOCUMENTATION_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="documentation-label"]')
-    DOCUMENTATION = (By.CSS_SELECTOR, 'span[data-testid="documentation"]')
+    DOCUMENTATION = (By.CSS_SELECTOR, 'a[data-testid="documentation"]')
+    NO_DOCUMENTATION = (By.CSS_SELECTOR, 'span[data-testid="documentation"]')
 
     REF_DATASET_LABEL = (
         By.CSS_SELECTOR,
@@ -51,38 +52,44 @@ class BenchmarkDetailsPage(BasePage):
     SUB_HEADER_2 = (By.CSS_SELECTOR, 'h5[data-testid="sub-header-2"]')
     POLICY_FORM = (By.ID, "association-policy-form")
 
-    DSET_AUTO_APPROVE_LABEL = (
+    DATASET_AUTO_APPROVE_LABEL = (
         By.CSS_SELECTOR,
         'label[for="dataset-auto-approve-mode"]',
     )
-    DSET_AUTO_APPROVE = (By.ID, "dataset-auto-approve-mode")
-    DSET_ALLOW_LIST_CONTAINER = (By.ID, "dataset-allow-list-container")
-    DSET_ALLOW_LIST_EMAILS = (By.ID, "dataset-allow-list-emails")
-    DSET_ALLOW_LIST_LABEL = (
+    DATASET_AUTO_APPROVE = (By.ID, "dataset-auto-approve-mode")
+    DATASET_ALLOW_LIST_CONTAINER = (By.ID, "dataset-allow-list-container")
+    DATASET_ALLOW_LIST_EMAILS = (By.ID, "dataset-allow-list-emails")
+    DATASET_ALLOW_LIST_LABEL = (
         By.CSS_SELECTOR,
         'label[for="dataset-allow-list-text-input"]',
     )
-    DSET_ALLOW_LIST = (By.ID, "dataset-allow-list-text-input")
+    DATASET_ALLOW_LIST = (By.ID, "dataset-allow-list-text-input")
 
-    CONT_AUTO_APPROVE_LABEL = (
+    MODEL_AUTO_APPROVE_LABEL = (
         By.CSS_SELECTOR,
         'label[for="model-auto-approve-mode"]',
     )
-    CONT_AUTO_APPROVE = (By.ID, "model-auto-approve-mode")
-    CONT_ALLOW_LIST_CONTAINER = (By.ID, "model-allow-list-container")
-    CONT_ALLOW_LIST_EMAILS = (By.ID, "model-allow-list-emails")
-    CONT_ALLOW_LIST_LABEL = (
+    MODEL_AUTO_APPROVE = (By.ID, "model-auto-approve-mode")
+    MODEL_ALLOW_LIST_CONTAINER = (By.ID, "model-allow-list-container")
+    MODEL_ALLOW_LIST_EMAILS = (By.ID, "model-allow-list-emails")
+    MODEL_ALLOW_LIST_LABEL = (
         By.CSS_SELECTOR,
         'label[for="model-allow-list-text-input"]',
     )
-    CONT_ALLOW_LIST = (By.ID, "model-allow-list-text-input")
+    MODEL_ALLOW_LIST = (By.ID, "model-allow-list-text-input")
 
     EMAIL_CHIP = (By.CSS_SELECTOR, ".email-chip")
     REMOVE_EMAIL = (By.CSS_SELECTOR, ".remove-btn")
     SAVE = (By.ID, "save-policy-btn")
 
+    ASSOCIATIONS_RESULTS_CONTAINER = (
+        By.CSS_SELECTOR,
+        'div[data-testid="associations-results"]',
+    )
+
     DATASETS_TITLE = (By.ID, "datasets-associations-title")
     DATASETS_ASSOCIATIONS = (By.ID, "datasets-associations")
+    DATASETS_ASSOCIATIONS_CARDS = (By.CSS_SELECTOR, "#datasets-associations > div.card")
     DATASETS_ASSOCS_COUNT = (
         By.CSS_SELECTOR,
         '#datasets-associations-title span[data-testid="associations-count"].badge',
@@ -94,6 +101,7 @@ class BenchmarkDetailsPage(BasePage):
 
     MODELS_TITLE = (By.ID, "models-associations-title")
     MODELS_ASSOCIATIONS = (By.ID, "models-associations")
+    MODELS_ASSOCIATIONS_CARDS = (By.CSS_SELECTOR, "#models-associations > div.card")
     MODELS_ASSOCS_COUNT = (
         By.CSS_SELECTOR,
         '#models-associations-title span[data-testid="associations-count"].badge',
@@ -105,6 +113,7 @@ class BenchmarkDetailsPage(BasePage):
 
     RESULTS_TITLE = (By.ID, "benchmark-results-title")
     RESULTS = (By.ID, "benchmark-results")
+    RESULTS_CARDS = (By.CSS_SELECTOR, "#benchmark-results > div.card")
     RESULTS_COUNT = (
         By.CSS_SELECTOR,
         '#benchmark-results-title span[data-testid="associations-count"].badge',
@@ -117,7 +126,60 @@ class BenchmarkDetailsPage(BasePage):
 
     CONFIRM_TEXT = (By.ID, "confirm-text")
 
-    def __init__(self, driver, benchmark, entity_name=""):
+    ASSOC_NAME = (By.CSS_SELECTOR, 'h5[data-testid="assoc-entity-name"]')
+    ASSOC_ANCHOR = (By.CSS_SELECTOR, 'a[data-testid="assoc-entity-anchor"]')
+    ASSOC_APPROVAL_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="assoc-approval-status-label"]',
+    )
+    ASSOC_APPROVAL = (By.CSS_SELECTOR, 'span[data-testid="assoc-approval-status"]')
+    ASSOC_REJECT = (By.CSS_SELECTOR, 'button[data-testid="assoc-reject-btn"]')
+    ASSOC_APPROVE = (By.CSS_SELECTOR, 'button[data-testid="assoc-approve-btn"]')
+    ASSOC_APPROVED_AT_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="assoc-approved-at-label"]',
+    )
+    ASSOC_APPROVED_AT = (By.CSS_SELECTOR, 'span[data-testid="assoc-approved-at"]')
+    ASSOC_MODIFIED_AT_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="assoc-modified-label"]',
+    )
+    ASSOC_MODIFIED_AT = (By.CSS_SELECTOR, 'span[data-testid="assoc-modified"]')
+    ASSOC_INITIATED_BY_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="assoc-initiated-by-label"]',
+    )
+    ASSOC_INITIATED_BY = (By.CSS_SELECTOR, 'span[data-testid="assoc-initiated-by"]')
+
+    RESULT_NAME = (By.CSS_SELECTOR, 'h5[data-testid="result-name"]')
+    RESULT_VIEW = (By.CSS_SELECTOR, 'button[data-testid="view-btn"]')
+    RESULT_NOT_SUBMITTED = (By.CSS_SELECTOR, 'h5[data-testid="not-submitted"]')
+    RESULT_OWNER_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="result-owner-label"]')
+    RESULT_OWNER = (By.CSS_SELECTOR, 'span[data-testid="result-owner"]')
+    RESULT_MODEL_LABEL = (By.CSS_SELECTOR, 'strong[data-testid="result-model-label"]')
+    RESULT_MODEL = (By.CSS_SELECTOR, 'a[data-testid="result-model"]')
+    RESULT_DATASET_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="result-dataset-label"]',
+    )
+    RESULT_DATASET = (By.CSS_SELECTOR, 'a[data-testid="result-dataset"]')
+    RESULT_INFERENCE_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="result-inference-label"]',
+    )
+    RESULT_INFERENCE = (By.CSS_SELECTOR, 'span[data-testid="result-inference"]')
+    RESULT_METRICS_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="result-metrics-label"]',
+    )
+    RESULT_METRICS = (By.CSS_SELECTOR, 'span[data-testid="result-metrics"]')
+    RESULT_MODIFIED_LABEL = (
+        By.CSS_SELECTOR,
+        'strong[data-testid="result-modified-label"]',
+    )
+    RESULT_MODIFIED = (By.CSS_SELECTOR, 'span[data-testid="result-modified"]')
+
+    def __init__(self, driver, benchmark="", entity_name=""):
         super().__init__(driver)
         self.BMK_BTN = (
             By.XPATH,

@@ -1,57 +1,82 @@
-import pytest
 from medperf.web_ui.tests import config as tests_config
 from medperf.web_ui.tests.pages.dataset.ui_page import DatasetsPage
-from medperf.tests.mocks.dataset import TestDataset
+
 import datetime
+import pytest
+from medperf.tests.mocks.dataset import TestDataset
 import selenium.common.exceptions as selenium_exceptions
 
 BASE_URL = tests_config.BASE_URL
-PATCH_GET_ALL_DSETS = "medperf.entities.dataset.Dataset.all"
+PATCH_GET_DATASETS = "medperf.entities.dataset.Dataset.all"
 PATCH_GET_USER_ID = "medperf.web_ui.datasets.routes.get_medperf_user_data"
+USER_ID = 1
+
+TEST_DATASETS = {
+    "1": TestDataset(
+        id=1,
+        owner=1,
+        created_at=datetime.datetime(2025, 1, 1),
+        name="test_dataset1",
+        location="test_location1",
+        description="test description",
+        state="DEVELOPMENT",
+    ),
+    "2": TestDataset(
+        id=2,
+        owner=2,
+        created_at=datetime.datetime(2025, 2, 2),
+        name="test_dataset2",
+        location="test_location2",
+        description="test description 2",
+    ),
+    "3": TestDataset(
+        id=3, owner=3, created_at=datetime.datetime(2025, 3, 3), is_valid=False
+    ),
+}
 
 
-def test_empty_datasets_ui_page_content(mocker, driver):
-    mocker.patch(PATCH_GET_USER_ID, return_value={"id": 1})
-    dsets_patch = mocker.patch(PATCH_GET_ALL_DSETS, return_value=[])
-    filters = {"owner": 1}
+@pytest.fixture(scope="module")
+def page(driver):
+    return DatasetsPage(driver)
 
-    page = DatasetsPage(driver)
+
+def test_empty_datasets_ui_page_content(page, mocker):
+    filters = {"owner": USER_ID}
+
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    spy_datasets = mocker.patch(PATCH_GET_DATASETS, return_value=[])
+
     page.open(BASE_URL.format("/datasets/ui"))
 
-    dsets_patch.assert_called_with(filters={})
+    spy_datasets.assert_called_with(filters={})
     assert page.get_text(page.REG_DSET_BTN) == "Register a New Dataset"
     assert page.get_text(page.IMPORT_DSET_BTN) == "Import Dataset"
     assert page.get_text(page.HEADER) == "Datasets"
     assert page.get_text(page.MINE_LABEL) == "Show only my datasets"
     assert page.get_text(page.NO_DATASETS) == "No datasets yet"
-    assert page.find(page.MINE_SWITCH).get_attribute("data-entity-name") == "datasets"
+    assert page.get_attribute(page.MINE_SWITCH, "data-entity-name") == "datasets"
 
     old_url = page.current_url
     page.toggle_mine()
     page.wait_for_url_change(old_url)
 
     assert page.is_mine()
-    dsets_patch.assert_called_with(filters=filters)
+    spy_datasets.assert_called_with(filters=filters)
 
     old_url = page.current_url
     page.toggle_mine()
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
-    dsets_patch.assert_called_with(filters={})
+    spy_datasets.assert_called_with(filters={})
+
+    assert spy_datasets.call_count == 3
 
 
-def test_datasets_ui_page_content(mocker, driver):
-    dset1 = TestDataset(id=1, owner=1, created_at=datetime.datetime(2025, 1, 1))
-    dset2 = TestDataset(id=2, owner=2, created_at=datetime.datetime(2025, 5, 20))
-    dset1.description = "Dataset sample"
-    dset1.state = "DEVELOPMENT"
-    dsets = [dset1, dset2]
+def test_datasets_ui_page_content(page, mocker):
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_DATASETS, return_value=list(TEST_DATASETS.values()))
 
-    mocker.patch(PATCH_GET_USER_ID, return_value={"id": 1})
-    mocker.patch(PATCH_GET_ALL_DSETS, return_value=dsets)
-
-    page = DatasetsPage(driver)
     page.open(BASE_URL.format("/datasets/ui"))
 
     with pytest.raises(selenium_exceptions.NoSuchElementException):
@@ -59,19 +84,19 @@ def test_datasets_ui_page_content(mocker, driver):
 
     dataset_cards = page.find_elements(page.CARDS_CONTAINER)
 
-    assert len(dataset_cards) == len(dsets)
+    assert len(dataset_cards) == len(TEST_DATASETS)
 
-    for i in range(len(dsets)):
-        dset_name = dataset_cards[i].find_element(*page.CARD_TITLE).text
-        dset_url = dataset_cards[i].find_element(*page.CARD_TITLE).get_attribute("href")
-        dset_id_txt = dataset_cards[i].find_element(*page.CARD_ID).text
-        dset_state = dataset_cards[i].find_element(*page.CARD_STATE).text
-        dset_valid_txt = dataset_cards[i].find_element(*page.CARD_VALID).text
-        dset_desc_txt = dataset_cards[i].find_element(*page.CARD_DESC).text
-        dset_created = (
-            dataset_cards[i].find_element(*page.CARD_CREATED).get_attribute("data-date")
+    for dataset in dataset_cards:
+        dset_name = dataset.find_element(*page.CARD_TITLE).text
+        dset_url = dataset.find_element(*page.CARD_TITLE).get_attribute("href")
+        dset_id_txt = dataset.find_element(*page.CARD_ID).text
+        dset_state = dataset.find_element(*page.CARD_STATE).text
+        dset_valid_txt = dataset.find_element(*page.CARD_VALID).text
+        dset_desc_txt = dataset.find_element(*page.CARD_DESC).text
+        dset_created = dataset.find_element(*page.CARD_CREATED).get_attribute(
+            "data-date"
         )
-        dset_location_txt = dataset_cards[i].find_element(*page.CARD_LOCATION).text
+        dset_location_txt = dataset.find_element(*page.CARD_LOCATION).text
 
         dset_id = dset_id_txt.split(":")[-1].strip()
         dset_id_url = dset_url.split("/")[-1].strip()
@@ -88,29 +113,29 @@ def test_datasets_ui_page_content(mocker, driver):
         assert dset_id == dset_id_url
         assert dset_id.isdigit()
 
-        assert dset_name == dsets[i].name
-        assert dset_id == str(dsets[i].id)
+        assert dset_name == TEST_DATASETS[dset_id].name
+        assert dset_id == str(TEST_DATASETS[dset_id].id)
         assert dset_url.endswith(f"/datasets/ui/display/{dset_id}")
-        assert dset_valid == str(dsets[i].is_valid)
-        assert dset_desc == str(dsets[i].description)
-        assert dset_created_dt == dsets[i].created_at
-        assert dset_location == dsets[i].location
+        assert dset_valid == str(TEST_DATASETS[dset_id].is_valid)
+        assert dset_desc == str(TEST_DATASETS[dset_id].description)
+        assert dset_created_dt == TEST_DATASETS[dset_id].created_at
+        assert dset_location == TEST_DATASETS[dset_id].location
 
-        if dsets[i].is_valid:
-            assert "invalid-card" not in dataset_cards[i].get_attribute("class")
+        if TEST_DATASETS[dset_id].is_valid:
+            assert "invalid-card" not in dataset.get_attribute("class")
         else:
-            assert "invalid-card" in dataset_cards[i].get_attribute("class")
+            assert "invalid-card" in dataset.get_attribute("class")
 
-        if dsets[i].state == "OPERATION":
+        if TEST_DATASETS[dset_id].state == "OPERATION":
             assert dset_state == "OPERATIONAL"
         else:
-            assert dset_state == dsets[i].state
+            assert dset_state == TEST_DATASETS[dset_id].state
 
     assert page.get_text(page.REG_DSET_BTN) == "Register a New Dataset"
     assert page.get_text(page.IMPORT_DSET_BTN) == "Import Dataset"
     assert page.get_text(page.HEADER) == "Datasets"
     assert page.get_text(page.MINE_LABEL) == "Show only my datasets"
-    assert page.find(page.MINE_SWITCH).get_attribute("data-entity-name") == "datasets"
+    assert page.get_attribute(page.MINE_SWITCH, "data-entity-name") == "datasets"
 
     old_url = page.current_url
     page.toggle_mine()

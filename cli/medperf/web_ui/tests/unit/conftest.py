@@ -134,7 +134,7 @@ def auth(mocker, package_init):
 @pytest.fixture
 def driver_noauth():
     options = Options()
-    # options.add_argument("--headless=true")  # run without opening a real window
+    options.add_argument("--headless=true")  # run without opening a real window
     driver = webdriver.Chrome(options=options)
     yield driver
     driver.quit()
@@ -143,7 +143,7 @@ def driver_noauth():
 @pytest.fixture(scope="session")
 def driver(sec_token):
     options = Options()
-    # options.add_argument("--headless=true")  # run without opening a real window
+    options.add_argument("--headless=true")  # run without opening a real window
     driver = webdriver.Chrome(options=options)
     driver.get(f"http://127.0.0.1:8100/security_check?token={sec_token}")
 

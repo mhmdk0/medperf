@@ -1,17 +1,18 @@
-from unittest.mock import ANY
+from medperf.web_ui.tests import config as tests_config
 from medperf.web_ui.tests.pages.benchmark.register_page import RegBenchmarkPage
-from medperf.tests.mocks.cube import TestCube
-import pytest
-from medperf.web_ui.app import web_app
 
-from selenium.common.exceptions import NoSuchElementException
-import medperf.web_ui.tests.config as tests_config
+import pytest
+from unittest.mock import ANY
+from medperf.tests.mocks.cube import TestCube
 import medperf.web_ui.events as events_module
+from medperf.web_ui.app import web_app
+from selenium.common.exceptions import NoSuchElementException
+
 
 BASE_URL = tests_config.BASE_URL
-PATCH_REGISTRATION = "medperf.commands.benchmark.submit.SubmitBenchmark.run"
-PATCH_CONTAINERS = "medperf.entities.cube.Cube.all"
-PATCH_CONTAINERS_TYPE = "medperf.web_ui.benchmarks.routes.get_container_type"
+PATCH_GET_CONTAINERS = "medperf.entities.cube.Cube.all"
+PATCH_GET_CONTAINERS_TYPE = "medperf.web_ui.benchmarks.routes.get_container_type"
+PATCH_REGISTER = "medperf.commands.benchmark.submit.SubmitBenchmark.run"
 PATCH_ROUTE = "medperf.web_ui.benchmarks.routes.{}"
 
 TEST_CONTAINERS = [
@@ -21,24 +22,7 @@ TEST_CONTAINERS = [
 ]
 
 
-@pytest.fixture()
-def patch_common(mocker):
-    init = mocker.patch(PATCH_ROUTE.format("initialize_state_task"), return_value=None)
-    reset = mocker.patch(PATCH_ROUTE.format("reset_state_task"), return_value=None)
-    notifs = mocker.patch(PATCH_ROUTE.format("add_notification"), return_value=None)
-
-    return {
-        "init_spy": init,
-        "reset_spy": reset,
-        "notifs_spy": notifs,
-    }
-
-
-def fake_event_generator(*args, **kwargs):
-    yield ""
-
-
-def fake_get_container_type(container: TestCube):
+def fake_container_type(container: TestCube):
     if container.name == "data-prep":
         return "data-prep-container"
     elif container.name == "ref-model":
@@ -46,44 +30,49 @@ def fake_get_container_type(container: TestCube):
     return "metrics-container"
 
 
-def test_benchmark_registration_page_content(driver, mocker):
-    mocker.patch(PATCH_CONTAINERS, return_value=[])
+def stub_event_generator(*args, **kwargs):
+    yield ""
 
-    page = RegBenchmarkPage(driver)
+
+@pytest.fixture()
+def patch_common(mocker):
+    init = mocker.patch(PATCH_ROUTE.format("initialize_state_task"))
+    reset = mocker.patch(PATCH_ROUTE.format("reset_state_task"))
+    notifs = mocker.patch(PATCH_ROUTE.format("add_notification"))
+
+    return (init, reset, notifs)
+
+
+@pytest.fixture(scope="module")
+def page(driver):
+    return RegBenchmarkPage(driver)
+
+
+def test_benchmark_registration_page_content(page, mocker):
+    mocker.patch(PATCH_GET_CONTAINERS, return_value=[])
+
     page.open(BASE_URL.format("/benchmarks/register/ui"))
-
-    page.wait_for_presence_selector(page.HEADER)
 
     page.wait_for_presence_selector(page.FORM)
 
-    page.wait_for_presence_selector(page.NAME_LABEL)
     page.wait_for_presence_selector(page.NAME)
     page.wait_for_presence_selector(page.NAME_TOOLTIP)
 
-    page.wait_for_presence_selector(page.DESCRIPTION_LABEL)
     page.wait_for_presence_selector(page.DESCRIPTION)
     page.wait_for_presence_selector(page.DESCRIPTION_TOOLTIP)
 
-    page.wait_for_presence_selector(page.REF_DATASET_LABEL)
     page.wait_for_presence_selector(page.REF_DATASET)
     page.wait_for_presence_selector(page.REF_DATASET_TOOLTIP)
 
-    page.wait_for_presence_selector(page.ALREADY_PREPARED_LABEL)
     page.wait_for_presence_selector(page.ALREADY_PREPARED)
 
-    page.wait_for_presence_selector(page.NOT_PREPARED_LABEL)
     page.wait_for_presence_selector(page.NOT_PREPARED)
 
-    page.wait_for_presence_selector(page.DATA_PREP_LABEL)
     page.wait_for_presence_selector(page.DATA_PREP)
 
-    page.wait_for_presence_selector(page.REF_MODEL_LABEL)
     page.wait_for_presence_selector(page.REF_MODEL)
 
-    page.wait_for_presence_selector(page.METRICS_LABEL)
     page.wait_for_presence_selector(page.METRICS)
-
-    page.wait_for_presence_selector(page.REGISTER)
 
     page.wait_for_presence_selector(page.CONFIRM_MODAL)
     page.wait_for_presence_selector(page.ERROR_MODAL)
@@ -100,10 +89,13 @@ def test_benchmark_registration_page_content(driver, mocker):
     assert page.get_text(page.DATA_PREP_LABEL) == "Data Preparation Container"
     assert page.get_text(page.REF_MODEL_LABEL) == "Reference Model Container"
     assert page.get_text(page.METRICS_LABEL) == "Metrics Container"
+    assert page.get_text(page.REGISTER) == "Register"
 
 
-def test_benchmark_registration_page_tooltips(driver):
-    page = RegBenchmarkPage(driver)
+def test_benchmark_registration_page_tooltips(page, mocker):
+    mocker.patch(PATCH_GET_CONTAINERS, return_value=TEST_CONTAINERS)
+    mocker.patch(PATCH_GET_CONTAINERS_TYPE, side_effect=fake_container_type)
+
     page.open(BASE_URL.format("/benchmarks/register/ui"))
 
     name_tooltip = page.find(page.NAME_TOOLTIP)
@@ -126,25 +118,21 @@ def test_benchmark_registration_page_tooltips(driver):
     assert tooltip_text == "Full URL of the reference dataset tarball"
 
 
-def test_benchmark_registration_fails(driver, mocker, ui, patch_common):
-    error_message = "Error registering benchmark."
+def test_benchmark_registration_fails(page, mocker, ui, patch_common):
+    error_message = "Benchmark registration test failed"
 
-    patch_conts = mocker.patch(PATCH_CONTAINERS, return_value=TEST_CONTAINERS)
-    patch_register = mocker.patch(
-        PATCH_REGISTRATION, side_effect=Exception(error_message)
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_containers = mocker.patch(PATCH_GET_CONTAINERS, return_value=TEST_CONTAINERS)
+    spy_type = mocker.patch(PATCH_GET_CONTAINERS_TYPE, side_effect=fake_container_type)
+    spy_register = mocker.patch(PATCH_REGISTER, side_effect=Exception(error_message))
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
-    )
-    patch_type = mocker.patch(
-        PATCH_CONTAINERS_TYPE, side_effect=fake_get_container_type
-    )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
 
-    page = RegBenchmarkPage(driver)
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
     page.open(BASE_URL.format("/benchmarks/register/ui"))
 
     confirm_modal = page.find(page.CONFIRM_MODAL)
@@ -164,24 +152,17 @@ def test_benchmark_registration_fails(driver, mocker, ui, patch_common):
     page.confirm_run_task()
 
     page.wait_for_visibility_element(error_modal)
-    page.wait_for_presence_selector(page.ERROR_TITLE)
-    page.wait_for_presence_selector(page.ERROR_TEXT)
     page.wait_for_presence_selector(page.ERROR_RELOAD)
-    page.wait_for_presence_selector(page.ERROR_HIDE)
 
     assert page.get_text(page.ERROR_TITLE) == "Benchmark Registration Failed"
     assert error_message in page.get_text(page.ERROR_TEXT)
 
-    error_modal.find_element(*page.ERROR_HIDE).click()
+    hide_btn = error_modal.find_element(*page.ERROR_HIDE)
+    page.ensure_element_ready(hide_btn)
+    hide_btn.click()
+
     page.wait_for_invisibility_element(error_modal)
 
-    patch_common["init_spy"].assert_called_with(ANY, task_name="benchmark_registration")
-    spy_task_id.assert_called_once()
-    event_gen.assert_called_with(request=ANY, stream_old=False)
-    ui.end_task.assert_called_once()
-    patch_common["reset_spy"].assert_called_once()
-    patch_common["notifs_spy"].assert_called_once()
-    patch_conts.assert_called_once()
     bmk_info = {
         "name": "test_benchmark",
         "description": "test description",
@@ -193,28 +174,34 @@ def test_benchmark_registration_fails(driver, mocker, ui, patch_common):
         "demo_dataset_tarball_hash": "",
         "state": "OPERATION",
     }
-    patch_register.assert_called_with(
-        bmk_info,
-        skip_data_preparation_step=False,
-    )
-    assert patch_type.call_count == 3
+
+    spy_init.assert_called_with(ANY, task_name="benchmark_registration")
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=False)
+    spy_register.assert_called_with(bmk_info, skip_data_preparation_step=False)
+
+    spy_containers.assert_called_once()
+    spy_task_id.assert_called_once()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
+
+    assert spy_type.call_count == len(TEST_CONTAINERS)
 
 
-def test_benchmark_registration_succeed(driver, mocker, ui, patch_common):
-    patch_conts = mocker.patch(PATCH_CONTAINERS, return_value=TEST_CONTAINERS)
-    patch_register = mocker.patch(PATCH_REGISTRATION, return_value=1)
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
+def test_benchmark_registration_succeed(page, mocker, ui, patch_common):
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_containers = mocker.patch(PATCH_GET_CONTAINERS, return_value=TEST_CONTAINERS)
+    spy_type = mocker.patch(PATCH_GET_CONTAINERS_TYPE, side_effect=fake_container_type)
+    spy_register = mocker.patch(PATCH_REGISTER, return_value=1)
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    patch_type = mocker.patch(
-        PATCH_CONTAINERS_TYPE, side_effect=fake_get_container_type
-    )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
 
-    page = RegBenchmarkPage(driver)
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
     page.open(BASE_URL.format("/benchmarks/register/ui"))
 
     confirm_modal = page.find(page.CONFIRM_MODAL)
@@ -240,13 +227,6 @@ def test_benchmark_registration_succeed(driver, mocker, ui, patch_common):
     page.wait_for_url_change(old_url)
     assert "/benchmarks/ui/display/1" in page.current_url
 
-    patch_common["init_spy"].assert_called_with(ANY, task_name="benchmark_registration")
-    spy_task_id.assert_called_once()
-    event_gen.assert_called_with(request=ANY, stream_old=False)
-    ui.end_task.assert_called_once()
-    patch_common["reset_spy"].assert_called_once()
-    patch_common["notifs_spy"].assert_called_once()
-    patch_conts.assert_called_once()
     bmk_info = {
         "name": "test_benchmark",
         "description": "test description",
@@ -258,25 +238,36 @@ def test_benchmark_registration_succeed(driver, mocker, ui, patch_common):
         "demo_dataset_tarball_hash": "",
         "state": "OPERATION",
     }
-    patch_register.assert_called_with(
-        bmk_info,
-        skip_data_preparation_step=True,
-    )
-    assert patch_type.call_count == 3
+
+    spy_init.assert_called_with(ANY, task_name="benchmark_registration")
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=False)
+    spy_register.assert_called_with(bmk_info, skip_data_preparation_step=True)
+
+    spy_containers.assert_called_once()
+    spy_task_id.assert_called_once()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
+
+    assert spy_type.call_count == len(TEST_CONTAINERS)
 
 
-def test_benchmark_registration_page_task_running(driver, mocker, ui, patch_common):
-    mocker.patch(PATCH_CONTAINERS, return_value=[])
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
+def test_benchmark_registration_page_task_running(page, mocker, ui, patch_common):
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
+    mocker.patch(PATCH_GET_CONTAINERS, return_value=[])
+
+    web_app.state.task_running = True
     web_app.state.task.running = True
 
-    page = RegBenchmarkPage(driver)
     page.open(BASE_URL.format("/benchmarks/register/ui"))
 
     name = page.find(page.NAME)
@@ -310,27 +301,29 @@ def test_benchmark_registration_page_task_running(driver, mocker, ui, patch_comm
     with pytest.raises(NoSuchElementException):
         page.driver.find_element(*page.RESUME_SCRIPT)
 
-    patch_common["init_spy"].assert_not_called()
+    spy_init.assert_not_called()
+    spy_event_gen.assert_not_called()
     spy_task_id.assert_not_called()
-    event_gen.assert_not_called()
+    spy_reset.assert_not_called()
+    spy_notifs.assert_not_called()
     ui.end_task.assert_not_called()
-    patch_common["reset_spy"].assert_not_called()
-    patch_common["notifs_spy"].assert_not_called()
 
 
 def test_benchmark_registration_page_task_running_form_data(
-    driver, mocker, ui, patch_common
+    page, mocker, ui, patch_common
 ):
-    event_gen = mocker.patch.object(
-        events_module, "event_generator", side_effect=fake_event_generator
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
     )
-    ui.task_id = "test-id"
-    ui.end_task = mocker.Mock(return_value=None)
-    ui.get_event = mocker.Mock(return_value=None)
     spy_task_id = mocker.spy(events_module, "_get_task_id")
 
-    mocker.patch(PATCH_CONTAINERS, return_value=TEST_CONTAINERS)
-    mocker.patch(PATCH_CONTAINERS_TYPE, side_effect=fake_get_container_type)
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
+    mocker.patch(PATCH_GET_CONTAINERS, return_value=TEST_CONTAINERS)
+    mocker.patch(PATCH_GET_CONTAINERS_TYPE, side_effect=fake_container_type)
+
     web_app.state.task_running = True
     web_app.state.task.running = True
     web_app.state.task.name = "benchmark_registration"
@@ -344,7 +337,6 @@ def test_benchmark_registration_page_task_running_form_data(
         "evaluator_container": "3",
     }
 
-    page = RegBenchmarkPage(driver)
     page.open(BASE_URL.format("/benchmarks/register/ui"))
 
     name = page.find(page.NAME)
@@ -364,7 +356,6 @@ def test_benchmark_registration_page_task_running_form_data(
     assert not data_prep.is_enabled()
     assert not ref_model.is_enabled()
     assert not metrics.is_enabled()
-    assert not page.find(page.REGISTER).is_enabled()
 
     assert name.get_attribute("value") == "test_benchmark"
     assert description.get_attribute("value") == "test description"
@@ -375,11 +366,17 @@ def test_benchmark_registration_page_task_running_form_data(
     assert ref_model.get_attribute("value") == "2"
     assert metrics.get_attribute("value") == "3"
 
+    register_btn = page.find(page.REGISTER)
+
+    assert not register_btn.is_enabled()
+    assert page.element_contains_spinner(register_btn)
+
     page.driver.find_element(*page.RESUME_SCRIPT)
 
-    patch_common["init_spy"].assert_not_called()
+    spy_event_gen.assert_called_once_with(request=ANY, stream_old=True)
+
+    spy_init.assert_not_called()
     spy_task_id.assert_not_called()
-    event_gen.assert_called_with(request=ANY, stream_old=True)
+    spy_reset.assert_not_called()
+    spy_notifs.assert_not_called()
     ui.end_task.assert_not_called()
-    patch_common["reset_spy"].assert_not_called()
-    patch_common["notifs_spy"].assert_not_called()

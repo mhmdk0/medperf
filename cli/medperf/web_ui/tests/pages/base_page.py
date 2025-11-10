@@ -2,6 +2,7 @@ from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 
 
 class BasePage:
@@ -21,6 +22,8 @@ class BasePage:
     TEXT_CONTAINER = (By.ID, "text-content")
     RESPOND_YES = (By.ID, "respond-yes-btn")
     RESPOND_NO = (By.ID, "respond-no-btn")
+
+    SPINNER = (By.CSS_SELECTOR, "span.spinner-border[role='status']")
 
     def __init__(self, driver):
         self.driver = driver
@@ -73,6 +76,9 @@ class BasePage:
 
     def get_text(self, locator):
         return self.find(locator).text
+
+    def get_attribute(self, locator, attribute):
+        return self.find(locator).get_attribute(attribute)
 
     def confirm_run_task(self):
         self.click(self.CONFIRM_BTN)
@@ -138,3 +144,10 @@ class BasePage:
             })();
             """
         )
+
+    def element_contains_spinner(self, element):
+        try:
+            element.find_element(*self.SPINNER)
+            return True
+        except NoSuchElementException:
+            return False

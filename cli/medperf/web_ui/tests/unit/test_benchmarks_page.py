@@ -1,56 +1,77 @@
-import pytest
 from medperf.web_ui.tests import config as tests_config
 from medperf.web_ui.tests.pages.benchmark.ui_page import BenchmarksPage
-from medperf.tests.mocks.benchmark import TestBenchmark
+
 import datetime
+import pytest
+from medperf.tests.mocks.benchmark import TestBenchmark
 import selenium.common.exceptions as selenium_exceptions
 
 BASE_URL = tests_config.BASE_URL
-PATCH_GET_ALL_BMKS = "medperf.entities.benchmark.Benchmark.all"
+PATCH_GET_BENCHMARKS = "medperf.entities.benchmark.Benchmark.all"
 PATCH_GET_USER_ID = "medperf.web_ui.benchmarks.routes.get_medperf_user_data"
+USER_ID = 1
+
+TEST_BENCHMARKS = {
+    "1": TestBenchmark(
+        id=1,
+        owner=1,
+        created_at=datetime.datetime(2025, 1, 1),
+        name="test_benchmark1",
+        description="test description 1",
+        docs_url="https://test.test/bmk_doc",
+    ),
+    "2": TestBenchmark(
+        id=2,
+        owner=2,
+        created_at=datetime.datetime(2025, 2, 2),
+        name="test_benchmark2",
+        description="test description 2",
+    ),
+    "3": TestBenchmark(
+        id=3, owner=3, created_at=datetime.datetime(2025, 3, 3), is_valid=False
+    ),
+}
 
 
-def test_empty_benchmarks_ui_page_content(mocker, driver):
-    mocker.patch(PATCH_GET_USER_ID, return_value={"id": 1})
-    bmks_patch = mocker.patch(PATCH_GET_ALL_BMKS, return_value=[])
-    filters = {"owner": 1}
+@pytest.fixture(scope="module")
+def page(driver):
+    return BenchmarksPage(driver)
 
-    page = BenchmarksPage(driver)
+
+def test_empty_benchmarks_ui_page_content(page, mocker):
+    filters = {"owner": USER_ID}
+
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    spy_benchmarks = mocker.patch(PATCH_GET_BENCHMARKS, return_value=[])
+
     page.open(BASE_URL.format("/benchmarks/ui"))
 
-    bmks_patch.assert_called_with(filters={})
+    spy_benchmarks.assert_called_with(filters={})
     assert page.get_text(page.REG_BMK_BTN) == "Register a New Benchmark"
     assert page.get_text(page.HEADER) == "Benchmarks"
     assert page.get_text(page.MINE_LABEL) == "Show only my benchmarks"
     assert page.get_text(page.NO_BENCHMARKS) == "No benchmarks yet"
-    assert page.find(page.MINE_SWITCH).get_attribute("data-entity-name") == "benchmarks"
+    assert page.get_attribute(page.MINE_SWITCH, "data-entity-name") == "benchmarks"
 
     old_url = page.current_url
     page.toggle_mine()
     page.wait_for_url_change(old_url)
 
     assert page.is_mine()
-    bmks_patch.assert_called_with(filters=filters)
+    spy_benchmarks.assert_called_with(filters=filters)
 
     old_url = page.current_url
     page.toggle_mine()
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
-    bmks_patch.assert_called_with(filters={})
+    spy_benchmarks.assert_called_with(filters={})
 
 
-def test_benchmarks_ui_page_content(mocker, driver):
-    bmk1 = TestBenchmark(id=1, owner=1, created_at=datetime.datetime(2025, 1, 1))
-    bmk2 = TestBenchmark(id=2, owner=2, created_at=datetime.datetime(2025, 5, 20))
-    bmk1.docs_url = "https://test.test/bmk_doc"
-    bmk1.description = "benchmark sample"
-    bmks = [bmk1, bmk2]
+def test_benchmarks_ui_page_content(page, mocker):
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_BENCHMARKS, return_value=list(TEST_BENCHMARKS.values()))
 
-    mocker.patch(PATCH_GET_USER_ID, return_value={"id": 1})
-    mocker.patch(PATCH_GET_ALL_BMKS, return_value=bmks)
-
-    page = BenchmarksPage(driver)
     page.open(BASE_URL.format("/benchmarks/ui"))
 
     with pytest.raises(selenium_exceptions.NoSuchElementException):
@@ -58,27 +79,21 @@ def test_benchmarks_ui_page_content(mocker, driver):
 
     benchmarks_cards = page.find_elements(page.CARDS_CONTAINER)
 
-    assert len(benchmarks_cards) == len(bmks)
+    assert len(benchmarks_cards) == len(TEST_BENCHMARKS)
 
-    for i in range(len(bmks)):
-        bmk_name = benchmarks_cards[i].find_element(*page.CARD_TITLE).text
-        bmk_url = (
-            benchmarks_cards[i].find_element(*page.CARD_TITLE).get_attribute("href")
+    for benchmark in benchmarks_cards:
+        bmk_name = benchmark.find_element(*page.CARD_TITLE).text
+        bmk_url = benchmark.find_element(*page.CARD_TITLE).get_attribute("href")
+        bmk_id_txt = benchmark.find_element(*page.CARD_ID).text
+        bmk_state = benchmark.find_element(*page.CARD_STATE).text
+        bmk_valid_txt = benchmark.find_element(*page.CARD_VALID).text
+        bmk_desc_txt = benchmark.find_element(*page.CARD_DESC).text
+        bmk_docs_txt = benchmark.find_element(*page.CARD_DOCS).text
+        bmk_docs_url = benchmark.find_element(*page.CARD_DOCS).get_attribute("href")
+        bmk_created = benchmark.find_element(*page.CARD_CREATED).get_attribute(
+            "data-date"
         )
-        bmk_id_txt = benchmarks_cards[i].find_element(*page.CARD_ID).text
-        bmk_state = benchmarks_cards[i].find_element(*page.CARD_STATE).text
-        bmk_valid_txt = benchmarks_cards[i].find_element(*page.CARD_VALID).text
-        bmk_desc_txt = benchmarks_cards[i].find_element(*page.CARD_DESC).text
-        bmk_docs_txt = benchmarks_cards[i].find_element(*page.CARD_DOCS).text
-        bmk_docs_url = (
-            benchmarks_cards[i].find_element(*page.CARD_DOCS).get_attribute("href")
-        )
-        bmk_created = (
-            benchmarks_cards[i]
-            .find_element(*page.CARD_CREATED)
-            .get_attribute("data-date")
-        )
-        bmk_approval_st_txt = benchmarks_cards[i].find_element(*page.APPROVAL).text
+        bmk_approval_st_txt = benchmark.find_element(*page.APPROVAL).text
 
         bmk_id = bmk_id_txt.split(":")[-1].strip()
         bmk_id_url = bmk_url.split("/")[-1].strip()
@@ -95,34 +110,34 @@ def test_benchmarks_ui_page_content(mocker, driver):
         assert bmk_id == bmk_id_url
         assert bmk_id.isdigit()
 
-        assert bmk_name == bmks[i].name
-        assert bmk_id == str(bmks[i].id)
+        assert bmk_name == TEST_BENCHMARKS[bmk_id].name
+        assert bmk_id == str(TEST_BENCHMARKS[bmk_id].id)
         assert bmk_url.endswith(f"/benchmarks/ui/display/{bmk_id}")
-        assert bmk_valid == str(bmks[i].is_valid)
-        assert bmk_desc == str(bmks[i].description)
-        assert bmk_created_dt == bmks[i].created_at
-        assert bmk_approval_st == str(bmks[i].approval_status)
+        assert bmk_valid == str(TEST_BENCHMARKS[bmk_id].is_valid)
+        assert bmk_desc == str(TEST_BENCHMARKS[bmk_id].description)
+        assert bmk_created_dt == TEST_BENCHMARKS[bmk_id].created_at
+        assert bmk_approval_st == str(TEST_BENCHMARKS[bmk_id].approval_status)
 
-        if bmks[i].is_valid:
-            assert "invalid-card" not in benchmarks_cards[i].get_attribute("class")
+        if TEST_BENCHMARKS[bmk_id].is_valid:
+            assert "invalid-card" not in benchmark.get_attribute("class")
         else:
-            assert "invalid-card" in benchmarks_cards[i].get_attribute("class")
+            assert "invalid-card" in benchmark.get_attribute("class")
 
-        if bmks[i].state == "OPERATION":
+        if TEST_BENCHMARKS[bmk_id].state == "OPERATION":
             assert bmk_state == "OPERATIONAL"
         else:
-            assert bmk_state == bmks[i].state
+            assert bmk_state == TEST_BENCHMARKS[bmk_id].state
 
         if bmk_docs_txt == "Not Available":
-            assert bmks[i].docs_url is None
+            assert TEST_BENCHMARKS[bmk_id].docs_url is None
         else:
             assert bmk_docs_txt == "Documentation"
-            assert bmk_docs_url == bmks[i].docs_url
+            assert bmk_docs_url == TEST_BENCHMARKS[bmk_id].docs_url
 
     assert page.get_text(page.REG_BMK_BTN) == "Register a New Benchmark"
     assert page.get_text(page.HEADER) == "Benchmarks"
     assert page.get_text(page.MINE_LABEL) == "Show only my benchmarks"
-    assert page.find(page.MINE_SWITCH).get_attribute("data-entity-name") == "benchmarks"
+    assert page.get_attribute(page.MINE_SWITCH, "data-entity-name") == "benchmarks"
 
     old_url = page.current_url
     page.toggle_mine()
