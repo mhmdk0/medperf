@@ -1,15 +1,15 @@
 {# ./cli/medperf/web_ui/templates/macros/association_card_macros.html #}
 
-{% macro association_card(assoc, entity, entity_type) %}
-<div class="card association-card {% if assoc.approval_status == 'REJECTED' %}invalid-card{% endif %}">
+{% macro association_card(assoc, entity, entity_type, task_running) %}
+<div class="card association-card {% if assoc.approval_status == 'REJECTED' %}invalid-card{% endif %}" data-testid="{{assoc.id}}">
     <div class="card-body">
-        <h5 class="card-title">{{ entity.name }}</h5>
+        <h5 class="card-title" data-testid="assoc-entity-name">{{ entity.name }}</h5>
         <h5 class="card-title">
-            <a href="/{{ entity_type }}s/ui/display/{{ entity.id }}" class="text-primary">{{ entity.name }}</a>
+            <a data-testid="assoc-entity-anchor" href="/{{ entity_type }}s/ui/display/{{ entity.id }}" class="text-primary">{{ entity.name }}</a>
         </h5>
         <p class="card-text">
-            <strong>Approval Status:</strong> 
-            {{ assoc.approval_status }}
+            <strong data-testid="assoc-approval-status-label">Approval Status:</strong> 
+            <span data-testid="assoc-approval-status">{{ assoc.approval_status }}</span>
             {% if assoc.approval_status == "PENDING" and entity_type!="benchmark"%}
             <br>
             <button
@@ -19,7 +19,9 @@
                 data-benchmark-id="{{ assoc.benchmark }}"
                 data-entity-type="{{ entity_type }}"
                 data-action-name="reject"
-                onclick="showConfirmationPrompt(this, '{{ entity_type }}', 'reject')"
+                data-testid="assoc-reject-btn"
+                onclick="showConfirmationPrompt(this)"
+                {% if task_running %} disabled {% endif %}
             >Reject</button>
             <button
                 type="button"
@@ -28,26 +30,28 @@
                 data-benchmark-id="{{ assoc.benchmark }}"
                 data-entity-type="{{ entity_type }}"
                 data-action-name="approve"
+                data-testid="assoc-approve-btn"
                 onclick="showConfirmationPrompt(this)"
+                {% if task_running %} disabled {% endif %}
             >Approve</button>
             {% endif %}
         </p>
         <p class="card-text">
-            <strong>Approved:</strong>
+            <strong data-testid="assoc-approved-at-label">Approved:</strong>
             {% if assoc.approval_status == "PENDING" %}
-            <span class="text-muted small">N/A</span>
+            <span class="text-muted small" data-testid="assoc-approved-at">N/A</span>
             {% else %}
-            <span class="text-muted small" data-date="{{ assoc.approved_at }}"></span>
+            <span class="text-muted small" data-date="{{ assoc.approved_at }}" data-testid="assoc-approved-at"></span>
             {% endif %}
         </p>
         <p class="card-text">
-            <strong>Modified:</strong> 
-            <span class="text-muted small" data-date="{{ assoc.modified_at }}"></span>
+            <strong data-testid="assoc-modified-label">Modified:</strong> 
+            <span data-testid="assoc-modified" class="text-muted small" data-date="{{ assoc.modified_at }}"></span>
         </p>
         <p class="card-text">
-            <strong>Initiated By:</strong> 
+            <strong data-testid="assoc-initiated-by-label">Initiated By:</strong> 
             <i class="fas fa-user"></i> 
-            {{ assoc.initiated_by }}
+            <span data-testid="assoc-initiated-by">{{ assoc.initiated_by }}</span>
         </p>
     </div>
 </div>

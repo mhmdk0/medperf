@@ -8,100 +8,106 @@
 {% block title %}Container Details{% endblock %}
 
 {% block detail_panel %}
-<h1 class="my-4">{{ entity.name }}</h1>
+<h1 class="my-4" data-testid="page-header">{{ entity.name }}</h1>
 <div class="{% if entity.is_valid %}card{% else %}invalid-card{% endif %}">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">Details</h5>
-            <span class="badge {% if entity.state == 'OPERATION' %}badge-state-operational{% else %}badge-state-development{% endif %}">
+            <h5 class="card-title mb-0" data-testid="sub-header-1">Details</h5>
+            <span
+                class="badge {% if entity.state == 'OPERATION' %}badge-state-operational{% else %}badge-state-development{% endif %}"
+                data-testid="container-state"
+                >
                 {% if entity.state == 'OPERATION' %} OPERATIONAL {% else %} {{ entity.state }} {% endif %}
             </span>
-            <span class="badge {% if entity.is_valid %}badge-valid{% else %}badge-invalid{% endif %}">
+            <span class="badge {% if entity.is_valid %}badge-valid{% else %}badge-invalid{% endif %}" data-testid="container-is-valid">
                 {% if entity.is_valid %}VALID{% else %}INVALID{% endif %}
             </span>
         </div>
         <div class="card mb-3">
             <div class="card-body">
                 <p class="card-text">
-                    <strong>Container ID:</strong> 
-                    {{ entity.id }}
+                    <strong data-testid="id-label">Container ID:</strong> 
+                    <span data-testid="id">{{ entity.id }}</span>
                 </p>
                 <p class="card-text">
-                    <strong>Container Manifest:</strong> 
+                    <strong data-testid="manifest-label">Container Manifest:</strong> 
                     <a
                         href="{{ entity.git_mlcube_url }}"
                         data-id="{{ entity.id }}"
                         data-field="git_mlcube_url"
                         data-entity="container"
-                        class="text-primary yaml-link">{{ entity.git_mlcube_url }}
+                        class="text-primary yaml-link"
+                        data-testid="manifest">{{ entity.git_mlcube_url }}
                     </a>
                 </p>
                 <p class="card-text">
-                    <strong>Parameters:</strong> 
+                    <strong data-testid="parameters-label">Parameters:</strong> 
                     <a
                         href="{{ entity.git_parameters_url }}"
                         data-id="{{ entity.id }}"
                         data-field="git_parameters_url"
                         data-entity="container"
-                        class="text-primary yaml-link">
+                        class="text-primary yaml-link"
+                        data-testid="parameters">
                         {{ entity.git_parameters_url }}
                     </a>
                 </p>
-                {% if entity.image_tarball_url %}
                 <p class="card-text">
-                    <strong>Image Tarball:</strong> 
+                    <strong data-testid="tarball-label">Image Tarball:</strong> 
+                {% if entity.image_tarball_url %}
                     <a
                         href="{{ entity.image_tarball_url }}"
                         class="text-primary"
-                        target="_blank">Click to Download the File
+                        target="_blank"
+                        data-testid="tarball"
+                        >Click to Download the File
                     </a>
-                </p>
                 {% else %}
-                <p class="card-text">
-                    <strong>Image Tarball:</strong> 
-                    Not Available
-                </p>
+                    <span data-testid="no-tarball">Not Available</span>
                 {% endif %}
-                {% if entity.additional_files_tarball_url %}
+                </p>
                 <p class="card-text">
-                    <strong>Additional Files:</strong> 
+                    <strong data-testid="additional-label">Additional Files:</strong> 
+                {% if entity.additional_files_tarball_url %}
                     <a
                         href="{{ entity.additional_files_tarball_url }}"
                         class="text-primary"
-                        target="_blank">Click to Download the File
+                        target="_blank"
+                        data-testid="additional"
+                        >Click to Download the File
                     </a>
-                </p>
                 {% else %}
-                <p class="card-text">
-                    <strong>Additional Files:</strong> 
-                    Not Available
-                </p>
+                    <span data-testid="no-additional">Not Available</span>
                 {% endif %}
+                </p>
             </div>
         </div>
         <div class="card mb-3">
             <div class="card-body d-flex justify-content-between flex-wrap">
                 <div class="w-50">
                     <p class="card-text">
-                        <strong>Owner:</strong> 
+                        <strong data-testid="owner-label">Owner:</strong> 
                         <i class="fas fa-user"></i> 
-                        <span class="text-muted small">{{ entity.owner }}</span>
+                        <span class="text-muted small" data-testid="owner">{{ entity.owner }}</span>
                     </p>
                 </div>
                 <div class="text-right w-50">
                     <p class="card-text">
-                        <strong>Created:</strong> 
-                        <span class="text-muted small" data-date="{{ entity.created_at }}"></span>
+                        <strong data-testid="created-label">Created:</strong> 
+                        <span class="text-muted small" data-date="{{ entity.created_at }}" data-testid="created"></span>
                     </p>
                     <p class="card-text">
-                        <strong>Modified:</strong> 
-                        <span class="text-muted small" data-date="{{ entity.modified_at }}"></span>
+                        <strong data-testid="modified-label">Modified:</strong> 
+                        <span class="text-muted small" data-date="{{ entity.modified_at }}" data-testid="modified"></span>
                     </p>
                 </div>
             </div>
         </div>
         {% if is_owner %}
-        <div class="p-2 card flex-row mt-5 shadow-sm rounded bg-white py-4 bottom-buttons-panel">
+        <div
+            class="p-2 card flex-row mt-5 shadow-sm rounded bg-white py-4 bottom-buttons-panel"
+            data-testid="botton-buttons-panel"
+            >
             <div class="col-12 text-center">
                 {% if entity.state=="OPERATION" %}
                 <div class="dropdown">
@@ -117,7 +123,7 @@
                     </button>
                     {% set available_benchmarks = [] %}
                     {% for benchmark in benchmarks.values() %}
-                    {% if benchmark.id not in benchmark_associations or (benchmark.id in benchmark_associations and benchmark_associations[benchmark.id].approval_status == "REJECTED" ) %}
+                    {% if benchmark.id not in benchmarks_associations or (benchmark.id in benchmarks_associations and benchmarks_associations[benchmark.id].approval_status == "REJECTED" ) %}
                     {% set _ = available_benchmarks.append(benchmark) %}
                     {% endif %}
                     {% endfor %}
@@ -125,30 +131,33 @@
                     {% for benchmark in available_benchmarks %}
                     <li class="dropdown-item d-flex justify-content-between align-items-center">
                         <div>
-                            <strong>{{ benchmark.id }} - {{ benchmark.name }}</strong>
+                            <strong data-testid="bmk-data">{{ benchmark.id }} - {{ benchmark.name }}</strong>
                         </div>
                         <div>
-                            <a href="/benchmarks/ui/display/{{ benchmark.id }}" class="btn btn-secondary ms-3">View Benchmark</a>
+                            <a href="/benchmarks/ui/display/{{ benchmark.id }}" class="btn btn-secondary ms-3" data-testid="bmk-view">View Benchmark</a>
                             <button
                                 type="button"
                                 class="btn btn-primary request-association-btn"
                                 data-benchmark-id="{{ benchmark.id }}"
                                 data-container-id="{{ entity.id }}"
+                                data-testid="bmk-associate"
                                 {% if task_running %} disabled {% endif %}
                             >Request Association</button>
                         </div>
                     </li>
                     {% endfor %}
                     {% if not available_benchmarks %}
-                    <li class="dropdown-item text-muted">No benchmarks available for association</li>
+                    <li class="dropdown-item text-muted" data-testid="no-bmks">No benchmarks available for association</li>
                     {% endif %}
                 </ul>
                 </div>
                 {% else %}
-                <button class="step-btn btn btn-info" disabled>Associate with Benchmark</button>
+                <button class="step-btn btn btn-info" disabled data-testid="disabled-associate">Associate with Benchmark</button>
                 <br>
                 {% endif %}
-                <small class="step-label ms-2">If this is a model container, make a request to the benchmark owner to associate your model with the benchmark</small>
+                <small class="step-label ms-2" data-testid="associate-note">
+                    If this is a model container, make a request to the benchmark owner to associate your model with the benchmark
+                </small>
             </div>
         </div>
         {% endif %}
@@ -156,10 +165,10 @@
 </div>
 {% if is_owner %}
 <div class="associations-panel my-5">
-    <div class="associations-column">
-        <h2 class="my-4">Associated Benchmarks</h2>
+    <div class="associations-column" data-testid="associations-container">
+        <h2 class="my-4" data-testid="sub-header-2">Associated Benchmarks</h2>
         {% for assoc in benchmarks_associations.values() %}
-            {{ association_card_macros.association_card(assoc, benchmarks[assoc.benchmark], "benchmark") }}
+            {{ association_card_macros.association_card(assoc, benchmarks[assoc.benchmark], "benchmark", task_running) }}
         {% endfor %}
     </div>
 </div>
@@ -175,7 +184,7 @@
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/containers/container_detail.js') }}"></script>
 {% if task_running and request.app.state.task.name == "container_association" and task_formData.get("container_id", "") == entity.id|string %}
-<script>
+<script data-testid="resume-container-association">
     $(document).ready(() => {
         resumeRunningTask(
             "#associate-dropdown-btn",

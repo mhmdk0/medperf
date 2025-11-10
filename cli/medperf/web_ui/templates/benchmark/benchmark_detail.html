@@ -189,7 +189,7 @@
 {% set dataset_assoc_len = datasets_associations|length %}
 {% set models_assoc_len = models_associations|length %}
 {% set results_len = results|length %}
-
+<div data-testid="associations-results">
 <div id="datasets-associations-title" class="d-flex flex-row my-5 border border-secondary rounded p-3 justify-content-between">
     <h4>
         Datasets Associations
@@ -204,7 +204,7 @@
 </div>
 <div id="datasets-associations" style="display: none;">
     {% for assoc in datasets_associations %}
-    {{ association_card_macros.association_card(assoc, datasets[assoc.dataset], "dataset") }}
+    {{ association_card_macros.association_card(assoc, datasets[assoc.dataset], "dataset", task_running) }}
     {% endfor %}
 </div>
 <div id="models-associations-title" class="d-flex flex-row my-5 border border-secondary rounded p-3 justify-content-between">
@@ -221,7 +221,7 @@
 </div>
 <div id="models-associations" style="display: none;">
     {% for assoc in models_associations %}
-    {{ association_card_macros.association_card(assoc, models[assoc.model_mlcube], "container") }}
+    {{ association_card_macros.association_card(assoc, models[assoc.model_mlcube], "container", task_running) }}
     {% endfor %}
 </div>
 <div id="benchmark-results-title" class="d-flex flex-row my-5 border border-secondary rounded p-3 justify-content-between">
@@ -237,6 +237,7 @@
     {% for result in results %}
     {{ result_card_macros.result_card(result) }}
     {% endfor %}
+</div>
 </div>
 {% endif %}
 
