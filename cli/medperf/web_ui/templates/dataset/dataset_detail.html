@@ -163,13 +163,14 @@
                 {% set _ = available_benchmarks.append(benchmark) %}
                 {% endif %}
                 {% endfor %}
-                <div class="relative w-full mt-auto" x-data="{ associateOpen: false }" @click.outside="associateOpen = false">
+                <div class="relative w-full mt-auto" x-data="{ associateOpen: false, listFilter: '' }" @click.outside="associateOpen = false">
                     <button type="button" id="associate-dropdown-btn" class="w-full px-4 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-semibold hover:opacity-90 cursor-pointer disabled:cursor-not-allowed" @click="associateOpen = !associateOpen" {% if task_running %}disabled{% endif %}><i class="fas fa-link mr-2"></i>Associate with benchmark</button>
                     <div id="dropdown-div" class="absolute left-0 right-0 mt-2 rounded-xl bg-white dark:bg-gray-800 shadow-xl border-2 border-gray-200 dark:border-gray-600 py-2 z-[100] max-h-[400px] overflow-y-auto overflow-x-hidden min-w-[420px]" x-show="associateOpen" x-cloak x-transition style="display: none;">
                         {% if available_benchmarks %}
+                        {% include "partials/association_dropdown_search.html" %}
                         {% for benchmark in available_benchmarks %}
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                            <div class="font-semibold text-gray-900 dark:text-white min-w-0 break-words">{{ benchmark.id }} - {{ benchmark.name }}</div>
+                        <div class="association-dropdown-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-b-0" data-search-text="{{ benchmark.id }} — {{ benchmark.name }}" x-show="!listFilter || ($el.dataset.searchText || '').toLowerCase().includes(listFilter.trim().toLowerCase())">
+                            <div class="font-semibold text-gray-900 dark:text-white min-w-0 break-words">{{ benchmark.id }} — {{ benchmark.name }}</div>
                             <div class="flex gap-2 flex-shrink-0">
                                 <a href="/benchmarks/ui/display/{{ benchmark.id }}" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white text-sm font-semibold hover:opacity-90 whitespace-nowrap cursor-pointer">View</a>
                                 <form id="dataset-association-form-{{ benchmark.id }}" action="/datasets/associate" method="post" class="inline dataset-action-form" data-panel-title="Requesting association" data-confirm-message="request association with this benchmark?">
@@ -197,13 +198,15 @@
                 {% if not dataset_is_operational %}
                 <p class="text-sm text-gray-500 dark:text-gray-400">Set dataset to operational first.</p>
                 {% else %}
-                <div class="relative w-full mt-auto overflow-visible" x-data="{ trainingAssocOpen: false }" @click.outside="trainingAssocOpen = false">
+                <div class="relative w-full mt-auto overflow-visible" x-data="{ trainingAssocOpen: false, listFilter: '' }" @click.outside="trainingAssocOpen = false">
                     <button type="button" class="w-full px-4 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-semibold hover:opacity-90 cursor-pointer disabled:cursor-not-allowed" @click="trainingAssocOpen = !trainingAssocOpen" {% if task_running %}disabled{% endif %}><i class="fas fa-link mr-2"></i>Associate with training experiment</button>
                     <div id="dropdown-training-div" class="absolute left-0 right-0 mt-2 rounded-xl bg-white dark:bg-gray-800 shadow-xl border-2 border-gray-200 dark:border-gray-600 py-2 z-[100] max-h-[400px] overflow-y-auto overflow-x-hidden min-w-[420px]" x-show="trainingAssocOpen" x-cloak x-transition style="display: none;">
                         {% if available_training_experiments %}
+                        {% set filter_placeholder = "Filter training experiments by name or ID…" %}
+                        {% include "partials/association_dropdown_search.html" %}
                         {% for exp in available_training_experiments %}
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                            <div class="font-semibold text-gray-900 dark:text-white min-w-0 break-words">{{ exp.name }} <span class="text-gray-500 dark:text-gray-400 font-normal">(ID: {{ exp.id }})</span></div>
+                        <div class="association-dropdown-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-b-0" data-search-text="{{ exp.id }} — {{ exp.name }}" x-show="!listFilter || ($el.dataset.searchText || '').toLowerCase().includes(listFilter.trim().toLowerCase())">
+                            <div class="font-semibold text-gray-900 dark:text-white min-w-0 break-words">{{ exp.id }} — {{ exp.name }}</div>
                             <div class="flex gap-2 flex-shrink-0">
                                 <a href="/training/ui/display/{{ exp.id }}" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white text-sm font-semibold hover:opacity-90 whitespace-nowrap cursor-pointer">View</a>
                                 {% if exp.id in training_associations %}

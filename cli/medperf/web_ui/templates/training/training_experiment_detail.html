@@ -92,27 +92,25 @@
         </div>
         {% else %}
         <p class="text-gray-600 dark:text-gray-400 mb-4">No aggregator set yet.</p>
-        {% if available_aggregators %}
         <form id="set-aggregator-form" action="/training/add_aggregator" method="post" class="training-action-form" data-panel-title="Setting aggregator" data-confirm-message="set this aggregator for this training experiment?">
             <input type="hidden" name="training_exp_id" value="{{ entity.id }}">
             <div class="flex flex-wrap items-center gap-3">
-                <select name="aggregator_id" class="flex-1 min-w-[200px] px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-green-500 cursor-pointer" required>
-                    <option value="" disabled selected>Select an aggregator</option>
-                    {% for agg in available_aggregators %}
-                    <option value="{{ agg.id }}">{{ agg.name }} ({{ agg.address }}:{{ agg.port }})</option>
-                    {% endfor %}
-                </select>
+                {% set entity_type = "aggregator" %}
+                {% set input_name = "aggregator_id" %}
+                {% set input_id = "aggregator-id" %}
+                {% set placeholder = "Search aggregators…" %}
+                {% set mine_only = false %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-[200px]" %}
+                {% include "partials/searchable_select.html" %}
                 <button type="submit" class="px-5 py-2.5 rounded-xl medperf-bg dark:bg-green-600 text-white font-semibold hover:opacity-90 cursor-pointer inline-flex items-center gap-2">
                     <i class="fas fa-link"></i> Set aggregator
                 </button>
             </div>
         </form>
-        {% else %}
-        <a href="/aggregators/register/ui" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl medperf-bg dark:bg-green-600 text-white font-semibold hover:opacity-90 cursor-pointer">
-            <i class="fas fa-plus"></i> Register an aggregator
-        </a>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">No aggregators registered. Register an aggregator first, then set it for this experiment.</p>
-        {% endif %}
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            <a href="/aggregators/register/ui" class="medperf-accent dark:text-green-400 hover:underline">Register an aggregator</a> if none appear in search.
+        </p>
         {% endif %}
     </div>
 </div>
@@ -270,6 +268,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/folder_browsing.js') }}"></script>
 <script src="{{ url_for('static', path='js/training/training_detail.js') }}"></script>

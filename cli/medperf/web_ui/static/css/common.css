@@ -49,6 +49,15 @@ footer.site-footer {
     color: black;
 }
 
+.searchable-select-results .searchable-select-option[aria-selected="true"],
+.searchable-select-results .searchable-select-option.bg-green-50 {
+    background-color: #e8f5e9;
+}
+.dark .searchable-select-results .searchable-select-option.bg-green-50,
+.dark .searchable-select-results .searchable-select-option.dark\:bg-gray-700 {
+    background-color: rgba(55, 65, 81, 0.8);
+}
+
 .invalid-card {
     background-color: #fef2f2;
 }

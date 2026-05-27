@@ -125,12 +125,15 @@
                 {% endif %}
                 <form id="start-aggregator-form" action="/aggregators/run" method="post" class="space-y-3 mt-auto" data-panel-title="Running aggregator" data-confirm-message="run the aggregator for the selected training experiment?">
                     <input type="hidden" name="aggregator_id" value="{{ entity.id }}">
-                    <select name="training_exp_id" class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer" required {% if not experiments_using_aggregator or not certificate_exists or task_running %}disabled{% endif %}>
-                        <option value="" disabled selected>Select experiment</option>
-                        {% for exp in experiments_using_aggregator %}
-                        <option value="{{ exp.id }}" {% if aggregator_running and form_data.get("training_exp_id") == exp.id | string %}selected{% endif %}>{{ exp.name }} (ID: {{ exp.id }})</option>
-                        {% endfor %}
-                    </select>
+                    {% set entity_type = "training" %}
+                    {% set input_name = "training_exp_id" %}
+                    {% set input_id = "training-exp-id" %}
+                    {% set placeholder = "Search linked training experiments…" %}
+                    {% set allowed_ids = training_allowed_ids %}
+                    {% set required = true %}
+                    {% set selected_value = form_data.get('training_exp_id', '') if aggregator_running else '' %}
+                    {% set disabled = not experiments_using_aggregator or not certificate_exists or task_running %}
+                    {% include "partials/searchable_select.html" %}
                     <div>
                         <label for="publish-on-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Publish on</label>
                         <input type="text" id="publish-on-input" name="publish_on" autocomplete="off" placeholder="127.0.0.1"
@@ -154,6 +157,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/aggregators/aggregator_detail.js') }}"></script>
 {% if request.app.state.task_running %}
