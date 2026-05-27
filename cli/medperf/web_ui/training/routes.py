@@ -30,11 +30,7 @@ from medperf.web_ui.common import (
     sort_associations_display,
     templates,
 )
-from medperf.web_ui.utils import (
-    get_container_type,
-    build_listing_filters,
-    build_pagination_context,
-)
+from medperf.web_ui.listing import fetch_listing_page
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -45,26 +41,9 @@ def register_training_ui(
     request: Request,
     current_user: bool = Depends(check_user_ui),
 ):
-    my_user_id = get_medperf_user_data()["id"]
-    filters = {"owner": my_user_id}
-    my_containers = Cube.all(filters=filters)
-    containers = []
-    for container in my_containers:
-        container_obj = {
-            "id": container.id,
-            "name": container.name,
-            "type": get_container_type(container),
-        }
-        containers.append(container_obj)
-    data_prep_containers = [c for c in containers if c["type"] == "data-prep-container"]
-    all_containers = [c for c in containers if c not in data_prep_containers]
     return templates.TemplateResponse(
         "training/register_training_experiment.html",
-        {
-            "request": request,
-            "data_prep_containers": data_prep_containers,
-            "all_containers": all_containers,
-        },
+        {"request": request},
     )
 
 
@@ -126,28 +105,18 @@ def training_ui(
     page: int = 1,
     page_size: int = 9,
     ordering: str = "created_at_desc",
+    search: Optional[str] = None,
     current_user: bool = Depends(check_user_ui),
 ):
-    filters = {}
     my_user_id = get_medperf_user_data()["id"]
-
-    if mine_only:
-        filters["owner"] = my_user_id
-
-    total_count = TrainingExp.get_count(filters=filters)
-
-    filters.update(
-        build_listing_filters(page=page, page_size=page_size, ordering=ordering)
-    )
-
-    experiments = TrainingExp.all(filters=filters)
-
-    pagination_context = build_pagination_context(
+    experiments, search_query, pagination_context = fetch_listing_page(
+        TrainingExp,
         page=page,
         page_size=page_size,
         ordering=ordering,
-        total_count=total_count,
-        page_items_count=len(experiments),
+        mine_only=mine_only,
+        my_user_id=my_user_id,
+        search=search,
     )
 
     return templates.TemplateResponse(
@@ -156,6 +125,7 @@ def training_ui(
             "request": request,
             "experiments": experiments,
             "mine_only": mine_only,
+            "search_query": search_query,
             **pagination_context,
         },
     )
@@ -219,18 +189,6 @@ def training_detail_ui(  # noqa
     except Exception:
         pass
 
-    # For owner: list of aggregators to choose from when adding aggregator
-    available_aggregators = []
-    if is_owner:
-        try:
-            available_aggregators = Aggregator.all()
-            available_aggregators = sorted(
-                available_aggregators,
-                key=lambda a: (a.owner != my_user_id, a.name or ""),
-            )
-        except Exception:
-            pass
-
     plan_exists = bool(entity.plan)
 
     return templates.TemplateResponse(
@@ -247,7 +205,6 @@ def training_detail_ui(  # noqa
             "aggregator": aggregator,
             "is_owner": is_owner,
             "has_active_event": has_active_event,
-            "available_aggregators": available_aggregators,
             "plan_exists": plan_exists,
         },
     )
