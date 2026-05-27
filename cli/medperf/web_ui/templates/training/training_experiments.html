@@ -17,7 +17,8 @@
         </div>
     </div>
 
-    {% set entity_name = "training" %}
+    {% set entity_name = "training experiments" %}
+    {% set empty_msg_testid = "no-exps-msg" %}
     {% set has_items = experiments %}
     {% include "partials/listing_controls.html" %}
 
@@ -27,7 +28,7 @@
         {{ training_macros.training_experiment_card(exp) }}
         {% endfor %}
         {% else %}
-        <h3 class="col-span-full text-center py-12 text-gray-600 dark:text-gray-400 text-xl" data-testid="no-exps-msg">No training experiments found</h3>
+        {% include "partials/listing_no_results.html" %}
         {% endif %}
     </div>
 
