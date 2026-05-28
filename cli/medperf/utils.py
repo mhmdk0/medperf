@@ -21,6 +21,7 @@ from typing import List
 from colorama import Fore, Style
 from pexpect.exceptions import TIMEOUT
 from git import Repo, GitCommandError
+from git.exc import InvalidGitRepositoryError, NoSuchPathError
 import medperf.config as config
 from medperf.exceptions import CleanExit, ExecutionError, InvalidArgumentError
 import shlex
@@ -467,7 +468,11 @@ def format_errors_dict(errors_dict: dict):
 
 def check_for_updates() -> None:
     """Check if the current branch is up-to-date with its remote counterpart using GitPython."""
-    repo = Repo(config.BASE_DIR)
+    try:
+        repo = Repo(config.BASE_DIR)
+    except (InvalidGitRepositoryError, NoSuchPathError):
+        logging.debug("Skipping update check: not a git repository.")
+        return
     if repo.bare:
         logging.debug("Repo is bare")
         return
