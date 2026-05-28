@@ -67,6 +67,9 @@ medperf_dashboard = "medperf.dashboard.__main__:t_app"
 
 [project.urls]
 Homepage = "https://github.com/mlcommons/medperf"
+Repository = "https://github.com/mlcommons/medperf"
+Issues = "https://github.com/mlcommons/medperf/issues"
+Documentation = "https://docs.medperf.org"
 
 [tool.setuptools.packages.find]
 where = ["."]
