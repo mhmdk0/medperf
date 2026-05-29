@@ -13,7 +13,7 @@
 <div class="mb-8">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div class="flex items-center mb-3 sm:mb-0">
-            <h1 class="text-5xl font-bold text-brand-accent">{{ entity.name }}</h1>
+            <h1 class="text-5xl font-bold text-ink">{{ entity.name }}</h1>
         </div>
         {% if current_user_is_benchmark_owner %}
         <button type="button" id="dashboard-btn" class="btn btn-primary shadow-lg shrink-0" {% if task_running %}disabled{% endif %}>
@@ -26,7 +26,7 @@
 
 {% if current_user_is_benchmark_owner %}
 <div id="dashboard-form-wrapper" class="hidden bg-card dark:bg-card rounded-2xl p-8 shadow-lg border-2 border-border-brand dark:border-border mb-6">
-    <h2 class="text-2xl font-bold text-brand-accent mb-6 flex items-center">
+    <h2 class="text-2xl font-bold text-ink mb-6 flex items-center">
         <i class="fas fa-chart-line mr-3"></i>Open preparation dashboard
     </h2>
     <form action="/benchmarks/ui/dashboard" method="POST" id="redirect-dashobard-form" class="space-y-6">
@@ -59,7 +59,7 @@
 
 <div class="bg-card dark:bg-card rounded-2xl p-8 shadow-lg border-2 border-border-brand dark:border-border mb-6 {% if not entity.is_valid %}invalid-card{% endif %}">
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <h2 class="text-3xl font-bold text-brand-accent flex items-center">
+        <h2 class="text-3xl font-bold text-ink flex items-center">
             <i class="fas fa-info-circle mr-3"></i>Details
         </h2>
         <div class="flex flex-wrap gap-2">
@@ -127,7 +127,7 @@
 
 {% if current_user_is_benchmark_owner %}
 <div class="bg-card dark:bg-card rounded-2xl p-8 shadow-lg border-2 border-border-brand dark:border-border mb-6">
-    <h2 class="text-3xl font-bold text-brand-accent mb-6 flex items-center">
+    <h2 class="text-3xl font-bold text-ink mb-6 flex items-center">
         <i class="fas fa-cog mr-3"></i>Association Policy
     </h2>
     <form id="association-policy-form" class="space-y-6">
@@ -176,7 +176,7 @@
 <div class="space-y-4">
     <div class="relative" x-data="{ open: false }" @click.outside="open = false">
         <button type="button" @click="open = !open" class="w-full bg-card dark:bg-card rounded-xl p-6 shadow-lg border-2 border-border-brand dark:border-border flex items-center justify-between cursor-pointer hover:bg-muted transition-colors text-left" data-testid="datasets-associations-btn">
-            <h3 class="text-xl font-bold text-brand-accent flex items-center flex-wrap gap-2">
+            <h3 class="text-xl font-bold text-ink flex items-center flex-wrap gap-2">
                 <i class="fas fa-database mr-1"></i>Datasets Associations
                 <span class="px-4 py-1 rounded-full text-sm font-bold text-brand-accent border-2 border-success bg-success-muted">{{ dataset_assoc_len }}</span>
                 {% if dataset_assoc_pending %}<span class="italic text-sm text-muted-fg">You have pending associations</span>{% endif %}
@@ -193,7 +193,7 @@
 
     <div class="relative" x-data="{ open: false }" @click.outside="open = false">
         <button type="button" @click="open = !open" class="w-full bg-card dark:bg-card rounded-xl p-6 shadow-lg border-2 border-border-brand dark:border-border flex items-center justify-between cursor-pointer hover:bg-muted transition-colors text-left" data-testid="models-associations-btn">
-            <h3 class="text-xl font-bold text-brand-accent flex items-center flex-wrap gap-2">
+            <h3 class="text-xl font-bold text-ink flex items-center flex-wrap gap-2">
                 <i class="fas fa-cube mr-1"></i>Models Associations
                 <span class="px-4 py-1 rounded-full text-sm font-bold text-brand-accent border-2 border-success bg-success-muted">{{ models_assoc_len }}</span>
                 {% if model_assoc_pending %}<span class="italic text-sm text-muted-fg">You have pending associations</span>{% endif %}
@@ -210,7 +210,7 @@
 
     <div class="relative" x-data="{ open: false }" @click.outside="open = false">
         <button type="button" @click="open = !open" class="w-full bg-card dark:bg-card rounded-xl p-6 shadow-lg border-2 border-border-brand dark:border-border flex items-center justify-between cursor-pointer hover:bg-muted transition-colors text-left" data-testid="benchmark-results-btn">
-            <h3 class="text-xl font-bold text-brand-accent flex items-center flex-wrap gap-2">
+            <h3 class="text-xl font-bold text-ink flex items-center flex-wrap gap-2">
                 <i class="fas fa-chart-bar mr-1"></i>Results
                 <span class="px-4 py-1 rounded-full text-sm font-bold text-brand-accent border-2 border-success bg-success-muted">{{ results_len }}</span>
             </h3>

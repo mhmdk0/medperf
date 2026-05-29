@@ -13,7 +13,7 @@
 <div class="mb-8">
     <div class="flex flex-wrap justify-between items-start gap-4 mb-6">
         <div class="flex items-center mb-3">
-            <h1 class="text-5xl font-bold text-brand-accent">{{ dataset.name }}</h1>
+            <h1 class="text-5xl font-bold text-ink">{{ dataset.name }}</h1>
         </div>
         <form action="/datasets/export/ui" method="POST" id="redirect-export-form" class="{% if not is_owner %}hidden{% endif %}">
             <input type="hidden" name="entity_id" value="{{ dataset.id }}">
@@ -24,7 +24,7 @@
 
 <div class="bg-card dark:bg-card rounded-2xl p-8 shadow-lg border-2 border-border-brand dark:border-border mb-6 {% if ui_mode == request.app.state.EVALUATION_MODE and not dataset.is_valid %}invalid-card{% endif %} overflow-hidden">
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <h2 class="text-3xl font-bold text-brand-accent flex items-center">
+        <h2 class="text-3xl font-bold text-ink flex items-center">
             <i class="fas fa-info-circle mr-3"></i>Details
         </h2>
         <div class="flex flex-wrap gap-2">
@@ -239,7 +239,7 @@
             {% endif %}
         </div>
         <div class="my-8 bg-card dark:bg-card rounded-2xl p-8 shadow-lg border-2 border-border-brand dark:border-border">
-            <h3 class="text-xl font-bold text-brand-accent mb-4">Confidential Computing Preferences</h3>
+            <h3 class="text-xl font-bold text-ink mb-4">Confidential Computing Preferences</h3>
             {{ cc_asset_macro.gcp_asset(cc_config_defaults, cc_configured, cc_initialized, cc_last_synced, dataset.id, "dataset", task_running) }}
         </div>
         {% endif %}

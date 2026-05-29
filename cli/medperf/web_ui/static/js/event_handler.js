@@ -117,7 +117,7 @@ function handleEvents(event, logPanel, stagesList, currentStageElement) {
         a.href = cleanMessage;
         a.target = "_blank";
         a.textContent = cleanMessage;
-        a.className = "text-lg text-ink text-brand-accent hover:underline";
+        a.className = "text-lg font-bold text-ink text-brand-accent hover:underline";
         if (content) content.appendChild(a);
         if (textContent) { textContent.style.display = ""; textContent.classList.remove("hidden"); }
     } else if (event.type === "code") {

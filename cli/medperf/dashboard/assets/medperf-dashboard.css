@@ -6,7 +6,6 @@
     --mlc-white: #ffffff;
     --mlc-border: #ebeef4;
     --mlc-mint: #ccebd4;
-    --mlc-green-dark: #44644e;
     --mlc-slate-mid: #535869;
 
     --medperf-page-bg: var(--mlc-surface);
@@ -14,7 +13,7 @@
     --medperf-card-border: color-mix(in srgb, var(--mlc-mint) 55%, var(--mlc-white));
     --medperf-text: var(--mlc-ink);
     --medperf-text-muted: var(--mlc-slate-mid);
-    --medperf-title: var(--mlc-green-dark);
+    --medperf-title: var(--mlc-ink);
     --medperf-radius: 16px;
     --medperf-table-header-bg: color-mix(in srgb, var(--mlc-mint) 55%, var(--mlc-white));
     --medperf-table-header-fg: var(--mlc-ink);

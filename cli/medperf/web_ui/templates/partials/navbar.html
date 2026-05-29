@@ -13,14 +13,10 @@
 <nav class="bg-nav medperf-navbar sticky top-0 z-40" x-data="{ open: false, notifOpen: false }" data-testid="navbar">
     <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-6 min-w-0">
                 <a href="/" class="flex items-center gap-3 shrink-0" aria-label="MedPerf home">
                     <img alt="MedPerf Logo" src="{{ url_for('static', path='images/medperf_logo.svg') }}" class="nav-logo">
                 </a>
-                <div class="hidden md:flex rounded-lg nav-mode-switch p-1 gap-0.5" role="tablist">
-                    <a href="/set_mode?mode={{evaluation_mode}}" class="nav-mode-link px-3 py-1.5 rounded-md text-sm {% if not is_training_mode %}is-active{% endif %}" role="tab">Evaluation</a>
-                    <a href="/set_mode?mode={{training_mode}}" class="nav-mode-link px-3 py-1.5 rounded-md text-sm {% if is_training_mode %}is-active{% endif %}" role="tab">Training</a>
-                </div>
                 <div class="hidden md:flex gap-6">
                     {% if is_training_mode %}
                     <a href="/training/ui" class="nav-main-link {% if nav_training %}is-active{% endif %}">Experiments</a>
@@ -34,7 +30,21 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 sm:gap-4 shrink-0">
+                <div class="hidden md:flex nav-mode-group items-center gap-2.5" role="group" aria-label="Application mode">
+                    <span class="nav-mode-label">Mode</span>
+                    <div class="nav-mode-switch flex rounded-full p-1 gap-0.5" role="tablist" aria-label="Switch between Evaluation and Training">
+                        <a href="/set_mode?mode={{evaluation_mode}}" class="nav-mode-link {% if not is_training_mode %}is-active{% endif %}" role="tab" {% if not is_training_mode %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+                            <i class="fas fa-chart-line nav-mode-icon" aria-hidden="true"></i>
+                            <span>Evaluation</span>
+                        </a>
+                        <a href="/set_mode?mode={{training_mode}}" class="nav-mode-link {% if is_training_mode %}is-active{% endif %}" role="tab" {% if is_training_mode %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
+                            <i class="fas fa-flask nav-mode-icon" aria-hidden="true"></i>
+                            <span>Training</span>
+                        </a>
+                    </div>
+                </div>
+
                 <div class="relative" @click.outside="notifOpen = false">
                     <button type="button" @click="notifOpen = !notifOpen" class="nav-icon-btn relative p-2 rounded-lg cursor-pointer">
                         <i class="fa fa-bell text-xl" aria-hidden="true"></i>
@@ -83,9 +93,16 @@
             </div>
         </div>
         <div x-show="open" x-cloak x-transition class="md:hidden mt-4 pt-4 border-t nav-mobile-divider" style="display: none;">
-            <div class="flex gap-2 mb-3">
-                <a href="/set_mode?mode=evaluation" class="nav-mobile-mode px-3 py-1.5 rounded-lg text-sm font-semibold {% if not is_training_mode %}is-active{% endif %}">Evaluation</a>
-                <a href="/set_mode?mode=training" class="nav-mobile-mode px-3 py-1.5 rounded-lg text-sm font-semibold {% if is_training_mode %}is-active{% endif %}">Training</a>
+            <p class="nav-mode-label mb-2 px-1">Mode</p>
+            <div class="nav-mode-switch flex rounded-full p-1 gap-1 mb-4" role="tablist">
+                <a href="/set_mode?mode={{evaluation_mode}}" class="nav-mode-link flex-1 justify-center {% if not is_training_mode %}is-active{% endif %}" role="tab">
+                    <i class="fas fa-chart-line nav-mode-icon" aria-hidden="true"></i>
+                    <span>Evaluation</span>
+                </a>
+                <a href="/set_mode?mode={{training_mode}}" class="nav-mode-link flex-1 justify-center {% if is_training_mode %}is-active{% endif %}" role="tab">
+                    <i class="fas fa-flask nav-mode-icon" aria-hidden="true"></i>
+                    <span>Training</span>
+                </a>
             </div>
             {% if is_training_mode %}
             <a href="/training/ui" class="nav-mobile-link block py-2">Experiments</a>

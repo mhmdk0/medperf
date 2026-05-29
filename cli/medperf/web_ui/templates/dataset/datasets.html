@@ -10,7 +10,7 @@
     <div class="mb-6">
         <div class="flex items-center justify-between gap-4 mb-6">
             <div>
-                <h1 class="text-5xl font-bold text-brand-accent mb-3" data-testid="page-header">Datasets{% if ui_mode == request.app.state.TRAINING_MODE %} (Training){% endif %}</h1>
+                <h1 class="text-5xl font-bold text-ink mb-3" data-testid="page-header">Datasets{% if ui_mode == request.app.state.TRAINING_MODE %} (Training){% endif %}</h1>
                 <p class="text-secondary text-lg">{% if ui_mode == request.app.state.TRAINING_MODE %}Associate datasets with training experiments.{% else %}Manage and explore datasets for benchmarks.{% endif %}</p>
             </div>
             <div class="flex flex-wrap gap-3">

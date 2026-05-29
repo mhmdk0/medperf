@@ -8,7 +8,6 @@
     --mlc-mint-hover: #b3ceba;
     --mlc-mint-pressed: #b2d1ba;
     --mlc-green: #62826c;
-    --mlc-green-dark: #11141f; /* TODO: FIX (THIS IS FOR FONT COLOR)*/
     --mlc-green-deep: #173d47;
     --mlc-slate: #343c52;
     --mlc-slate-mid: #535869;
@@ -39,7 +38,7 @@
     --theme-brand: var(--mlc-mint);
     --theme-brand-hover: var(--mlc-mint-hover);
     --theme-brand-fg: var(--mlc-ink);
-    --theme-brand-accent: var(--mlc-green-dark);
+    --theme-brand-accent: var(--mlc-green);
     --theme-brand-subtle: color-mix(in srgb, var(--mlc-mint) 40%, var(--mlc-white));
     --theme-brand-subtle-strong: color-mix(in srgb, var(--mlc-mint) 55%, var(--mlc-white));
 
@@ -50,7 +49,7 @@
     --theme-nav-pill-active: color-mix(in srgb, var(--mlc-mint) 50%, var(--mlc-white));
     --theme-nav-hover-bg: color-mix(in srgb, var(--mlc-mint) 30%, var(--mlc-white));
     --theme-nav-border: var(--mlc-border);
-    --theme-success: var(--mlc-green-dark);
+    --theme-success: var(--mlc-green);
     --theme-success-text: var(--mlc-green-deep);
     --theme-success-bg: color-mix(in srgb, var(--mlc-mint) 55%, var(--mlc-white));
     --theme-success-border: var(--mlc-mint-hover);
@@ -81,14 +80,10 @@
         color-mix(in srgb, var(--mlc-mint) 70%, var(--mlc-white)) 0%,
         color-mix(in srgb, var(--mlc-mint-hover) 45%, var(--mlc-white)) 100%
     );
-    --theme-alert-success: linear-gradient(135deg, var(--mlc-green) 0%, var(--mlc-green-dark) 100%);
+    --theme-alert-success: linear-gradient(135deg, var(--mlc-green) 0%, var(--mlc-green-deep) 100%);
     --theme-alert-danger: linear-gradient(135deg, var(--theme-danger) 0%, color-mix(in srgb, var(--theme-danger) 75%, black) 100%);
     --theme-alert-warning: linear-gradient(135deg, var(--mlc-amber) 0%, color-mix(in srgb, var(--mlc-amber) 70%, black) 100%);
     --theme-alert-info: linear-gradient(135deg, var(--mlc-blue) 0%, var(--mlc-blue-dark) 100%);
-    --theme-toast-neutral: var(--mlc-slate);
-    --theme-toast-success: var(--mlc-green-dark);
-    --theme-toast-danger: var(--theme-danger);
-    --theme-toast-info: var(--mlc-blue);
     --theme-inverse: var(--mlc-slate);
     --theme-toggle-off: #d1d5db;
     --theme-toggle-ring: color-mix(in srgb, var(--mlc-mint) 65%, white);
@@ -214,23 +209,65 @@ html.dark body {
     filter: brightness(0) invert(1);
 }
 
+.medperf-navbar .nav-mode-group {
+    padding: 0.25rem 0.5rem 0.25rem 0;
+    gap: 0.625rem;
+}
+
+.medperf-navbar .nav-mode-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--theme-nav-muted);
+    white-space: nowrap;
+}
+
 .medperf-navbar .nav-mode-switch {
     background: var(--theme-nav-pill-bg);
+    border: 1px solid var(--theme-nav-border);
+    box-shadow: inset 0 1px 2px var(--theme-shadow);
 }
 
 .medperf-navbar .nav-mode-link {
-    color: var(--theme-nav-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
     font-weight: 600;
-    transition: color 0.15s ease, background-color 0.15s ease;
+    line-height: 1;
+    color: var(--theme-nav-muted);
+    white-space: nowrap;
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.medperf-navbar .nav-mode-icon {
+    font-size: 0.75rem;
+    opacity: 0.85;
 }
 
 .medperf-navbar .nav-mode-link:hover {
     color: var(--theme-nav-fg);
+    background: var(--theme-nav-hover-bg);
 }
 
 .medperf-navbar .nav-mode-link.is-active {
-    background: var(--theme-nav-pill-active);
-    color: var(--theme-nav-fg);
+    background: var(--mlc-mint);
+    color: var(--mlc-ink);
+    box-shadow: 0 1px 3px var(--theme-shadow);
+}
+
+.medperf-navbar .nav-mode-link.is-active .nav-mode-icon {
+    opacity: 1;
+}
+
+.dark .medperf-navbar .nav-mode-link.is-active {
+    color: var(--mlc-ink);
 }
 
 .medperf-navbar .nav-main-link {
@@ -291,13 +328,8 @@ html.dark body {
     transition: color 0.15s ease;
 }
 
-.medperf-navbar .nav-mobile-link:hover,
-.medperf-navbar .nav-mobile-mode.is-active {
+.medperf-navbar .nav-mobile-link:hover {
     color: var(--theme-nav-fg);
-}
-
-.medperf-navbar .nav-mobile-mode.is-active {
-    background: var(--theme-nav-pill-active);
 }
 
 .medperf-card { border-left: 4px solid var(--mlc-mint); }

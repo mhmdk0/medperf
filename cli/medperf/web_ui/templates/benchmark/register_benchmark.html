@@ -11,7 +11,7 @@
 {% endif %}
 
 <div class="container mx-auto px-4 py-8 max-w-3xl">
-    <h1 class="text-3xl font-bold text-brand-accent text-center mb-4">Register a New Benchmark</h1>
+    <h1 class="text-3xl font-bold text-ink text-center mb-4">Register a New Benchmark</h1>
     <form id="benchmark-register-form" class="space-y-6" action="/benchmarks/register" method="post" data-panel-title="Registering benchmark" data-confirm-message="register this benchmark?">
         <div class="flex flex-wrap gap-4">
             <label class="inline-flex items-center gap-2 cursor-pointer text-ink"><input type="radio" name="skip_compatibility_tests" id="skip-tests" value="true" class="rounded-full border-border-strong text-brand focus:ring-brand-accent dark:border-border accent-brand" {% if task_running %}disabled{% endif %}> Skip Compatibility Tests</label>
