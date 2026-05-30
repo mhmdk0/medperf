@@ -30,12 +30,12 @@ CONTAINER_TYPE_FILTERS = {
 
 def _entity_option(entity, entity_type: str = "") -> dict:
     name = entity.name or ""
-    label = f"{entity.id} — {name}"
+    label = f"{name} (ID: {entity.id})"
     if entity_type == "aggregator":
         address = getattr(entity, "address", None)
         port = getattr(entity, "port", None)
         if address is not None and port is not None:
-            label = f"{entity.id} — {name} ({address}:{port})"
+            label = f"{name} (ID: {entity.id}) ({address}:{port})"
     return {"id": entity.id, "name": name, "label": label}
 
 

@@ -49,7 +49,7 @@
 
         function entityLabel(item) {
             if (item.label) return item.label;
-            if (item.id != null && item.name) return item.id + " — " + item.name;
+            if (item.id != null && item.name) return item.name + " (ID: " + item.id + ")";
             return item.name || String(item.id || "");
         }
 
