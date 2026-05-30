@@ -114,29 +114,58 @@ html.dark .medperf-dash-alert .alert-heading {
     border: 1px solid var(--medperf-card-border);
 }
 
-html.dark .dash-table-container .dash-spreadsheet-inner table {
+.dash-table-container .dash-spreadsheet-inner table {
     background-color: var(--medperf-card-bg) !important;
 }
 
-html.dark .dash-table-container .dash-cell {
+.dash-table-container .dash-cell {
     background-color: var(--medperf-card-bg) !important;
     color: var(--medperf-text) !important;
     border-color: var(--medperf-table-cell-border) !important;
 }
 
-html.dark .dash-table-container .dash-header {
+.dash-table-container .dash-header {
     background-color: var(--medperf-table-header-bg) !important;
     color: var(--medperf-table-header-fg) !important;
     border-color: var(--medperf-card-border) !important;
 }
 
-html.dark .dash-table-container .dash-filter--case {
+.dash-table-container .dash-filter--case,
+.dash-table-container .dash-filter--case input {
     background-color: var(--medperf-card-bg) !important;
     color: var(--medperf-text) !important;
 }
 
-html.dark .dash-table-container .previous-next-container button {
+.dash-table-container .previous-next-container button,
+.dash-table-container .previous-next-container button:hover {
     color: var(--medperf-text) !important;
+}
+
+.js-plotly-plot .gtitle,
+.js-plotly-plot .legendtext,
+.js-plotly-plot .xtitle,
+.js-plotly-plot .ytitle {
+    fill: var(--medperf-text) !important;
+}
+
+html.dark .js-plotly-plot .gtitle {
+    fill: var(--medperf-title) !important;
+}
+
+html.dark .js-plotly-plot .legendtext,
+html.dark .js-plotly-plot .xtick text,
+html.dark .js-plotly-plot .ytick text,
+html.dark .js-plotly-plot .xtitle,
+html.dark .js-plotly-plot .ytitle {
+    fill: var(--medperf-text) !important;
+}
+
+html.dark .js-plotly-plot .pie text {
+    fill: var(--medperf-text) !important;
+}
+
+html.dark .js-plotly-plot .annotation-text {
+    fill: #ffffff !important;
 }
 
 html.dark .medperf-dash-alert .lead {

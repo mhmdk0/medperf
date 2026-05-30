@@ -125,13 +125,10 @@ def _datatable():
             "fontFamily": _MEDPERF_FONT,
             "fontSize": "14px",
             "padding": "10px 12px",
-            "border": f"1px solid {_MLC_BORDER}",
             "textAlign": "left",
-            "color": _MLC_INK,
+            "backgroundColor": "transparent",
         },
         "style_header": {
-            "backgroundColor": "#e5f0e8",
-            "color": _MLC_INK,
             "fontWeight": "700",
             "border": "none",
             "fontFamily": _MEDPERF_FONT,
@@ -141,6 +138,24 @@ def _datatable():
             {
                 "selector": ".dash-spreadsheet-container",
                 "rule": "border-radius: 12px; font-family: " + _MEDPERF_FONT + ";",
+            },
+            {
+                "selector": ".dash-cell",
+                "rule": "color: var(--medperf-text) !important; background-color:"
+                " var(--medperf-card-bg) !important; border-color: var(--medperf-table-cell-border) !important;",
+            },
+            {
+                "selector": ".dash-header",
+                "rule": "color: var(--medperf-table-header-fg) !important;"
+                " background-color: var(--medperf-table-header-bg) !important;",
+            },
+            {
+                "selector": ".dash-filter--case",
+                "rule": "color: var(--medperf-text) !important; background-color: var(--medperf-card-bg) !important;",
+            },
+            {
+                "selector": ".previous-next-container button",
+                "rule": "color: var(--medperf-text) !important;",
             },
         ],
     }

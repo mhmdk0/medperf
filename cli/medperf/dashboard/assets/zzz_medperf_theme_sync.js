@@ -1,17 +1,13 @@
 /**
- * Keeps Dash dashboard theme in sync with MedPerf WebUI:
- * - Same localStorage key and prefers-color-scheme fallback as base.html
- * - postMessage from parent (dashboard_wrapper) when user toggles theme
- * - Plotly relayout after theme change (graphs render async)
- * Palette aligned with web_ui/static/css/brand-tokens.css
+ * Keeps Dash dashboard theme in sync with MedPerf WebUI (localStorage medperf-dark).
  */
 (function () {
     var FONT = "Instrument Sans, ui-sans-serif, system-ui, sans-serif";
     var INK = "#11141f";
     var SURFACE = "#f7f8fa";
-    var MINT = "#ccebd4";
     var CARD_DARK = "#1f2433";
-    var INK_DARK_PAGE = "#11141f";
+    var TEXT_DARK = "#e5e7eb";
+    var TEXT_DARK_BRIGHT = "#ffffff";
 
     function medperfDashIsDark() {
         try {
@@ -27,58 +23,66 @@
         }
     }
 
+    function medperfPlotlyLayoutPatch(gd, dark) {
+        var text = dark ? TEXT_DARK : INK;
+        var centerText = dark ? TEXT_DARK_BRIGHT : INK;
+        var plotBg = dark ? CARD_DARK : SURFACE;
+        var grid = dark ? "#3d455a" : "#d8dce6";
+        var axis = dark ? "#6b7280" : "#9b9fad";
+        var zero = dark ? "#4b5563" : "#d8dce6";
+        var legendBg = dark ? "rgba(24,28,40,0.95)" : "rgba(247,248,250,0.95)";
+        var legendBorder = dark ? "#3d455a" : "#ebeef4";
+
+        var patch = {
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: plotBg,
+            "font.color": text,
+            "title.font.color": centerText,
+            "legend.font.color": text,
+            "legend.bgcolor": legendBg,
+            "legend.bordercolor": legendBorder,
+        };
+
+        var layout = gd.layout || {};
+        var key;
+        for (key in layout) {
+            if (/^xaxis\d*$/.test(key) || /^yaxis\d*$/.test(key)) {
+                patch[key + ".tickfont.color"] = text;
+                patch[key + ".title.font.color"] = text;
+                patch[key + ".gridcolor"] = grid;
+                patch[key + ".linecolor"] = axis;
+                patch[key + ".zerolinecolor"] = zero;
+            }
+        }
+
+        if (layout.annotations && layout.annotations.length) {
+            var i;
+            for (i = 0; i < layout.annotations.length; i++) {
+                patch["annotations[" + i + "].font.color"] = centerText;
+            }
+        }
+
+        return patch;
+    }
+
     function medperfPlotlyRelayout() {
         if (typeof window.Plotly === "undefined") return;
         var dark = document.documentElement.classList.contains("dark");
+        var text = dark ? TEXT_DARK : INK;
+        var sliceLabel = dark ? TEXT_DARK_BRIGHT : INK;
         var plots = document.querySelectorAll(".js-plotly-plot");
         var i;
         var gd;
-        var layout;
-        if (dark) {
-            layout = {
-                paper_bgcolor: "rgba(0,0,0,0)",
-                plot_bgcolor: CARD_DARK,
-                font: { color: "#e5e7eb", family: FONT },
-                title: { font: { color: "#ffffff", family: FONT } },
-                legend: {
-                    bgcolor: "rgba(24,28,40,0.95)",
-                    bordercolor: "#3d455a",
-                    font: { color: "#e5e7eb", family: FONT },
-                },
-                "xaxis.gridcolor": "#3d455a",
-                "xaxis.linecolor": "#6b7280",
-                "xaxis.zerolinecolor": "#4b5563",
-                "xaxis.tickfont.color": "#c5c8d0",
-                "yaxis.gridcolor": "#3d455a",
-                "yaxis.linecolor": "#6b7280",
-                "yaxis.zerolinecolor": "#4b5563",
-                "yaxis.tickfont.color": "#c5c8d0",
-            };
-        } else {
-            layout = {
-                paper_bgcolor: "rgba(0,0,0,0)",
-                plot_bgcolor: SURFACE,
-                font: { color: INK, family: FONT },
-                title: { font: { color: INK, family: FONT } },
-                legend: {
-                    bgcolor: "rgba(247,248,250,0.95)",
-                    bordercolor: "#ebeef4",
-                    font: { color: INK, family: FONT },
-                },
-                "xaxis.gridcolor": "#d8dce6",
-                "xaxis.linecolor": "#9b9fad",
-                "xaxis.zerolinecolor": "#d8dce6",
-                "xaxis.tickfont.color": INK,
-                "yaxis.gridcolor": "#d8dce6",
-                "yaxis.linecolor": "#9b9fad",
-                "yaxis.zerolinecolor": "#d8dce6",
-                "yaxis.tickfont.color": INK,
-            };
-        }
+
         for (i = 0; i < plots.length; i++) {
             gd = plots[i];
             try {
-                window.Plotly.relayout(gd, layout);
+                window.Plotly.relayout(gd, medperfPlotlyLayoutPatch(gd, dark));
+                window.Plotly.restyle(gd, {
+                    "textfont.color": sliceLabel,
+                    "insidetextfont.color": sliceLabel,
+                    "outsidetextfont.color": sliceLabel,
+                });
             } catch (e) {
                 /* ignore per-figure errors */
             }
