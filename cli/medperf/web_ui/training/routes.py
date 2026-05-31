@@ -9,7 +9,6 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import medperf.config as config
 from medperf.account_management import get_medperf_user_data
 from medperf.commands.association.approval import Approval
-from medperf.commands.association.utils import get_experiment_associations
 from medperf.commands.training.submit import SubmitTrainingExp
 from medperf.commands.training.set_plan import SetPlan
 from medperf.commands.training.start_event import StartEvent
@@ -148,28 +147,25 @@ def training_detail_ui(  # noqa
         Cube.get(cube_uid=entity.fl_admin_mlcube) if entity.fl_admin_mlcube else None
     )
 
-    # Dataset associations (for owner: show pending and approved)
-    dataset_associations = []
+    datasets_associations = []
     datasets = {}
     dataset_assoc_pending = False
-    try:
-        dataset_associations = get_experiment_associations(
-            experiment_id=training_id,
-            experiment_type="training_exp",
-            component_type="dataset",
-        )
-        dataset_associations = sort_associations_display(dataset_associations)
-        dataset_assoc_pending = any(
-            a.get("approval_status") == "PENDING" for a in dataset_associations
-        )
-        for a in dataset_associations:
-            if a.get("dataset"):
-                try:
-                    datasets[a["dataset"]] = Dataset.get(a["dataset"])
-                except Exception:
-                    pass
-    except Exception as e:
-        logger.warning("Could not load training dataset associations: %s", e)
+    if is_owner:
+        try:
+            datasets_associations = TrainingExp.get_datasets_associations(
+                training_exp_uid=training_id
+            )
+            dataset_assoc_pending = any(
+                i["approval_status"] == "PENDING" for i in datasets_associations
+            )
+            datasets_associations = sort_associations_display(datasets_associations)
+            datasets = {
+                assoc["dataset"]: Dataset.get(assoc["dataset"])
+                for assoc in datasets_associations
+                if assoc["dataset"]
+            }
+        except Exception as e:
+            logger.warning("Could not load training dataset associations: %s", e)
 
     # Aggregator (one per experiment, from server)
     aggregator = None
@@ -199,7 +195,7 @@ def training_detail_ui(  # noqa
             "prep_cube": prep_cube,
             "fl_cube": fl_cube,
             "fl_admin_cube": fl_admin_cube,
-            "dataset_associations": dataset_associations,
+            "datasets_associations": datasets_associations,
             "datasets": datasets,
             "dataset_assoc_pending": dataset_assoc_pending,
             "aggregator": aggregator,
