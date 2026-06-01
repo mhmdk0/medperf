@@ -1,4 +1,0 @@
-recursive-include medperf/web_ui/templates *
-recursive-include medperf/web_ui/static *
-recursive-include medperf/templates *
-recursive-include medperf/dashboard/assets *
