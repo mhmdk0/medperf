@@ -82,6 +82,7 @@ medperf = [
     "web_ui/static/**/*",
     "templates/**/*",
     "dashboard/assets/**/*",
+    "mock_tokens/tokens.json",
 ]
 
 [tool.setuptools.dynamic]

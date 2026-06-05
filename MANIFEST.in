@@ -2,3 +2,4 @@ recursive-include cli/medperf/web_ui/templates *
 recursive-include cli/medperf/web_ui/static *
 recursive-include cli/medperf/templates *
 recursive-include cli/medperf/dashboard/assets *
+include cli/medperf/mock_tokens/tokens.json
