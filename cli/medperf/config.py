@@ -44,7 +44,7 @@ token_absolute_expiry = 2592000  # Refresh token absolute expiration time (secon
 access_token_storage_id = "medperf_access_token"
 refresh_token_storage_id = "medperf_refresh_token"
 
-local_tokens_path = BASE_DIR / "mock_tokens" / "tokens.json"
+local_tokens_path = Path(__file__).resolve().parent / "mock_tokens" / "tokens.json"
 
 # Certificate Authority
 certificate_authority_id = 1
