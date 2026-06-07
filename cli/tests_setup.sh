@@ -42,7 +42,7 @@ TIMEOUT="${TIMEOUT:-30}"
 VERSION_PREFIX="/api/v0"
 LOGIN_SCRIPT="$MEDPERF_ROOT_REPO/cli/auto_login.sh"
 ADMIN_LOGIN_SCRIPT="$MEDPERF_ROOT_REPO/server/auth_provider_token.py"
-MOCK_TOKENS_FILE="$MEDPERF_ROOT_REPO/mock_tokens/tokens.json"
+MOCK_TOKENS_FILE="$MEDPERF_ROOT_REPO/cli/medperf/mock_tokens/tokens.json"
 SQLITE3_FILE="$MEDPERF_ROOT_REPO/server/db.sqlite3"
 echo "Server URL: $SERVER_URL"
 

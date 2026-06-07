@@ -53,7 +53,7 @@ jobs:
     - name: Build container image
       working-directory: ./server
       run: |
-        cp ../mock_tokens/tokens.json tokens.json
+        cp ../cli/medperf/mock_tokens/tokens.json tokens.json
         cp -r ../examples/chestxray_tutorial/ .
         docker build -t ${{ env.IMAGE_NAME }} -f Dockerfile.gha .
 

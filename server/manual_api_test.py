@@ -29,7 +29,9 @@ def do_test(args):
 
 if __name__ == "__main__":
     default_cert_file = str(REPO_BASE_DIR / "server" / "cert.crt")
-    default_tokens_file = str(REPO_BASE_DIR / "mock_tokens" / "tokens.json")
+    default_tokens_file = str(
+        REPO_BASE_DIR / "cli" / "medperf" / "mock_tokens" / "tokens.json"
+    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
