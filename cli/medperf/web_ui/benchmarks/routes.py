@@ -408,7 +408,9 @@ def preparation_dashboard(
     is_owner = Benchmark.user_can_manage(benchmark)
     if not is_owner:
         errors = True
-        error_message += "Only the benchmark owner or committee members can access the dashboard."
+        error_message += (
+            "Only the benchmark owner or committee members can access the dashboard."
+        )
 
     try:
         if not errors:
