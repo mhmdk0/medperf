@@ -396,3 +396,39 @@ def test_failing_validate_and_normalize_emails(emails):
     # Act & Assert
     with pytest.raises(InvalidArgumentError):
         utils.validate_and_normalize_emails(emails)
+
+
+def test_get_latest_pypi_version_returns_none_when_unpublished(mocker):
+    response = mocker.Mock(status_code=404)
+    mocker.patch(f"{patch_utils.format('requests.get')}", return_value=response)
+
+    assert utils.get_latest_pypi_version() is None
+
+
+def test_get_latest_pypi_version_returns_latest_release(mocker):
+    response = mocker.Mock(status_code=200)
+    response.json.return_value = {"info": {"version": "0.3.1"}}
+    mocker.patch(f"{patch_utils.format('requests.get')}", return_value=response)
+
+    assert utils.get_latest_pypi_version() == "0.3.1"
+
+
+def test_check_for_updates_warns_when_pypi_has_newer_release(mocker, ui):
+    mocker.patch(f"{patch_utils.format('get_latest_pypi_version')}", return_value="0.4.0")
+    mocker.patch("medperf._version.__version__", "0.3.0")
+
+    utils.check_for_updates()
+
+    ui.print_warning.assert_called_once_with(
+        "MedPerf 0.4.0 is available (you have 0.3.0). "
+        "Upgrade with: pip install -U medperf"
+    )
+
+
+def test_check_for_updates_is_silent_when_up_to_date(mocker, ui):
+    mocker.patch(f"{patch_utils.format('get_latest_pypi_version')}", return_value="0.3.0")
+    mocker.patch("medperf._version.__version__", "0.3.0")
+
+    utils.check_for_updates()
+
+    ui.print_warning.assert_not_called()

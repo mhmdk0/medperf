@@ -17,11 +17,10 @@ from pathlib import Path
 import shutil
 from pexpect import spawn
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from colorama import Fore, Style
 from pexpect.exceptions import TIMEOUT
-from git import Repo, GitCommandError
-from git.exc import InvalidGitRepositoryError, NoSuchPathError
+import semver
 import medperf.config as config
 from medperf.exceptions import CleanExit, ExecutionError, InvalidArgumentError
 import shlex
@@ -466,49 +465,48 @@ def format_errors_dict(errors_dict: dict):
     return error_msg
 
 
+PYPI_PACKAGE_NAME = "medperf"
+PYPI_JSON_URL = f"https://pypi.org/pypi/{PYPI_PACKAGE_NAME}/json"
+PYPI_REQUEST_TIMEOUT = 5
+
+
+def get_latest_pypi_version() -> Optional[str]:
+    """Return the latest MedPerf version published on PyPI, if available."""
+    try:
+        response = requests.get(PYPI_JSON_URL, timeout=PYPI_REQUEST_TIMEOUT)
+        if response.status_code == 404:
+            logging.debug("MedPerf is not published on PyPI yet.")
+            return None
+        response.raise_for_status()
+        return response.json()["info"]["version"]
+    except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
+        logging.debug("Could not fetch latest MedPerf version from PyPI: %s", exc)
+        return None
+
+
 def check_for_updates() -> None:
-    """Check if the current branch is up-to-date with its remote counterpart using GitPython."""
-    try:
-        repo = Repo(config.BASE_DIR)
-    except (InvalidGitRepositoryError, NoSuchPathError):
-        logging.debug("Skipping update check: not a git repository.")
-        return
-    if repo.bare:
-        logging.debug("Repo is bare")
+    """Check PyPI for a newer MedPerf release than the installed client."""
+    from medperf._version import __version__
+
+    latest = get_latest_pypi_version()
+    if latest is None:
         return
 
-    logging.debug(f"Current git commit: {repo.head.commit.hexsha}")
-
     try:
-        for remote in repo.remotes:
-            remote.fetch()
+        current_version = semver.VersionInfo.parse(__version__)
+        latest_version = semver.VersionInfo.parse(latest)
+    except ValueError as exc:
+        logging.debug("Could not compare MedPerf versions: %s", exc)
+        return
 
-        if repo.head.is_detached:
-            logging.debug("Repo is in detached state")
-            return
+    if latest_version <= current_version:
+        logging.debug("MedPerf client is up to date with PyPI.")
+        return
 
-        current_branch = repo.active_branch
-        tracking_branch = current_branch.tracking_branch()
-
-        if tracking_branch is None:
-            logging.debug("Current branch does not track a remote branch.")
-            return
-        if current_branch.commit.hexsha == tracking_branch.commit.hexsha:
-            logging.debug("No git branch updates.")
-            return
-
-        logging.debug(
-            f"Git branch updates found: {current_branch.commit.hexsha} -> {tracking_branch.commit.hexsha}"
-        )
-        config.ui.print_warning(
-            "MedPerf client updates found. Please, update your MedPerf installation."
-        )
-    except GitCommandError as e:
-        logging.debug(
-            "Exception raised during updates check. Maybe user checked out repo with git@ and private key"
-            " or repo is in detached / non-tracked state?"
-        )
-        logging.debug(e)
+    config.ui.print_warning(
+        f"MedPerf {latest} is available (you have {__version__}). "
+        "Upgrade with: pip install -U medperf"
+    )
 
 
 class spawn_and_kill:
