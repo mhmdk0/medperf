@@ -2,13 +2,60 @@ from rest_framework import serializers
 from django.utils import timezone
 from django.conf import settings
 from .models import Benchmark
+from .utils import resolve_committee_member_emails
 
 
-class BenchmarkSerializer(serializers.ModelSerializer):
+class CommitteeMembersMixin:
+    def get_fields(self):
+        fields = super().get_fields()
+        fields["committee_member_emails"] = serializers.ListField(
+            child=serializers.EmailField(),
+            required=False,
+        )
+        if "committee_members" in fields:
+            fields["committee_members"].read_only = True
+        return fields
+
+    def get_committee_member_emails(self, obj):
+        return list(obj.committee_members.values_list("email", flat=True))
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["committee_member_emails"] = self.get_committee_member_emails(
+            instance
+        )
+        representation.pop("committee_members", None)
+        return representation
+
+    def _set_committee_members(self, instance, emails):
+        users = resolve_committee_member_emails(emails, owner=instance.owner)
+        instance.committee_members.set(users)
+
+    def create(self, validated_data):
+        committee_member_emails = validated_data.pop("committee_member_emails", None)
+        instance = super().create(validated_data)
+        if committee_member_emails is not None:
+            self._set_committee_members(instance, committee_member_emails)
+        return instance
+
+    def update(self, instance, validated_data):
+        committee_member_emails = validated_data.pop("committee_member_emails", None)
+        instance = super().update(instance, validated_data)
+        if committee_member_emails is not None:
+            self._set_committee_members(instance, committee_member_emails)
+        return instance
+
+
+class BenchmarkSerializer(CommitteeMembersMixin, serializers.ModelSerializer):
     class Meta:
         model = Benchmark
         fields = "__all__"
-        read_only_fields = ["owner", "approved_at", "approval_status"]
+        read_only_fields = [
+            "owner",
+            "approved_at",
+            "approval_status",
+            "committee_members",
+        ]
 
     def validate(self, data):
         owner = self.context["request"].user
@@ -36,13 +83,14 @@ class BenchmarkSerializer(serializers.ModelSerializer):
         return data
 
 
-class BenchmarkApprovalSerializer(serializers.ModelSerializer):
+class BenchmarkApprovalSerializer(CommitteeMembersMixin, serializers.ModelSerializer):
     class Meta:
         model = Benchmark
-        read_only_fields = ["owner", "approved_at"]
+        read_only_fields = ["owner", "approved_at", "committee_members"]
         fields = "__all__"
 
     def update(self, instance, validated_data):
+        committee_member_emails = validated_data.pop("committee_member_emails", None)
         if "approval_status" in validated_data:
             if validated_data["approval_status"] != instance.approval_status:
                 instance.approval_status = validated_data["approval_status"]
@@ -52,6 +100,8 @@ class BenchmarkApprovalSerializer(serializers.ModelSerializer):
         for k, v in validated_data.items():
             setattr(instance, k, v)
         instance.save()
+        if committee_member_emails is not None:
+            self._set_committee_members(instance, committee_member_emails)
         return instance
 
     def validate_approval_status(self, approval_status):
@@ -92,6 +142,7 @@ class BenchmarkApprovalSerializer(serializers.ModelSerializer):
                 "dataset_auto_approval_mode",
                 "model_auto_approval_allow_list",
                 "model_auto_approval_mode",
+                "committee_member_emails",
             ]
             for k, v in data.items():
                 if k not in editable_fields:
@@ -105,4 +156,8 @@ class BenchmarkApprovalSerializer(serializers.ModelSerializer):
 class BenchmarkPublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Benchmark
-        exclude = ["dataset_auto_approval_allow_list", "model_auto_approval_allow_list"]
+        exclude = [
+            "dataset_auto_approval_allow_list",
+            "model_auto_approval_allow_list",
+            "committee_members",
+        ]

@@ -61,6 +61,9 @@ class Benchmark(models.Model):
         choices=AUTO_APPROVAL_MODE, max_length=100, default="NEVER"
     )
     user_metadata = models.JSONField(default=dict, blank=True, null=True)
+    committee_members = models.ManyToManyField(
+        User, blank=True, related_name="committee_benchmarks"
+    )
     approved_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
