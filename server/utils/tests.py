@@ -78,6 +78,23 @@ class BenchmarksTest(MedPerfTest):
         self.assertEqual(resp1[0]["id"], benchmark1["id"])
         self.assertEqual(resp2[0]["id"], benchmark2["id"])
 
+    def test_committee_member_sees_managed_benchmarks(self):
+        owner = "bmk_owner"
+        committee = "committee_user"
+        self.create_user(owner)
+        self.create_user(committee)
+
+        benchmark = self.__create_asset(owner)
+        self.add_benchmark_committee_member(benchmark["id"], committee)
+
+        url = self.api_prefix + "/me/benchmarks/"
+        self.set_credentials(committee)
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        benchmark_ids = [item["id"] for item in response.data["results"]]
+        self.assertIn(benchmark["id"], benchmark_ids)
+
 
 class DatasetsTest(MedPerfTest):
     def __create_asset(self, user):
@@ -279,6 +296,41 @@ class BenchmarkDatasetTest(MedPerfTest):
         self.assertEqual(resp1[0]["id"], assoc1["id"])
         self.assertEqual(resp2[0]["id"], assoc2["id"])
 
+    def test_committee_member_sees_benchmark_dataset_associations(self):
+        owner = "bmk_owner"
+        committee = "committee_user"
+        data_owner = "data_owner"
+        self.create_user(owner)
+        self.create_user(committee)
+        self.create_user(data_owner)
+
+        prep, _, _, benchmark = self.shortcut_create_benchmark(
+            owner,
+            owner,
+            owner,
+            owner,
+            name="committee_bmk",
+            target_approval_status="APPROVED",
+            state="OPERATION",
+        )
+        self.set_credentials(data_owner)
+        dataset = self.mock_dataset(
+            prep["id"], generated_uid="dataownergenuid", state="OPERATION"
+        )
+        dataset = self.create_dataset(dataset).data
+        assoc = self.mock_dataset_association(benchmark["id"], dataset["id"])
+        assoc = self.create_dataset_association(assoc, data_owner, data_owner).data
+
+        self.add_benchmark_committee_member(benchmark["id"], committee)
+
+        url = self.api_prefix + "/me/datasets/associations/"
+        self.set_credentials(committee)
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assoc_ids = [item["id"] for item in response.data["results"]]
+        self.assertIn(assoc["id"], assoc_ids)
+
 
 class BenchmarkModelTest(MedPerfTest):
     def __create_asset(self, user):
@@ -342,6 +394,39 @@ class BenchmarkModelTest(MedPerfTest):
         self.assertEqual(len(resp2), 1)
         self.assertEqual(resp1[0]["id"], assoc1["id"])
         self.assertEqual(resp2[0]["id"], assoc2["id"])
+
+    def test_committee_member_sees_benchmark_model_associations(self):
+        owner = "bmk_owner"
+        committee = "committee_user"
+        model_owner = "model_owner"
+        self.create_user(owner)
+        self.create_user(committee)
+        self.create_user(model_owner)
+
+        _, _, _, benchmark = self.shortcut_create_benchmark(
+            owner,
+            owner,
+            owner,
+            owner,
+            name="committee_bmk_models",
+            target_approval_status="APPROVED",
+            state="OPERATION",
+        )
+        self.set_credentials(model_owner)
+        model = self.mock_model(name="model_owner_model", state="OPERATION")
+        model = self.create_model(model).data
+        assoc = self.mock_model_association(benchmark["id"], model["id"])
+        assoc = self.create_model_association(assoc, model_owner, model_owner).data
+
+        self.add_benchmark_committee_member(benchmark["id"], committee)
+
+        url = self.api_prefix + "/me/models/associations/"
+        self.set_credentials(committee)
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        assoc_ids = [item["id"] for item in response.data["results"]]
+        self.assertIn(assoc["id"], assoc_ids)
 
 
 class CertificatesTest(MedPerfTest):

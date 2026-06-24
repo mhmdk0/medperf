@@ -13,12 +13,14 @@ class BenchmarkTest(MedPerfTest):
         ref_model_owner = "ref_model_owner"
         eval_mlcube_owner = "eval_mlcube_owner"
         other_user = "other_user"
+        committee_user = "committee_user"
 
         self.create_user(bmk_owner)
         self.create_user(prep_mlcube_owner)
         self.create_user(ref_model_owner)
         self.create_user(eval_mlcube_owner)
         self.create_user(other_user)
+        self.create_user(committee_user)
 
         # setup globals
         self.bmk_owner = bmk_owner
@@ -26,6 +28,7 @@ class BenchmarkTest(MedPerfTest):
         self.ref_model_owner = ref_model_owner
         self.eval_mlcube_owner = eval_mlcube_owner
         self.other_user = other_user
+        self.committee_user = committee_user
 
         self.url = self.api_prefix + "/benchmarks/{0}/"
         self.set_credentials(None)
@@ -37,6 +40,7 @@ class BenchmarkTest(MedPerfTest):
         {"actor": "ref_model_owner"},
         {"actor": "eval_mlcube_owner"},
         {"actor": "bmk_owner"},
+        {"actor": "committee_user"},
         {"actor": "other_user"},
     ]
 )
@@ -58,11 +62,16 @@ class BenchmarkGetTest(BenchmarkTest):
         self.private_fields = [
             "dataset_auto_approval_allow_list",
             "model_auto_approval_allow_list",
+            "committee_member_emails",
         ]
+        if self.actor == self.committee_user:
+            self.add_benchmark_committee_member(
+                self.testbenchmark["id"], self.committee_user
+            )
         self.set_credentials(self.actor)
 
     def __can_see_private_fields(self):
-        return self.actor == "bmk_owner"
+        return self.actor in (self.bmk_owner, self.committee_user)
 
     def test_generic_get_benchmark(self):
         # Arrange
@@ -74,8 +83,9 @@ class BenchmarkGetTest(BenchmarkTest):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mutable_fields = {"committee_member_emails"}
         for k, v in response.data.items():
-            if k in self.testbenchmark:
+            if k in self.testbenchmark and k not in mutable_fields:
                 self.assertEqual(self.testbenchmark[k], v, f"Unexpected value for {k}")
 
     def test_get_benchmark_private_fields(self):
@@ -528,7 +538,8 @@ class PermissionTest(BenchmarkTest):
         DELETE: for all users except admin
         PUT:
             including approval_status: for all users except admin
-            not including approval_status: for all users except bmk_owner and admin
+            not including approval_status: for all users except bmk_owner,
+            committee members, and admin
     """
 
     def setUp(self):
@@ -545,6 +556,9 @@ class PermissionTest(BenchmarkTest):
         )
         self.testbenchmark = testbenchmark
         self.url = self.url.format(self.testbenchmark["id"])
+        self.add_benchmark_committee_member(
+            self.testbenchmark["id"], self.committee_user
+        )
 
     @parameterized.expand(
         [
@@ -557,6 +571,24 @@ class PermissionTest(BenchmarkTest):
 
         # Act
         response = self.client.get(self.url)
+
+        # Assert
+        self.assertEqual(response.status_code, expected_status)
+
+    @parameterized.expand(
+        [
+            ("bmk_owner", status.HTTP_200_OK),
+            ("committee_user", status.HTTP_200_OK),
+        ]
+    )
+    def test_put_permissions_allowed(self, user, expected_status):
+        # Arrange
+        self.set_credentials(user)
+
+        # Act
+        response = self.client.put(
+            self.url, {"description": "updated by manager"}, format="json"
+        )
 
         # Assert
         self.assertEqual(response.status_code, expected_status)
