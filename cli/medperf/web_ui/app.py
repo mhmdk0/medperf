@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from medperf import config
 from medperf.decorators import clean_except
 from medperf.web_ui.common import custom_exception_handler
-from medperf.utils import print_webui_props
+from medperf.utils import get_update_info, print_webui_props
 from medperf.web_ui.datasets.routes import router as datasets_router
 from medperf.web_ui.benchmarks.routes import router as benchmarks_router
 from medperf.web_ui.containers.routes import router as containers_router
@@ -48,8 +48,17 @@ class NavModeMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+class ClientUpdateMiddleware(BaseHTTPMiddleware):
+    """Attach cached PyPI update metadata for templates (rate-limited in utils)."""
+
+    async def dispatch(self, request, call_next):
+        request.app.state.client_update = get_update_info()
+        return await call_next(request)
+
+
 web_app = FastAPI()
 
+web_app.add_middleware(ClientUpdateMiddleware)
 web_app.add_middleware(NavModeMiddleware)
 
 web_app.include_router(datasets_router, prefix="/datasets")

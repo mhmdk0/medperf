@@ -414,8 +414,16 @@ def test_get_latest_pypi_version_returns_latest_release(mocker):
 
 
 def test_check_for_updates_warns_when_pypi_has_newer_release(mocker, ui):
-    mocker.patch(f"{patch_utils.format('get_latest_pypi_version')}", return_value="0.4.0")
-    mocker.patch("medperf._version.__version__", "0.3.0")
+    mocker.patch(
+        f"{patch_utils.format('get_update_info')}",
+        return_value={
+            "update_available": True,
+            "current_version": "0.3.0",
+            "latest_version": "0.4.0",
+            "upgrade_command": "pip install -U medperf",
+            "checked_at": "2026-06-01T12:00:00+00:00",
+        },
+    )
 
     utils.check_for_updates()
 
@@ -426,9 +434,79 @@ def test_check_for_updates_warns_when_pypi_has_newer_release(mocker, ui):
 
 
 def test_check_for_updates_is_silent_when_up_to_date(mocker, ui):
-    mocker.patch(f"{patch_utils.format('get_latest_pypi_version')}", return_value="0.3.0")
-    mocker.patch("medperf._version.__version__", "0.3.0")
+    mocker.patch(
+        f"{patch_utils.format('get_update_info')}",
+        return_value={
+            "update_available": False,
+            "current_version": "0.3.0",
+            "latest_version": "0.3.0",
+            "upgrade_command": "pip install -U medperf",
+            "checked_at": "2026-06-01T12:00:00+00:00",
+        },
+    )
 
     utils.check_for_updates()
 
     ui.print_warning.assert_not_called()
+
+
+def test_get_update_info_uses_fresh_cache_without_pypi_call(mocker):
+    cache_path = Path(config.config_storage) / ".update_check_cache.test.json"
+    cached = {
+        "update_available": True,
+        "current_version": "0.3.0",
+        "latest_version": "0.4.0",
+        "upgrade_command": "pip install -U medperf",
+        "checked_at": "2099-01-01T00:00:00+00:00",
+    }
+    cache_path.write_text(__import__("json").dumps(cached))
+    mocker.patch.object(config, "update_check_cache_file", str(cache_path))
+    pypi = mocker.patch(f"{patch_utils.format('get_latest_pypi_version')}")
+
+    info = utils.get_update_info()
+
+    assert info == cached
+    pypi.assert_not_called()
+    cache_path.unlink(missing_ok=True)
+
+
+def test_get_update_info_refetches_when_cache_is_stale(mocker):
+    cache_path = Path(config.config_storage) / ".update_check_cache.test.json"
+    cached = {
+        "update_available": False,
+        "current_version": "0.3.0",
+        "latest_version": "0.3.0",
+        "upgrade_command": "pip install -U medperf",
+        "checked_at": "2000-01-01T00:00:00+00:00",
+    }
+    cache_path.write_text(__import__("json").dumps(cached))
+    mocker.patch.object(config, "update_check_cache_file", str(cache_path))
+    mocker.patch(f"{patch_utils.format('get_latest_pypi_version')}", return_value="0.4.0")
+    mocker.patch("medperf._version.__version__", "0.3.0")
+
+    info = utils.get_update_info()
+
+    assert info["update_available"] is True
+    assert info["latest_version"] == "0.4.0"
+    saved = __import__("json").loads(cache_path.read_text())
+    assert saved["latest_version"] == "0.4.0"
+    cache_path.unlink(missing_ok=True)
+
+
+def test_get_update_info_returns_stale_cache_when_pypi_is_unreachable(mocker):
+    cache_path = Path(config.config_storage) / ".update_check_cache.test.json"
+    cached = {
+        "update_available": True,
+        "current_version": "0.3.0",
+        "latest_version": "0.4.0",
+        "upgrade_command": "pip install -U medperf",
+        "checked_at": "2000-01-01T00:00:00+00:00",
+    }
+    cache_path.write_text(__import__("json").dumps(cached))
+    mocker.patch.object(config, "update_check_cache_file", str(cache_path))
+    mocker.patch(f"{patch_utils.format('get_latest_pypi_version')}", return_value=None)
+
+    info = utils.get_update_info()
+
+    assert info == cached
+    cache_path.unlink(missing_ok=True)

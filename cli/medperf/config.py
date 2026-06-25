@@ -71,6 +71,7 @@ pki_assets = str(config_storage / ".pki_assets")
 container_keys_dir = str(config_storage / ".container_keys")
 cc_artifacts_dir = str(config_storage / ".cc_artifacts")
 webui_host_props = str(config_storage / ".webui_host_props")
+update_check_cache_file = str(config_storage / ".update_check_cache.json")
 
 # TODO: should we change this?
 safe_root = ""  # Base path to accept input paths from user.
@@ -303,6 +304,9 @@ webui_max_log_messages = 200  # Max nb of messages that will appear in LogPanel 
 webui_max_chunk_age = 2.0  # Max 2 seconds as age of a chunk
 webui_max_chunk_length = 20  # Max 20 events in a chunk
 webui_max_chunk_size = 64 * 1024  # Max 64 Bytes as chunk size
+# How often the Web UI re-checks PyPI for a newer MedPerf release (seconds).
+# 4 Hours. This number was chosen arbitrarily, but it should be enough to avoid unnecessary requests to PyPI.
+webui_update_check_interval_seconds = 4 * 60 * 60
 
 
 default_profile_name = "default"

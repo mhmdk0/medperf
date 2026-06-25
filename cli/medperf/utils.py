@@ -16,7 +16,7 @@ import json
 from pathlib import Path
 import shutil
 from pexpect import spawn
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from colorama import Fore, Style
 from pexpect.exceptions import TIMEOUT
@@ -468,6 +468,7 @@ def format_errors_dict(errors_dict: dict):
 PYPI_PACKAGE_NAME = "medperf"
 PYPI_JSON_URL = f"https://pypi.org/pypi/{PYPI_PACKAGE_NAME}/json"
 PYPI_REQUEST_TIMEOUT = 5
+UPGRADE_COMMAND = "pip install -U medperf"
 
 
 def get_latest_pypi_version() -> Optional[str]:
@@ -484,28 +485,103 @@ def get_latest_pypi_version() -> Optional[str]:
         return None
 
 
-def check_for_updates() -> None:
-    """Check PyPI for a newer MedPerf release than the installed client."""
-    from medperf._version import __version__
+def _update_check_cache_path() -> Path:
+    return Path(config.update_check_cache_file)
 
-    latest = get_latest_pypi_version()
-    if latest is None:
-        return
 
+def _parse_checked_at(checked_at: Optional[str]) -> Optional[datetime]:
+    if not checked_at:
+        return None
     try:
-        current_version = semver.VersionInfo.parse(__version__)
-        latest_version = semver.VersionInfo.parse(latest)
+        parsed = datetime.fromisoformat(checked_at)
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _update_check_cache_is_fresh(cached: dict) -> bool:
+    checked_at = _parse_checked_at(cached.get("checked_at"))
+    if checked_at is None:
+        return False
+    age_seconds = (datetime.now(timezone.utc) - checked_at).total_seconds()
+    return age_seconds < config.webui_update_check_interval_seconds
+
+
+def _read_update_check_cache(cache_path: Path) -> Optional[dict]:
+    try:
+        with open(cache_path) as cache_file:
+            cached = json.load(cache_file)
+    except (OSError, json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(cached, dict):
+        return None
+    return cached
+
+
+def _write_update_check_cache(cache_path: Path, info: dict) -> None:
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(cache_path, "w") as cache_file:
+        json.dump(info, cache_file)
+
+
+def _is_update_available(current_version: str, latest_version: Optional[str]) -> bool:
+    if latest_version is None:
+        return False
+    try:
+        current = semver.VersionInfo.parse(current_version)
+        latest = semver.VersionInfo.parse(latest_version)
     except ValueError as exc:
         logging.debug("Could not compare MedPerf versions: %s", exc)
-        return
+        return False
+    return latest > current
 
-    if latest_version <= current_version:
+
+def _build_update_info(current_version: str, latest_version: Optional[str]) -> dict:
+    return {
+        "update_available": _is_update_available(current_version, latest_version),
+        "current_version": current_version,
+        "latest_version": latest_version,
+        "upgrade_command": UPGRADE_COMMAND,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def get_update_info(force_refresh: bool = False) -> dict:
+    """Return cached PyPI update metadata, refreshing when the cache expires."""
+    from medperf._version import __version__
+
+    cache_path = _update_check_cache_path()
+    cached = None if force_refresh else _read_update_check_cache(cache_path)
+
+    if cached and _update_check_cache_is_fresh(cached):
+        return cached
+
+    latest = get_latest_pypi_version()
+    if latest is not None:
+        info = _build_update_info(__version__, latest)
+        _write_update_check_cache(cache_path, info)
+        return info
+
+    if cached is not None:
+        return cached
+
+    return _build_update_info(__version__, None)
+
+
+def check_for_updates() -> None:
+    """Check PyPI for a newer MedPerf release than the installed client."""
+    info = get_update_info()
+    if not info.get("update_available"):
         logging.debug("MedPerf client is up to date with PyPI.")
         return
 
+    latest = info["latest_version"]
+    current = info["current_version"]
     config.ui.print_warning(
-        f"MedPerf {latest} is available (you have {__version__}). "
-        "Upgrade with: pip install -U medperf"
+        f"MedPerf {latest} is available (you have {current}). "
+        f"Upgrade with: {info['upgrade_command']}"
     )
 
 

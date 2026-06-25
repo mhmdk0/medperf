@@ -60,6 +60,7 @@
         window.ui_mode = "{{ request.app.state.ui_mode }}";
         window.evaluation_mode = "{{ request.app.state.EVALUATION_MODE }}";
         window.notifications = {{ notifications | tojson }};
+        window.clientUpdate = {{ (request.app.state.client_update or {}) | tojson }};
         window.maxLogMessages = Number("{{ request.app.state.MAXLOGMESSAGES }}");
         window.evSource = null;
     </script>
@@ -72,6 +73,7 @@
 </head>
 <body class="min-h-screen bg-[#f1f8f4] dark:bg-gray-900">
     {% include "partials/navbar.html" %}
+    {% include "partials/update_banner.html" %}
 
     <div class="page-wrap pt-6">
         <div class="main-content">
@@ -102,6 +104,7 @@
     <script src="{{ url_for('static', path='js/prism-json-1.29.0.min.js') }}"></script>
     <script src="{{ url_for('static', path='js/modal-queue.js') }}"></script>
     <script src="{{ url_for('static', path='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', path='js/update_banner.js') }}"></script>
     <script src="{{ url_for('static', path='js/common.js') }}"></script>
 
     {% if task_running %}
