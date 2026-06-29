@@ -1,4 +1,4 @@
-from medperf.exceptions import InvalidArgumentError, MedperfException
+from medperf.exceptions import InvalidArgumentError
 import pytest
 
 from medperf.commands.benchmark.update_committee_members import UpdateCommitteeMembers
@@ -6,7 +6,7 @@ from medperf.commands.benchmark.update_committee_members import UpdateCommitteeM
 
 def test_both_file_and_list_raises():
     # Act & Assert
-    with pytest.raises(MedperfException):
+    with pytest.raises(InvalidArgumentError):
         UpdateCommitteeMembers(
             1,
             committee_emails_file="/somefile",
@@ -25,7 +25,7 @@ def test_committee_email_list_filled(mocker, fs):
     obj.validate_emails()
 
     # Assert
-    assert obj.committee_emails == ["test@example.com", "member@org.com"]
+    assert obj.committee_emails_list == ["test@example.com", "member@org.com"]
 
 
 def test_invalid_email_list(mocker, fs):
@@ -44,7 +44,7 @@ def test_update_calls_comms_with_file_emails(mocker, comms):
     # Arrange
     spy = mocker.patch.object(comms, "update_benchmark")
     obj = UpdateCommitteeMembers(1)
-    obj.committee_emails = ["test@example.com", "member@org.com"]
+    obj.committee_emails_list = ["test@example.com", "member@org.com"]
 
     # Act
     obj.update()
@@ -59,7 +59,9 @@ def test_update_calls_comms_with_file_emails(mocker, comms):
 def test_update_calls_comms_with_inline_emails(mocker, comms):
     # Arrange
     spy = mocker.patch.object(comms, "update_benchmark")
-    obj = UpdateCommitteeMembers(1, committee_emails="member@example.com other@example.com")
+    obj = UpdateCommitteeMembers(
+        1, committee_emails="member@example.com other@example.com"
+    )
     obj.read_emails()
     obj.validate_emails()
 
@@ -73,16 +75,13 @@ def test_update_calls_comms_with_inline_emails(mocker, comms):
     )
 
 
-def test_update_skips_when_no_emails_provided(mocker, comms):
+def test_update_fails_when_no_emails_provided(mocker, comms):
     # Arrange
-    spy = mocker.patch.object(comms, "update_benchmark")
     obj = UpdateCommitteeMembers(1)
 
-    # Act
-    obj.update()
-
-    # Assert
-    spy.assert_not_called()
+    # Act & Assert
+    with pytest.raises(InvalidArgumentError):
+        obj.validate()
 
 
 def test_update_clears_members_with_empty_list(mocker, comms):
