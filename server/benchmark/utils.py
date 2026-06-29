@@ -5,14 +5,12 @@ User = get_user_model()
 
 
 def user_can_manage_benchmark(benchmark, user):
-    if benchmark.owner_id == user.id:
+    if benchmark.owner.id == user.id:
         return True
     return benchmark.committee_members.filter(id=user.id).exists()
 
 
 def resolve_committee_member_emails(emails, owner=None):
-    if emails is None:
-        return None
     normalized_emails = list(
         dict.fromkeys(
             email.lower().strip() for email in emails if email and str(email).strip()

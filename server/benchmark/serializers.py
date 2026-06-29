@@ -5,48 +5,12 @@ from .models import Benchmark
 from .utils import resolve_committee_member_emails
 
 
-class CommitteeMembersMixin:
-    def get_fields(self):
-        fields = super().get_fields()
-        fields["committee_member_emails"] = serializers.ListField(
-            child=serializers.EmailField(),
-            required=False,
-        )
-        if "committee_members" in fields:
-            fields["committee_members"].read_only = True
-        return fields
+class BenchmarkSerializer(serializers.ModelSerializer):
+    committee_member_emails = serializers.ListField(
+        child=serializers.EmailField(),
+        required=False,
+    )
 
-    def get_committee_member_emails(self, obj):
-        return list(obj.committee_members.values_list("email", flat=True))
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation["committee_member_emails"] = self.get_committee_member_emails(
-            instance
-        )
-        representation.pop("committee_members", None)
-        return representation
-
-    def _set_committee_members(self, instance, emails):
-        users = resolve_committee_member_emails(emails, owner=instance.owner)
-        instance.committee_members.set(users)
-
-    def create(self, validated_data):
-        committee_member_emails = validated_data.pop("committee_member_emails", None)
-        instance = super().create(validated_data)
-        if committee_member_emails is not None:
-            self._set_committee_members(instance, committee_member_emails)
-        return instance
-
-    def update(self, instance, validated_data):
-        committee_member_emails = validated_data.pop("committee_member_emails", None)
-        instance = super().update(instance, validated_data)
-        if committee_member_emails is not None:
-            self._set_committee_members(instance, committee_member_emails)
-        return instance
-
-
-class BenchmarkSerializer(CommitteeMembersMixin, serializers.ModelSerializer):
     class Meta:
         model = Benchmark
         fields = "__all__"
@@ -82,8 +46,23 @@ class BenchmarkSerializer(CommitteeMembersMixin, serializers.ModelSerializer):
             data["approval_status"] = "APPROVED"
         return data
 
+    def create(self, validated_data):
+        committee_member_emails = validated_data.pop("committee_member_emails", None)
+        instance = super().create(validated_data)
+        if committee_member_emails is not None:
+            users = resolve_committee_member_emails(
+                committee_member_emails, owner=instance.owner
+            )
+            instance.committee_members.set(users)
+        return instance
 
-class BenchmarkApprovalSerializer(CommitteeMembersMixin, serializers.ModelSerializer):
+
+class BenchmarkApprovalSerializer(serializers.ModelSerializer):
+    committee_member_emails = serializers.ListField(
+        child=serializers.EmailField(),
+        required=False,
+    )
+
     class Meta:
         model = Benchmark
         read_only_fields = ["owner", "approved_at", "committee_members"]
@@ -101,7 +80,10 @@ class BenchmarkApprovalSerializer(CommitteeMembersMixin, serializers.ModelSerial
             setattr(instance, k, v)
         instance.save()
         if committee_member_emails is not None:
-            self._set_committee_members(instance, committee_member_emails)
+            users = resolve_committee_member_emails(
+                committee_member_emails, owner=instance.owner
+            )
+            instance.committee_members.set(users)
         return instance
 
     def validate_approval_status(self, approval_status):

@@ -73,3 +73,7 @@ class Benchmark(models.Model):
 
     class Meta:
         ordering = ["modified_at"]
+
+    @property
+    def committee_member_emails(self):
+        return list(self.committee_members.values_list("email", flat=True))
