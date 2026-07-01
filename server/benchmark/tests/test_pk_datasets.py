@@ -14,8 +14,8 @@ class BenchmarkTest(MedPerfTest):
         eval_mlcube_owner = "eval_mlcube_owner"
         data1_owner = "data1_owner"
         data2_owner = "data2_owner"
-        other_user = "other_user"
         committee_user = "committee_user"
+        other_user = "other_user"
 
         self.create_user(bmk_owner)
         self.create_user(prep_mlcube_owner)
@@ -23,8 +23,8 @@ class BenchmarkTest(MedPerfTest):
         self.create_user(eval_mlcube_owner)
         self.create_user(data1_owner)
         self.create_user(data2_owner)
-        self.create_user(other_user)
         self.create_user(committee_user)
+        self.create_user(other_user)
 
         # create benchmark and datasets
         prep, _, _, benchmark = self.shortcut_create_benchmark(
@@ -49,8 +49,8 @@ class BenchmarkTest(MedPerfTest):
         self.eval_mlcube_owner = eval_mlcube_owner
         self.data1_owner = data1_owner
         self.data2_owner = data2_owner
-        self.other_user = other_user
         self.committee_user = committee_user
+        self.other_user = other_user
         self.benchmark_id = benchmark["id"]
         self.data1_id = data1["id"]
         self.data2_id = data2["id"]
@@ -62,6 +62,7 @@ class BenchmarkTest(MedPerfTest):
 @parameterized_class(
     [
         {"actor": "bmk_owner"},
+        {"actor": "committee_user"},
     ]
 )
 class BenchmarkDatasetGetListTest(BenchmarkTest):
@@ -87,6 +88,7 @@ class BenchmarkDatasetGetListTest(BenchmarkTest):
         )
         self.create_dataset_association(assoc, self.data2_owner, self.bmk_owner)
 
+        self.add_benchmark_committee_member(self.benchmark_id, self.committee_user)
         self.visible_fields = ["approval_status", "created_at", "dataset"]
         self.set_credentials(self.actor)
 
@@ -110,7 +112,7 @@ class BenchmarkDatasetGetListTest(BenchmarkTest):
 class PermissionTest(BenchmarkTest):
     """Test module for permissions of /benchmarks/{pk}/datasets/ endpoint
     Non-permitted actions:
-        GET: for all users except benchmark owner, committee members, and admin
+        GET: for all users except benchmark owner, committee user, and admin
     """
 
     def setUp(self):
@@ -124,13 +126,10 @@ class PermissionTest(BenchmarkTest):
         )
         self.create_dataset_association(assoc, self.data1_owner, self.bmk_owner)
         self.url = self.url.format(self.benchmark_id)
-        self.add_benchmark_committee_member(self.benchmark_id, self.committee_user)
         self.set_credentials(None)
 
     @parameterized.expand(
         [
-            ("bmk_owner", status.HTTP_200_OK),
-            ("committee_user", status.HTTP_200_OK),
             ("prep_mlcube_owner", status.HTTP_403_FORBIDDEN),
             ("ref_model_owner", status.HTTP_403_FORBIDDEN),
             ("eval_mlcube_owner", status.HTTP_403_FORBIDDEN),
