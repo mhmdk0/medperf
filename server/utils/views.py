@@ -311,7 +311,9 @@ class DatasetAssociationList(GenericAPIView):
             as_committee_member = BenchmarkDataset.objects.filter(
                 benchmark__committee_members__id=pk
             )
-            return as_dataset_owner | as_benchmark_owner | as_committee_member
+            return (
+                as_dataset_owner | as_benchmark_owner | as_committee_member
+            ).distinct()
         except BenchmarkDataset.DoesNotExist:
             raise Http404
 
@@ -332,13 +334,13 @@ class ModelAssociationList(GenericAPIView):
     def get_object(self, pk):
         try:
             as_model_owner = BenchmarkModel.objects.filter(model__owner__id=pk)
-            as_benchmark_owner = BenchmarkModel.objects.filter(
-                benchmark__owner__id=pk
-            )
+            as_benchmark_owner = BenchmarkModel.objects.filter(benchmark__owner__id=pk)
             as_committee_member = BenchmarkModel.objects.filter(
                 benchmark__committee_members__id=pk
             )
-            return as_model_owner | as_benchmark_owner | as_committee_member
+            return (
+                as_model_owner | as_benchmark_owner | as_committee_member
+            ).distinct()
         except BenchmarkModel.DoesNotExist:
             raise Http404
 

@@ -77,23 +77,15 @@ class Benchmark(Entity):
         self.model_auto_approval_mode = self._model.model_auto_approval_mode
         self.committee_member_emails = self._model.committee_member_emails
 
-    @staticmethod
-    def user_can_manage(benchmark, user_data=None):
+    def user_can_manage(self, user_data=None):
         user_data = user_data or get_medperf_user_data()
-        if benchmark.owner == user_data["id"]:
+        if self.owner == user_data["id"]:
             return True
+
         user_email = user_data["email"].lower()
-        committee_emails = [
-            email.lower() for email in (benchmark.committee_member_emails or [])
-        ]
+        committee_emails = [email.lower() for email in self.committee_member_emails]
         if user_email in committee_emails:
             return True
-        if benchmark.id and not committee_emails:
-            benchmark = Benchmark.get(benchmark.id)
-            committee_emails = [
-                email.lower() for email in (benchmark.committee_member_emails or [])
-            ]
-            return user_email in committee_emails
         return False
 
     @property

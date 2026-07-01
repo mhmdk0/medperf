@@ -1,7 +1,7 @@
 import os
 
 import medperf.config as config
-from medperf.exceptions import InvalidArgumentError, MedperfException
+from medperf.exceptions import InvalidArgumentError
 from medperf.utils import sanitize_path, validate_and_normalize_emails
 
 
@@ -35,15 +35,13 @@ class UpdateCommitteeMembers:
         self.benchmark_uid = benchmark_uid
         self.committee_emails_file = sanitize_path(committee_emails_file)
         self.committee_emails = committee_emails
+        self.committee_emails_list = None
 
     def validate(self):
-        if (
-            self.committee_emails_file is not None
-            and self.committee_emails is not None
-        ):
-            raise MedperfException(
-                "Internal Error: Both a file and a list of emails are provided."
-            )
+        if self.committee_emails_file is not None and self.committee_emails is not None:
+            raise InvalidArgumentError("Both a file and a list of emails are provided.")
+        if self.committee_emails_file is None and self.committee_emails is None:
+            raise InvalidArgumentError("No emails provided.")
 
         if self.committee_emails_file and not os.path.isfile(
             self.committee_emails_file
@@ -59,23 +57,19 @@ class UpdateCommitteeMembers:
 
     def read_emails(self):
         if self.committee_emails_file is not None:
-            self.committee_emails = self.__read_emails_file(
+            self.committee_emails_list = self.__read_emails_file(
                 self.committee_emails_file
             )
-        elif self.committee_emails is not None:
-            self.committee_emails = self.committee_emails.strip().split(" ")
+        else:
+            self.committee_emails_list = self.committee_emails.strip().split(" ")
 
     def validate_emails(self):
-        if self.committee_emails is not None:
-            self.committee_emails = validate_and_normalize_emails(
-                self.committee_emails
-            )
+        self.committee_emails_list = validate_and_normalize_emails(
+            self.committee_emails_list
+        )
 
     def update(self):
-        if self.committee_emails is None:
-            return
-
         config.comms.update_benchmark(
             self.benchmark_uid,
-            {"committee_member_emails": self.committee_emails},
+            {"committee_member_emails": self.committee_emails_list},
         )

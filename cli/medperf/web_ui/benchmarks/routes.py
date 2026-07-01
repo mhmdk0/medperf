@@ -102,7 +102,7 @@ def benchmark_detail_ui(
     dataset_assoc_pending = False
     model_assoc_pending = False
     current_user_is_benchmark_owner = benchmark.owner == get_medperf_user_data()["id"]
-    current_user_can_manage_benchmark = Benchmark.user_can_manage(benchmark)
+    current_user_can_manage_benchmark = benchmark.user_can_manage()
     if current_user_can_manage_benchmark:
         datasets_associations = Benchmark.get_datasets_associations(
             benchmark_uid=benchmark_id
@@ -405,8 +405,8 @@ def preparation_dashboard(
     error_message = "Failed to load dashboard: "
 
     benchmark = Benchmark.get(benchmark_id)
-    is_owner = Benchmark.user_can_manage(benchmark)
-    if not is_owner:
+    can_manage = benchmark.user_can_manage()
+    if not can_manage:
         errors = True
         error_message += (
             "Only the benchmark owner or committee members can access the dashboard."
