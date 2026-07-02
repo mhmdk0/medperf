@@ -1,0 +1,66 @@
+# Standard MedPerf data-preparator manifest. To MedPerf this is an ordinary
+# single-container, 3-task preparator; the multi-step workflow happens inside the
+# `prepare` task. `report_file` and `metadata_path` are declared so MedPerf mounts
+# them and ships the per-subject progress the engine writes.
+container_type: DockerImage
+image: my-org/my-data-prep:0.0.1
+tasks:
+  prepare:
+    run_args:
+      command: prep-workflow prepare
+    input_volumes:
+      data_path:
+        mount_path: /mlcommons/volumes/raw_data
+        type: directory
+      labels_path:
+        mount_path: /mlcommons/volumes/raw_labels
+        type: directory
+      parameters_file:
+        mount_path: /mlcommons/volumes/parameters/parameters_file.yaml
+        type: file
+      additional_files:
+        mount_path: /mlcommons/volumes/additional_files
+        type: directory
+    output_volumes:
+      output_path:
+        mount_path: /mlcommons/volumes/data
+        type: directory
+      output_labels_path:
+        mount_path: /mlcommons/volumes/labels
+        type: directory
+      metadata_path:
+        mount_path: /mlcommons/volumes/metadata
+        type: directory
+      report_file:
+        mount_path: /mlcommons/volumes/report/report.yaml
+        type: file
+  sanity_check:
+    run_args:
+      command: prep-workflow sanity_check
+    input_volumes:
+      data_path:
+        mount_path: /mlcommons/volumes/data
+        type: directory
+      labels_path:
+        mount_path: /mlcommons/volumes/labels
+        type: directory
+      parameters_file:
+        mount_path: /mlcommons/volumes/parameters/parameters_file.yaml
+        type: file
+  statistics:
+    run_args:
+      command: prep-workflow statistics
+    input_volumes:
+      data_path:
+        mount_path: /mlcommons/volumes/data
+        type: directory
+      labels_path:
+        mount_path: /mlcommons/volumes/labels
+        type: directory
+      parameters_file:
+        mount_path: /mlcommons/volumes/parameters/parameters_file.yaml
+        type: file
+    output_volumes:
+      output_path:
+        mount_path: /mlcommons/volumes/statistics/statistics.yaml
+        type: file

@@ -1,0 +1,25 @@
+# The control graph for the `prepare` task. Only *ordering* lives here; every
+# step shares the container filesystem, so there are no images or mounts.
+#
+# The first step must be a barrier (per_subject: false) that establishes the
+# subject list. The built-in `DiscoverSubjects` registers one subject per
+# sub-directory of the raw input data.
+
+max_workers: 4
+
+steps:
+  - id: discover
+    step: DiscoverSubjects
+    per_subject: false
+    next: convert
+
+  - id: convert
+    step: Convert
+    per_subject: true
+    limit: 4
+    next: collect
+
+  - id: collect
+    step: Collect
+    per_subject: false
+    next: null

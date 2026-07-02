@@ -1,0 +1,65 @@
+# MedPerf sees an ordinary 3-task DockerImage preparator; the multi-step RANO
+# workflow runs inside the `prepare` task. Mount paths follow the /workspace
+# layout the reused stages expect.
+container_type: DockerImage
+image: mlcommons/rano-data-prep-workflow:0.1.0
+tasks:
+  prepare:
+    run_args:
+      command: python3 -m prep_workflow.main prepare
+    input_volumes:
+      data_path:
+        mount_path: /workspace/input_data
+        type: directory
+      labels_path:
+        mount_path: /workspace/input_labels
+        type: directory
+      parameters_file:
+        mount_path: /workspace/parameters.yaml
+        type: file
+      additional_files:
+        mount_path: /workspace/additional_files
+        type: directory
+    output_volumes:
+      output_path:
+        mount_path: /workspace/data
+        type: directory
+      output_labels_path:
+        mount_path: /workspace/labels
+        type: directory
+      metadata_path:
+        mount_path: /workspace/metadata
+        type: directory
+      report_file:
+        mount_path: /workspace/report.yaml
+        type: file
+  sanity_check:
+    run_args:
+      command: python3 -m prep_workflow.main sanity_check
+    input_volumes:
+      data_path:
+        mount_path: /workspace/data
+        type: directory
+      labels_path:
+        mount_path: /workspace/labels
+        type: directory
+      parameters_file:
+        mount_path: /workspace/parameters.yaml
+        type: file
+  statistics:
+    run_args:
+      command: python3 -m prep_workflow.main statistics
+    input_volumes:
+      data_path:
+        mount_path: /workspace/data
+        type: directory
+      labels_path:
+        mount_path: /workspace/labels
+        type: directory
+      parameters_file:
+        mount_path: /workspace/parameters.yaml
+        type: file
+    output_volumes:
+      output_path:
+        mount_path: /workspace/statistics.yaml
+        type: file
