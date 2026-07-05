@@ -16,7 +16,6 @@ class BenchmarkTest(MedPerfTest):
         model2_owner = "model2_owner"
         data1_owner = "data1_owner"
         data2_owner = "data2_owner"
-        committee_user = "committee_user"
         other_user = "other_user"
 
         self.create_user(bmk_owner)
@@ -27,7 +26,6 @@ class BenchmarkTest(MedPerfTest):
         self.create_user(model2_owner)
         self.create_user(data1_owner)
         self.create_user(data2_owner)
-        self.create_user(committee_user)
         self.create_user(other_user)
 
         # create benchmark and mlcubes
@@ -82,7 +80,6 @@ class BenchmarkTest(MedPerfTest):
         self.model2_owner = model2_owner
         self.data1_owner = data1_owner
         self.data2_owner = data2_owner
-        self.committee_user = committee_user
         self.other_user = other_user
         self.benchmark_id = benchmark["id"]
         self.model1_id = model1["id"]
@@ -96,7 +93,6 @@ class BenchmarkTest(MedPerfTest):
     [
         {"actor": "bmk_owner"},
         {"actor": "data2_owner"},
-        {"actor": "committee_user"},
     ]
 )
 class BenchmarkModelGetListTest(BenchmarkTest):
@@ -122,7 +118,6 @@ class BenchmarkModelGetListTest(BenchmarkTest):
         )
         self.create_model_association(assoc, self.model2_owner, self.bmk_owner)
 
-        self.add_benchmark_committee_member(self.benchmark_id, self.committee_user)
         self.visible_fields = ["approval_status", "created_at", "model"]
         self.set_credentials(self.actor)
 
@@ -146,8 +141,7 @@ class BenchmarkModelGetListTest(BenchmarkTest):
 class PermissionTest(BenchmarkTest):
     """Test module for permissions of /benchmarks/{pk}/models/ endpoint
     Non-permitted actions:
-        GET: for all users except benchmark owner, committee user, dataset owners
-            with approved associations, and admin
+        GET: for unauthenticated users
     """
 
     def setUp(self):

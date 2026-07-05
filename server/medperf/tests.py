@@ -235,15 +235,6 @@ class MedPerfTest(TestCase):
 
         return prep, ref_model, eval, benchmark
 
-    def add_benchmark_committee_member(self, benchmark_id, committee_username):
-        from django.contrib.auth import get_user_model
-        from benchmark.models import Benchmark
-
-        User = get_user_model()
-        benchmark = Benchmark.objects.get(pk=benchmark_id)
-        user = User.objects.get(email=f"{committee_username}@example.com")
-        benchmark.committee_members.add(user)
-
     def create_ca(self, ca_data):
         """Helper to create a CA
 

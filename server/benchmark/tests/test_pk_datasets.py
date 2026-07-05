@@ -14,7 +14,6 @@ class BenchmarkTest(MedPerfTest):
         eval_mlcube_owner = "eval_mlcube_owner"
         data1_owner = "data1_owner"
         data2_owner = "data2_owner"
-        committee_user = "committee_user"
         other_user = "other_user"
 
         self.create_user(bmk_owner)
@@ -23,7 +22,6 @@ class BenchmarkTest(MedPerfTest):
         self.create_user(eval_mlcube_owner)
         self.create_user(data1_owner)
         self.create_user(data2_owner)
-        self.create_user(committee_user)
         self.create_user(other_user)
 
         # create benchmark and datasets
@@ -49,7 +47,6 @@ class BenchmarkTest(MedPerfTest):
         self.eval_mlcube_owner = eval_mlcube_owner
         self.data1_owner = data1_owner
         self.data2_owner = data2_owner
-        self.committee_user = committee_user
         self.other_user = other_user
         self.benchmark_id = benchmark["id"]
         self.data1_id = data1["id"]
@@ -62,7 +59,6 @@ class BenchmarkTest(MedPerfTest):
 @parameterized_class(
     [
         {"actor": "bmk_owner"},
-        {"actor": "committee_user"},
     ]
 )
 class BenchmarkDatasetGetListTest(BenchmarkTest):
@@ -88,7 +84,6 @@ class BenchmarkDatasetGetListTest(BenchmarkTest):
         )
         self.create_dataset_association(assoc, self.data2_owner, self.bmk_owner)
 
-        self.add_benchmark_committee_member(self.benchmark_id, self.committee_user)
         self.visible_fields = ["approval_status", "created_at", "dataset"]
         self.set_credentials(self.actor)
 
@@ -112,7 +107,7 @@ class BenchmarkDatasetGetListTest(BenchmarkTest):
 class PermissionTest(BenchmarkTest):
     """Test module for permissions of /benchmarks/{pk}/datasets/ endpoint
     Non-permitted actions:
-        GET: for all users except benchmark owner, committee user, and admin
+        GET: for all users except benchmark owner and admin
     """
 
     def setUp(self):

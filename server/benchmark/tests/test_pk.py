@@ -58,7 +58,6 @@ class BenchmarkGetTest(BenchmarkTest):
         self.private_fields = [
             "dataset_auto_approval_allow_list",
             "model_auto_approval_allow_list",
-            "committee_member_emails",
         ]
         self.set_credentials(self.actor)
 
@@ -75,9 +74,8 @@ class BenchmarkGetTest(BenchmarkTest):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        mutable_fields = {"committee_member_emails"}
         for k, v in response.data.items():
-            if k in self.testbenchmark and k not in mutable_fields:
+            if k in self.testbenchmark:
                 self.assertEqual(self.testbenchmark[k], v, f"Unexpected value for {k}")
 
     def test_get_benchmark_private_fields(self):
@@ -530,8 +528,7 @@ class PermissionTest(BenchmarkTest):
         DELETE: for all users except admin
         PUT:
             including approval_status: for all users except admin
-            not including approval_status: for all users except bmk_owner,
-            committee members, and admin
+            not including approval_status: for all users except bmk_owner and admin
     """
 
     def setUp(self):
