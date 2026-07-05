@@ -77,3 +77,8 @@ class Benchmark(models.Model):
     @property
     def committee_member_emails(self):
         return list(self.committee_members.values_list("email", flat=True))
+
+    def user_can_manage_benchmark(self, user):
+        if self.owner.id == user.id:
+            return True
+        return self.committee_members.filter(id=user.id).exists()

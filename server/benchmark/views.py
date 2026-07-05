@@ -23,7 +23,6 @@ from .permissions import (
     IsAssociatedDatasetOwner,
     IsAssociatedModelOwner,
 )
-from .utils import user_can_manage_benchmark
 
 
 class BenchmarkList(GenericAPIView):
@@ -191,7 +190,7 @@ class BenchmarkDetail(GenericAPIView):
         Retrieve a benchmark instance.
         """
         benchmark = self.get_object(pk)
-        if user_can_manage_benchmark(benchmark, request.user):
+        if benchmark.user_can_manage_benchmark(request.user):
             serializer = BenchmarkSerializer(benchmark)
         else:
             serializer = BenchmarkPublicSerializer(benchmark)

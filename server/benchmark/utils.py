@@ -4,12 +4,6 @@ from rest_framework import serializers
 User = get_user_model()
 
 
-def user_can_manage_benchmark(benchmark, user):
-    if benchmark.owner.id == user.id:
-        return True
-    return benchmark.committee_members.filter(id=user.id).exists()
-
-
 def resolve_committee_member_emails(emails, owner=None):
     normalized_emails = list(
         dict.fromkeys(
