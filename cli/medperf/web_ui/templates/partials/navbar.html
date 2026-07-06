@@ -56,7 +56,14 @@
                     <div x-show="userOpen" x-cloak x-transition class="absolute right-0 mt-2 min-w-56 max-w-[20rem] w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border-2 border-gray-200 dark:border-gray-700 py-2 z-50 overflow-hidden" style="display: none;">
                         <div class="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm border-b border-gray-200 dark:border-gray-700 min-w-0">
                             Logged in as:<br><strong class="block truncate text-gray-900 dark:text-white" title="{{ request.app.state.user_email }}">{{ request.app.state.user_email }}</strong>
+                            {% set installed_version = (request.app.state.update_check or {}).get('current_version') %}
+                            {% if installed_version %}
+                            <span class="block mt-1 text-xs text-gray-400 dark:text-gray-500">MedPerf {{ installed_version }}</span>
+                            {% endif %}
                         </div>
+                        <button type="button" class="check-for-updates-btn w-full text-left flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" data-testid="check-for-updates-menu">
+                            <i class="fas fa-sync-alt mr-2 medperf-accent dark:text-green-400"></i> Check for updates
+                        </button>
                         <a href="/settings" class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                             <i class="fas fa-cog mr-2 medperf-accent dark:text-green-400"></i> Settings
                         </a>
@@ -66,8 +73,15 @@
                     </div>
                 </div>
                 {% else %}
-                <a href="/medperf_login" class="text-white font-semibold px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Login</a>
-                <a href="/settings" class="p-2 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-colors">
+                <button type="button"
+                        class="check-for-updates-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg text-white font-semibold hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                        title="Check for updates"
+                        data-testid="check-for-updates-navbar">
+                    <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                    <span>Check for updates</span>
+                </button>
+                <a href="/medperf_login" class="text-white font-semibold px-4 py-2 rounded-lg hover:bg-white/10 transition-colors shrink-0">Login</a>
+                <a href="/settings" class="p-2 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-colors shrink-0" title="Settings">
                     <i class="fas fa-cog" aria-hidden="true"></i>
                 </a>
                 {% endif %}
@@ -97,6 +111,11 @@
             <a href="/models/ui" class="block py-2 text-white/90 hover:text-white">Models</a>
             <a href="/containers/ui" class="block py-2 text-white/90 hover:text-white">Containers</a>
             <a href="/datasets/ui" class="block py-2 text-white/90 hover:text-white">Datasets</a>
+            {% endif %}
+            {% if not logged_in %}
+            <button type="button" class="check-for-updates-btn w-full text-left py-2 text-white/90 hover:text-white font-semibold cursor-pointer md:hidden" data-testid="check-for-updates-mobile">
+                <i class="fas fa-sync-alt mr-2" aria-hidden="true"></i> Check for updates
+            </button>
             {% endif %}
         </div>
     </div>

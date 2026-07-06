@@ -1,52 +1,88 @@
 (function () {
     "use strict";
 
-    var DISMISS_STORAGE_KEY = "medperf-update-banner-dismissed";
+    const DISMISS_KEY = "medperf-update-banner-dismissed";
+    const UPDATE_KEY = "medperf-update-in-progress";
+    const POLL_MS = 1500;
+    const TIMEOUT_MS = 5 * 60 * 1000;
 
-    function getUpdateInfo() {
-        if (window.clientUpdate && typeof window.clientUpdate === "object") {
-            return window.clientUpdate;
+    function fetchJson(url, options) {
+        return fetch(url, options)
+            .then(function (response) {
+                return response.json().then(function (body) {
+                    return { ok: response.ok, body: body };
+                });
+            })
+            .catch(function () {
+                return { ok: false, body: {} };
+            });
+    }
+
+    function showOverlay(message, failed) {
+        var overlay = document.getElementById("client-update-overlay");
+        if (!overlay) return;
+
+        overlay.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+
+        var title = document.getElementById("client-update-overlay-title");
+        var msg = document.getElementById("client-update-overlay-message");
+        var icon = document.getElementById("client-update-overlay-icon");
+        var dismiss = document.getElementById("client-update-overlay-dismiss");
+
+        if (title) title.textContent = failed ? "Update failed" : "Updating MedPerf";
+        if (msg) msg.textContent = message;
+        if (icon) {
+            icon.className = failed
+                ? "fas fa-exclamation-triangle text-2xl text-amber-600"
+                : "fas fa-sync-alt fa-spin text-2xl";
         }
-        return null;
+        if (dismiss) dismiss.classList.toggle("hidden", !failed);
     }
 
-    function readBannerData(banner) {
-        return {
-            updateAvailable: banner.getAttribute("data-update-available") === "true",
-            latestVersion: banner.getAttribute("data-latest-version") || "",
-            currentVersion: banner.getAttribute("data-current-version") || "",
-            upgradeCommand: banner.getAttribute("data-upgrade-command") || "pip install -U medperf",
-        };
+    function hideOverlay() {
+        var overlay = document.getElementById("client-update-overlay");
+        if (!overlay) return;
+        overlay.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
     }
 
-    function applyUpdateInfo(banner, info) {
-        if (!info) return readBannerData(banner);
+    function showProgressBanner(targetVersion) {
+        var progress = document.getElementById("client-update-progress-banner");
+        var banner = document.getElementById("client-update-banner");
+        if (banner) banner.classList.add("hidden");
+        if (!progress) return;
 
-        var merged = {
-            updateAvailable: Boolean(info.update_available),
-            latestVersion: info.latest_version || "",
-            currentVersion: info.current_version || "",
-            upgradeCommand: info.upgrade_command || "pip install -U medperf",
-        };
-
-        banner.setAttribute("data-update-available", merged.updateAvailable ? "true" : "false");
-        banner.setAttribute("data-latest-version", merged.latestVersion);
-        banner.setAttribute("data-current-version", merged.currentVersion);
-        banner.setAttribute("data-upgrade-command", merged.upgradeCommand);
-        return merged;
+        var label = document.getElementById("client-update-progress-label");
+        if (label) {
+            label.textContent = targetVersion
+                ? "Updating MedPerf to " + targetVersion + "…"
+                : "MedPerf update in progress…";
+        }
+        progress.classList.remove("hidden");
     }
 
-    function isDismissedForVersion(latestVersion) {
+    function saveUpdateSession(targetVersion) {
         try {
-            return localStorage.getItem(DISMISS_STORAGE_KEY) === latestVersion;
+            sessionStorage.setItem(
+                UPDATE_KEY,
+                JSON.stringify({ targetVersion: targetVersion, startedAt: Date.now() })
+            );
+        } catch (_) {}
+    }
+
+    function loadUpdateSession() {
+        try {
+            var raw = sessionStorage.getItem(UPDATE_KEY);
+            return raw ? JSON.parse(raw) : null;
         } catch (_) {
-            return false;
+            return null;
         }
     }
 
-    function dismissForVersion(latestVersion) {
+    function clearUpdateSession() {
         try {
-            localStorage.setItem(DISMISS_STORAGE_KEY, latestVersion);
+            sessionStorage.removeItem(UPDATE_KEY);
         } catch (_) {}
     }
 
@@ -57,126 +93,230 @@
         var chevron = document.getElementById("client-update-instructions-chevron");
         if (!panel || !button) return;
 
-        if (expanded) {
-            panel.classList.remove("hidden");
-            panel.setAttribute("aria-hidden", "false");
-            button.setAttribute("aria-expanded", "true");
-            if (label) label.textContent = "Hide update steps";
-            if (chevron) chevron.classList.add("rotate-180");
-        } else {
-            panel.classList.add("hidden");
-            panel.setAttribute("aria-hidden", "true");
-            button.setAttribute("aria-expanded", "false");
-            if (label) label.textContent = "Show update steps";
-            if (chevron) chevron.classList.remove("rotate-180");
-        }
+        panel.classList.toggle("hidden", !expanded);
+        panel.setAttribute("aria-hidden", expanded ? "false" : "true");
+        button.setAttribute("aria-expanded", expanded ? "true" : "false");
+        if (label) label.textContent = expanded ? "Hide update steps" : "Show update steps";
+        if (chevron) chevron.classList.toggle("rotate-180", expanded);
     }
 
-    function copyElementText(elementId, button) {
-        var element = document.getElementById(elementId);
-        if (!element) return;
+    function showBanner(info, ignoreDismiss) {
+        var banner = document.getElementById("client-update-banner");
+        if (!banner || !info) return;
 
-        var text = element.textContent || "";
-        function onCopied() {
+        window.updateCheck = info;
+        setInstructionsExpanded(false);
+
+        var latest = info.latest_version || "";
+        var current = info.current_version || "";
+        var show = Boolean(info.update_available && latest);
+
+        if (show && !ignoreDismiss) {
+            try {
+                if (localStorage.getItem(DISMISS_KEY) === latest) show = false;
+            } catch (_) {}
+        }
+
+        if (!show) {
+            banner.classList.add("hidden");
+            return;
+        }
+
+        var summary = document.getElementById("client-update-summary");
+        if (summary) {
+            summary.innerHTML =
+                "A new MedPerf release is available: " +
+                "<strong class=\"font-semibold text-amber-800 dark:text-amber-200\">" + latest + "</strong> " +
+                "<span class=\"text-gray-600 dark:text-gray-300\">(you have " + current + ")</span>";
+        }
+
+        var command = document.getElementById("client-update-command");
+        if (command) command.textContent = info.update_command || "pip install -U medperf";
+
+        banner.dataset.latestVersion = latest;
+        banner.dataset.currentVersion = current;
+        banner.classList.remove("hidden");
+    }
+
+    function checkForUpdates() {
+        document.querySelectorAll(".check-for-updates-btn").forEach(function (btn) {
+            btn.disabled = true;
+        });
+
+        fetchJson("/api/update_check?refresh=true").then(function (result) {
+            if (!result.ok) {
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Update check failed",
+                        result.body.detail || "Could not check for updates.",
+                        "text-bg-danger"
+                    );
+                }
+                return;
+            }
+
+            var body = result.body;
+            showBanner(body, true);
+
+            if (typeof showToast !== "function") return;
+
+            var toastClass = "text-bg-success";
+            if (!body.check_ok) toastClass = "text-bg-danger";
+            else if (body.update_available) toastClass = "text-bg-warning";
+            showToast("MedPerf updates", body.message, toastClass);
+        }).finally(function () {
+            document.querySelectorAll(".check-for-updates-btn").forEach(function (btn) {
+                btn.disabled = false;
+            });
+        });
+    }
+
+    function failUpdate(message) {
+        clearUpdateSession();
+        showOverlay(message, true);
+        showBanner(window.updateCheck || {}, false);
+    }
+
+    function waitForRestart(targetVersion, startedAt) {
+        if (Date.now() - startedAt > TIMEOUT_MS) {
+            failUpdate("Timed out waiting for the Web UI to restart. Check the terminal logs.");
+            return;
+        }
+
+        fetchJson("/api/update_status").then(function (result) {
+            if (result.ok) {
+                var payload = result.body;
+                if (payload.status === "update_failed") {
+                    failUpdate(payload.error || "The update failed. Check the terminal logs.");
+                    return;
+                }
+                if (!payload.update_in_progress && payload.version === targetVersion) {
+                    clearUpdateSession();
+                    window.location.reload();
+                    return;
+                }
+            }
+
+            window.setTimeout(function () {
+                waitForRestart(targetVersion, startedAt);
+            }, POLL_MS);
+        });
+    }
+
+    function startUpdate(targetVersion, currentVersion) {
+        if (window.taskRunning) {
+            showOverlay("A task is currently running. Wait for it to finish before updating.", true);
+            return;
+        }
+
+        showOverlay("Downloading the latest release and restarting the Web UI. This may take a minute.", false);
+        showProgressBanner(targetVersion);
+        saveUpdateSession(targetVersion);
+
+        fetchJson("/api/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                latest_version: targetVersion,
+                current_version: currentVersion,
+            }),
+        }).then(function (result) {
+            if (!result.ok) {
+                failUpdate(result.body.detail || "Could not start the update.");
+                return;
+            }
+            waitForRestart(targetVersion, Date.now());
+        });
+    }
+
+    function resumeUpdateIfNeeded() {
+        var session = loadUpdateSession();
+        if (!session || !session.targetVersion) return false;
+
+        showProgressBanner(session.targetVersion);
+        showOverlay(
+            "Update in progress. Downloading and restarting the Web UI. This page will reload automatically.",
+            false
+        );
+        waitForRestart(session.targetVersion, session.startedAt || Date.now());
+        return true;
+    }
+
+    function copyText(elementId, button) {
+        var element = document.getElementById(elementId);
+        if (!element || !navigator.clipboard) return;
+        navigator.clipboard.writeText(element.textContent || "").then(function () {
             if (!button) return;
             var original = button.textContent;
             button.textContent = "Copied";
             window.setTimeout(function () {
                 button.textContent = original;
             }, 1500);
-        }
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(onCopied).catch(function () {});
-            return;
-        }
-
-        var textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "absolute";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            document.execCommand("copy");
-            onCopied();
-        } catch (_) {}
-        document.body.removeChild(textarea);
+        });
     }
 
-    function populateBannerContent(data) {
-        var summary = document.getElementById("client-update-summary");
-        var upgradeCommand = document.getElementById("client-update-upgrade-command");
-        if (summary) {
-            summary.innerHTML =
-                "A new MedPerf release is available: " +
-                "<strong class=\"font-semibold text-amber-800 dark:text-amber-200\">" + data.latestVersion + "</strong> " +
-                "<span class=\"text-gray-600 dark:text-gray-300\">(you have " + data.currentVersion + ")</span>";
-        }
-        if (upgradeCommand) {
-            upgradeCommand.textContent = data.upgradeCommand;
-        }
-    }
-
-    function refreshClientUpdateBanner(overrideInfo) {
-        var banner = document.getElementById("client-update-banner");
-        if (!banner) return;
-
-        var data = applyUpdateInfo(banner, overrideInfo || getUpdateInfo());
-        setInstructionsExpanded(false);
-
-        if (!data.updateAvailable || !data.latestVersion || isDismissedForVersion(data.latestVersion)) {
-            banner.classList.add("hidden");
-            return;
-        }
-
-        populateBannerContent(data);
-        banner.classList.remove("hidden");
-    }
-
-    function bindUpdateBannerEvents() {
+    function bindEvents() {
         var banner = document.getElementById("client-update-banner");
         if (!banner || banner.dataset.bound === "true") return;
         banner.dataset.bound = "true";
+
+        var updateBtn = document.getElementById("client-update-now-btn");
+        if (updateBtn) {
+            updateBtn.addEventListener("click", function () {
+                var latest = banner.dataset.latestVersion;
+                if (!latest) return;
+                startUpdate(latest, banner.dataset.currentVersion || "");
+            });
+        }
 
         var instructionsBtn = document.getElementById("client-update-instructions-btn");
         if (instructionsBtn) {
             instructionsBtn.addEventListener("click", function () {
                 var panel = document.getElementById("client-update-instructions");
-                var expanded = panel && !panel.classList.contains("hidden");
-                setInstructionsExpanded(!expanded);
+                setInstructionsExpanded(panel && panel.classList.contains("hidden"));
             });
         }
 
         var dismissBtn = document.getElementById("client-update-dismiss-btn");
         if (dismissBtn) {
             dismissBtn.addEventListener("click", function () {
-                var latestVersion = banner.getAttribute("data-latest-version");
-                if (latestVersion) dismissForVersion(latestVersion);
+                if (banner.dataset.latestVersion) {
+                    try {
+                        localStorage.setItem(DISMISS_KEY, banner.dataset.latestVersion);
+                    } catch (_) {}
+                }
                 banner.classList.add("hidden");
                 setInstructionsExpanded(false);
             });
         }
 
+        var overlayDismiss = document.getElementById("client-update-overlay-dismiss");
+        if (overlayDismiss) overlayDismiss.addEventListener("click", hideOverlay);
+
         banner.querySelectorAll(".client-update-copy-btn").forEach(function (button) {
             button.addEventListener("click", function () {
                 var targetId = button.getAttribute("data-copy-target");
-                if (targetId) copyElementText(targetId, button);
+                if (targetId) copyText(targetId, button);
             });
+        });
+
+        document.addEventListener("click", function (event) {
+            var button = event.target.closest(".check-for-updates-btn");
+            if (!button || button.disabled) return;
+            event.preventDefault();
+            checkForUpdates();
         });
     }
 
-    function initializeUpdateBanner() {
-        bindUpdateBannerEvents();
-        refreshClientUpdateBanner();
+    function init() {
+        bindEvents();
+        if (resumeUpdateIfNeeded()) return;
+        showBanner(window.updateCheck || {}, false);
     }
 
-    window.refreshClientUpdateBanner = refreshClientUpdateBanner;
-
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initializeUpdateBanner);
+        document.addEventListener("DOMContentLoaded", init);
     } else {
-        initializeUpdateBanner();
+        init();
     }
 })();

@@ -39,6 +39,8 @@ ALLOWED_PATHS = [
     "/current_task",
     "/api/running_tasks",
     "/api/stop_task",
+    "/api/update_check",
+    "/api/update_status",
 ]
 
 

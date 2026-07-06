@@ -1,12 +1,21 @@
-{% set client_update = request.app.state.client_update or {} %}
+<div id="client-update-progress-banner"
+     class="hidden border-b border-green-200 dark:border-green-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-gray-900"
+     role="status"
+     aria-live="assertive">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+        <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300" aria-hidden="true">
+            <i class="fas fa-sync-alt fa-spin"></i>
+        </span>
+        <p id="client-update-progress-label" class="text-sm sm:text-base font-medium text-green-900 dark:text-green-100">
+            MedPerf update in progress…
+        </p>
+        <span class="text-sm text-green-700 dark:text-green-300">This page will reload automatically.</span>
+    </div>
+</div>
 <div id="client-update-banner"
      class="hidden border-b border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-green-50 dark:from-amber-950/40 dark:to-gray-900"
      role="status"
-     aria-live="polite"
-     data-update-available="{{ 'true' if client_update.get('update_available') else 'false' }}"
-     data-latest-version="{{ client_update.get('latest_version') or '' }}"
-     data-current-version="{{ client_update.get('current_version') or '' }}"
-     data-upgrade-command="{{ client_update.get('upgrade_command') or 'pip install -U medperf' }}">
+     aria-live="polite">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div class="flex items-start sm:items-center gap-3 min-w-0">
@@ -17,8 +26,13 @@
             </div>
             <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                 <button type="button"
+                        id="client-update-now-btn"
+                        class="px-4 py-2 rounded-xl medperf-bg dark:bg-green-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer">
+                    Update now
+                </button>
+                <button type="button"
                         id="client-update-instructions-btn"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-amber-300 dark:border-amber-700 bg-white/80 dark:bg-gray-900/60 text-amber-900 dark:text-amber-200 text-sm font-semibold hover:bg-white dark:hover:bg-gray-900 transition-colors"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-amber-300 dark:border-amber-700 bg-white/80 dark:bg-gray-900/60 text-amber-900 dark:text-amber-200 text-sm font-semibold hover:bg-white dark:hover:bg-gray-900 transition-colors cursor-pointer"
                         aria-expanded="false"
                         aria-controls="client-update-instructions">
                     <span id="client-update-instructions-label">Show update steps</span>
@@ -45,17 +59,17 @@
                     <span class="text-gray-600 dark:text-gray-400">Press <kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-mono text-xs">Ctrl+C</kbd> in the terminal where it is running.</span>
                 </li>
                 <li class="flex flex-col gap-2">
-                    <span class="font-medium">2. Upgrade MedPerf</span>
+                    <span class="font-medium">2. Update MedPerf</span>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <code id="client-update-upgrade-command" class="flex-1 block px-3 py-2 rounded-xl bg-white/90 dark:bg-gray-900/80 border border-amber-200 dark:border-amber-800 font-mono text-xs sm:text-sm overflow-x-auto"></code>
-                        <button type="button" class="client-update-copy-btn shrink-0 px-3 py-2 rounded-lg medperf-bg dark:bg-green-600 text-white text-xs font-semibold hover:opacity-90" data-copy-target="client-update-upgrade-command">Copy</button>
+                        <code id="client-update-command" class="flex-1 block px-3 py-2 rounded-xl bg-white/90 dark:bg-gray-900/80 border border-amber-200 dark:border-amber-800 font-mono text-xs sm:text-sm overflow-x-auto"></code>
+                        <button type="button" class="client-update-copy-btn shrink-0 px-3 py-2 rounded-lg medperf-bg dark:bg-green-600 text-white text-xs font-semibold hover:opacity-90 cursor-pointer" data-copy-target="client-update-command">Copy</button>
                     </div>
                 </li>
                 <li class="flex flex-col gap-2">
                     <span class="font-medium">3. Start the Web UI again</span>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                         <code id="client-update-restart-command" class="flex-1 block px-3 py-2 rounded-xl bg-white/90 dark:bg-gray-900/80 border border-amber-200 dark:border-amber-800 font-mono text-xs sm:text-sm overflow-x-auto">medperf_webui</code>
-                        <button type="button" class="client-update-copy-btn shrink-0 px-3 py-2 rounded-lg medperf-bg dark:bg-green-600 text-white text-xs font-semibold hover:opacity-90" data-copy-target="client-update-restart-command">Copy</button>
+                        <button type="button" class="client-update-copy-btn shrink-0 px-3 py-2 rounded-lg medperf-bg dark:bg-green-600 text-white text-xs font-semibold hover:opacity-90 cursor-pointer" data-copy-target="client-update-restart-command">Copy</button>
                     </div>
                 </li>
                 <li>

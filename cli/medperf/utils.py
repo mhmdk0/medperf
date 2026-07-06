@@ -5,6 +5,8 @@ import re
 import os
 import signal
 import subprocess
+import sys
+import threading
 import yaml
 import random
 import hashlib
@@ -22,7 +24,12 @@ from colorama import Fore, Style
 from pexpect.exceptions import TIMEOUT
 import semver
 import medperf.config as config
-from medperf.exceptions import CleanExit, ExecutionError, InvalidArgumentError
+from medperf.exceptions import (
+    CleanExit,
+    ExecutionError,
+    InvalidArgumentError,
+    UpdateNotNeededError,
+)
 import shlex
 from email_validator import validate_email, EmailNotValidError
 from medperf.enums import CryptoKeyType
@@ -465,124 +472,234 @@ def format_errors_dict(errors_dict: dict):
     return error_msg
 
 
-PYPI_PACKAGE_NAME = "medperf"
-PYPI_JSON_URL = f"https://pypi.org/pypi/{PYPI_PACKAGE_NAME}/json"
-PYPI_REQUEST_TIMEOUT = 5
-UPGRADE_COMMAND = "pip install -U medperf"
+class UpdateManager:
+    PYPI_PACKAGE_NAME = "medperf"
+    PYPI_JSON_URL = f"https://pypi.org/pypi/{PYPI_PACKAGE_NAME}/json"
+    PYPI_REQUEST_TIMEOUT = 5
+    UPDATE_COMMAND = f"pip install -U {PYPI_PACKAGE_NAME}"
 
+    def get_installed_version(self) -> str:
+        """Return the installed package version from environment metadata."""
+        import importlib.metadata
 
-def get_latest_pypi_version() -> Optional[str]:
-    """Return the latest MedPerf version published on PyPI, if available."""
-    try:
-        response = requests.get(PYPI_JSON_URL, timeout=PYPI_REQUEST_TIMEOUT)
-        if response.status_code == 404:
-            logging.debug("MedPerf is not published on PyPI yet.")
+        try:
+            return importlib.metadata.version(self.PYPI_PACKAGE_NAME)
+        except importlib.metadata.PackageNotFoundError:
+            logging.debug("medperf is not installed as a package in this environment")
+            return "unknown"
+
+    def get_latest_version(self) -> Optional[str]:
+        """Return the latest MedPerf version published on PyPI, if available."""
+        try:
+            response = requests.get(
+                self.PYPI_JSON_URL, timeout=self.PYPI_REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            return response.json()["info"]["version"]
+        except Exception as exc:
+            logging.debug("Could not fetch latest MedPerf version from PyPI: %s", exc)
             return None
-        response.raise_for_status()
-        return response.json()["info"]["version"]
-    except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
-        logging.debug("Could not fetch latest MedPerf version from PyPI: %s", exc)
-        return None
 
+    @staticmethod
+    def is_update_available(
+        current_version: str, latest_version: Optional[str]
+    ) -> bool:
+        if latest_version is None:
+            return False
+        try:
+            current = semver.VersionInfo.parse(current_version)
+            latest = semver.VersionInfo.parse(latest_version)
+        except ValueError as exc:
+            logging.debug("Could not compare MedPerf versions: %s", exc)
+            return False
+        return latest > current
 
-def _update_check_cache_path() -> Path:
-    return Path(config.update_check_cache_file)
+    @staticmethod
+    def _update_cache_path() -> Path:
+        return Path(config.update_check_cache_file)
 
+    @staticmethod
+    def _update_cache_is_fresh(cached: dict) -> bool:
+        checked_at = cached.get("checked_at")
+        if not checked_at:
+            return False
+        age_seconds = (
+            datetime.now(timezone.utc) - datetime.fromisoformat(checked_at)
+        ).total_seconds()
+        return age_seconds < config.webui_update_check_interval_seconds
 
-def _parse_checked_at(checked_at: Optional[str]) -> Optional[datetime]:
-    if not checked_at:
-        return None
-    try:
-        parsed = datetime.fromisoformat(checked_at)
-    except (TypeError, ValueError):
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed
-
-
-def _update_check_cache_is_fresh(cached: dict) -> bool:
-    checked_at = _parse_checked_at(cached.get("checked_at"))
-    if checked_at is None:
-        return False
-    age_seconds = (datetime.now(timezone.utc) - checked_at).total_seconds()
-    return age_seconds < config.webui_update_check_interval_seconds
-
-
-def _read_update_check_cache(cache_path: Path) -> Optional[dict]:
-    try:
-        with open(cache_path) as cache_file:
-            cached = json.load(cache_file)
-    except (OSError, json.JSONDecodeError, TypeError):
-        return None
-    if not isinstance(cached, dict):
-        return None
-    return cached
-
-
-def _write_update_check_cache(cache_path: Path, info: dict) -> None:
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(cache_path, "w") as cache_file:
-        json.dump(info, cache_file)
-
-
-def _is_update_available(current_version: str, latest_version: Optional[str]) -> bool:
-    if latest_version is None:
-        return False
-    try:
-        current = semver.VersionInfo.parse(current_version)
-        latest = semver.VersionInfo.parse(latest_version)
-    except ValueError as exc:
-        logging.debug("Could not compare MedPerf versions: %s", exc)
-        return False
-    return latest > current
-
-
-def _build_update_info(current_version: str, latest_version: Optional[str]) -> dict:
-    return {
-        "update_available": _is_update_available(current_version, latest_version),
-        "current_version": current_version,
-        "latest_version": latest_version,
-        "upgrade_command": UPGRADE_COMMAND,
-        "checked_at": datetime.now(timezone.utc).isoformat(),
-    }
-
-
-def get_update_info(force_refresh: bool = False) -> dict:
-    """Return cached PyPI update metadata, refreshing when the cache expires."""
-    from medperf._version import __version__
-
-    cache_path = _update_check_cache_path()
-    cached = None if force_refresh else _read_update_check_cache(cache_path)
-
-    if cached and _update_check_cache_is_fresh(cached):
+    @staticmethod
+    def _read_update_cache(cache_path: Path) -> Optional[dict]:
+        try:
+            with open(cache_path) as cache_file:
+                cached = json.load(cache_file)
+        except (OSError, json.JSONDecodeError, TypeError):
+            return None
         return cached
 
-    latest = get_latest_pypi_version()
-    if latest is not None:
-        info = _build_update_info(__version__, latest)
-        _write_update_check_cache(cache_path, info)
+    @staticmethod
+    def _write_update_cache(cache_path: Path, info: dict) -> None:
+        with open(cache_path, "w") as cache_file:
+            json.dump(info, cache_file)
+
+    def _sync_cache_with_installed(self, cached: dict, installed_version: str) -> dict:
+        """Update cached fields that depend on the currently installed version."""
+        info = dict(cached)
+        latest_version = info.get("latest_version")
+        info["current_version"] = installed_version
+        info["update_available"] = self.is_update_available(
+            installed_version, latest_version
+        )
         return info
 
-    if cached is not None:
-        return cached
+    def _make_update_info(
+        self, current_version: str, latest_version: Optional[str]
+    ) -> dict:
+        return {
+            "update_available": self.is_update_available(
+                current_version, latest_version
+            ),
+            "current_version": current_version,
+            "latest_version": latest_version,
+            "update_command": self.UPDATE_COMMAND,
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+            "check_ok": latest_version is not None,
+        }
 
-    return _build_update_info(__version__, None)
+    def get_update_info(self, force_refresh: bool = False) -> dict:
+        """Return cached update metadata, refreshing when the cache expires."""
+        installed_version = self.get_installed_version()
+        cache_path = self._update_cache_path()
+        cached = None if force_refresh else self._read_update_cache(cache_path)
 
+        if cached and self._update_cache_is_fresh(cached):
+            return self._sync_cache_with_installed(cached, installed_version)
 
-def check_for_updates() -> None:
-    """Check PyPI for a newer MedPerf release than the installed client."""
-    info = get_update_info()
-    if not info.get("update_available"):
-        logging.debug("MedPerf client is up to date with PyPI.")
-        return
+        latest_version = self.get_latest_version()
+        if latest_version is not None:
+            info = self._make_update_info(installed_version, latest_version)
+            self._write_update_cache(cache_path, info)
+            return info
 
-    latest = info["latest_version"]
-    current = info["current_version"]
-    config.ui.print_warning(
-        f"MedPerf {latest} is available (you have {current}). "
-        f"Upgrade with: {info['upgrade_command']}"
-    )
+        if cached is not None:
+            return self._sync_cache_with_installed(cached, installed_version)
+
+        return self._make_update_info(installed_version, None)
+
+    def format_update_check_message(self, info: dict) -> str:
+        installed_version = info.get("current_version") or "unknown"
+        latest_version = info.get("latest_version")
+
+        if info.get("update_available") and latest_version:
+            return (
+                f"Update available: MedPerf {latest_version} "
+                f"(you have {installed_version})"
+            )
+
+        if latest_version:
+            return f"MedPerf is up to date (version {installed_version})"
+
+        return (
+            f"Could not check for updates (PyPI unavailable). "
+            f"Installed version: {installed_version}"
+        )
+
+    def validate_update(
+        self,
+        latest_version: Optional[str],
+        current_version: Optional[str] = None,
+    ) -> str:
+        """Return installed version if updating to latest_version is allowed."""
+        installed_version = self.get_installed_version()
+        target_version = (latest_version or "").strip() or None
+        if not target_version:
+            raise UpdateNotNeededError(
+                f"MedPerf is already up to date (installed {installed_version})."
+            )
+
+        # Compare against installed package and the version the UI showed the user.
+        versions_to_check = {installed_version}
+        if current_version:
+            versions_to_check.add(current_version.strip())
+
+        if any(
+            self.is_update_available(version, target_version)
+            for version in versions_to_check
+        ):
+            return installed_version
+
+        raise UpdateNotNeededError(
+            f"MedPerf is already up to date (installed {installed_version})."
+        )
+
+    def check_for_updates(self) -> None:
+        """Check PyPI for a newer MedPerf release than the installed client."""
+        info = self.get_update_info()
+        if not info.get("update_available"):
+            logging.debug("MedPerf client is up to date with PyPI.")
+            return
+
+        config.ui.print_warning(
+            f"MedPerf {info['latest_version']} is available "
+            f"(you have {info['current_version']}). "
+            f"Update with: {info['update_command']}"
+        )
+
+    @staticmethod
+    def build_webui_restart_argv(port: int) -> List[str]:
+        """Build argv to restart the Web UI in the current Python environment."""
+        bin_dir = Path(sys.executable).resolve().parent
+        executable = bin_dir / "medperf_webui"
+        if executable.is_file():
+            return [str(executable), "run", "--port", str(port)]
+        raise ExecutionError(
+            f"Could not find medperf_webui next to Python executable ({sys.executable})"
+        )
+
+    def _run_pip_update(self) -> None:
+        cmd = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            self.PYPI_PACKAGE_NAME,
+        ]
+        logging.info("Updating MedPerf with: %s", shlex.join(cmd))
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=600,
+            check=False,
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "pip update failed").strip()
+            raise ExecutionError(detail)
+        logging.info("MedPerf package updated successfully")
+
+    def _update_and_restart_webui(self, port: int) -> None:
+        self._run_pip_update()
+        restart_argv = self.build_webui_restart_argv(port)
+        logging.info("Restarting Web UI: %s", shlex.join(restart_argv))
+        os.execv(restart_argv[0], restart_argv)
+
+    def schedule_webui_update(self, port: int, app_state=None) -> None:
+        """Run pip update + execv restart shortly after the caller returns."""
+
+        def _run_update() -> None:
+            import time
+
+            time.sleep(0.5)
+            try:
+                self._update_and_restart_webui(port)
+            except Exception as exc:
+                logging.exception("MedPerf Web UI update failed: %s", exc)
+                if app_state is not None:
+                    app_state.update_in_progress = False
+                    app_state.update_error = str(exc)
+
+        threading.Thread(target=_run_update, daemon=True, name="medperf-update").start()
 
 
 class spawn_and_kill:

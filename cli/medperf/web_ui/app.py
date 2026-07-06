@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from medperf import config
 from medperf.decorators import clean_except
 from medperf.web_ui.common import custom_exception_handler
-from medperf.utils import get_update_info, print_webui_props
+from medperf.utils import UpdateManager, print_webui_props
 from medperf.web_ui.datasets.routes import router as datasets_router
 from medperf.web_ui.benchmarks.routes import router as benchmarks_router
 from medperf.web_ui.containers.routes import router as containers_router
@@ -29,7 +29,7 @@ from medperf.web_ui.medperf_login import router as medperf_login
 from medperf.web_ui.settings import router as settings_router
 from medperf.web_ui.auth import wrap_openapi, NotAuthenticatedException, security_token
 
-JS_VERSION = "1.0.1"
+JS_VERSION = "1.0.4"
 
 UI_MODE_COOKIE = "medperf-mode"
 UI_MODE_TRAINING = "training"
@@ -48,17 +48,17 @@ class NavModeMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-class ClientUpdateMiddleware(BaseHTTPMiddleware):
-    """Attach cached PyPI update metadata for templates (rate-limited in utils)."""
+class UpdateCheckMiddleware(BaseHTTPMiddleware):
+    """Attach cached PyPI update metadata for templates."""
 
     async def dispatch(self, request, call_next):
-        request.app.state.client_update = get_update_info()
+        request.app.state.update_check = UpdateManager().get_update_info()
         return await call_next(request)
 
 
 web_app = FastAPI()
 
-web_app.add_middleware(ClientUpdateMiddleware)
+web_app.add_middleware(UpdateCheckMiddleware)
 web_app.add_middleware(NavModeMiddleware)
 
 web_app.include_router(datasets_router, prefix="/datasets")
@@ -90,6 +90,8 @@ def startup_event():
     web_app.state.task = WebUITask()
     web_app.state.old_tasks = []  # List of [schemas.WebUITask]
     web_app.state.task_running = False
+    web_app.state.update_in_progress = False
+    web_app.state.update_error = None
     web_app.state.MAXLOGMESSAGES = config.webui_max_log_messages
 
     # {benchmark_id: dict} (checks if mounted and files changed)
