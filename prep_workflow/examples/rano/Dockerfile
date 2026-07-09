@@ -4,7 +4,13 @@
 #
 # The scientific code (nnU-Net models, DICOM/NIfTI tooling, stages/constants.py)
 # comes from the RANO base image; we overlay the reused stages + the orchestrator.
+
+# this prebuilt image is based on code from alejandro's branch.
 FROM mlcommons/rano-data-prep-mlcube:1.0.10
+
+RUN /bin/sh -c sed -i '36s|.*|    temp_path = Path("/tmp") / ".report.yaml"|' /project/stages/pipeline.py # buildkit
+RUN /bin/sh -c sed -i '39s|.*|    shutil.move(temp_path, filepath)|' /project/stages/pipeline.py # buildkit
+RUN /bin/sh -c sed -i '1i import shutil' /project/stages/pipeline.py # buildkit
 
 # The workflow orchestrator (provided; authors don't edit it).
 COPY pyproject.toml /orchestrator/pyproject.toml
