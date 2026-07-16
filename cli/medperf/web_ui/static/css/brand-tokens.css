@@ -170,9 +170,24 @@ html.dark body {
 
 .text-brand-accent { color: var(--theme-brand-accent); }
 .text-brand { color: var(--theme-brand); }
+.text-brand-fg { color: var(--theme-brand-fg); }
 .text-success { color: var(--theme-success-text); }
 .text-muted { color: var(--theme-text-muted); }
 .text-secondary { color: var(--theme-text-secondary); }
+
+/* Beat browser :link/:visited defaults on themed anchors */
+a.text-brand-accent:link,
+a.text-brand-accent:visited,
+a.text-brand-accent:hover,
+a.text-brand-accent:active {
+    color: var(--theme-brand-accent);
+}
+a.text-brand-fg:link,
+a.text-brand-fg:visited,
+a.text-brand-fg:hover,
+a.text-brand-fg:active {
+    color: var(--theme-brand-fg);
+}
 
 .bg-brand {
     background-color: var(--theme-brand);

@@ -242,20 +242,20 @@
             <h3 class="text-xl font-bold text-ink mb-4">Confidential Computing Preferences</h3>
             {{ cc_asset_macro.gcp_asset(cc_config_defaults, cc_configured, cc_initialized, cc_last_synced, dataset.id, "dataset", task_running) }}
         </div>
-        {% endif %}
     </div>
 </div>
+{% endif %}
 
 {% if is_owner and ui_mode == request.app.state.EVALUATION_MODE %}
-<div class="bg-card dark:bg-card rounded-2xl shadow-lg border-2 border-border-brand dark:border-border mb-6 overflow-hidden" data-testid="benchmark-associations">
+<div class="w-full bg-card dark:bg-card rounded-2xl shadow-lg border-2 border-border-brand dark:border-border mb-6 overflow-hidden" data-testid="benchmark-associations">
     <div class="px-4 py-3 border-b border-border bg-muted">
         <h3 class="mb-0 text-ink font-bold">Associated benchmarks</h3>
     </div>
     <div class="p-6">
         {% if benchmark_associations %}
-        <ul class="space-y-4">
+        <ul class="space-y-4 w-full">
             {% for assoc in benchmark_associations %}
-            <li class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted">
+            <li class="w-full flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted">
                 <div data-testid="associated-benchmark-item">
                     <a href="/benchmarks/ui/display/{{ assoc }}" class="text-brand-accent hover:underline font-semibold">{{ benchmarks[assoc].name }}</a>
                     <span class="text-muted-fg text-sm ml-2">ID: {{ assoc }}</span>
@@ -274,11 +274,11 @@
 {% for assoc in benchmark_associations %}
 	{% if assoc in approved_benchmarks %}
 	{% set reference_model_id = benchmarks[assoc].reference_model %}
-	<div class="bg-card dark:bg-card rounded-2xl shadow-lg border-2 border-border-brand dark:border-border mt-6 mb-4 overflow-hidden">
-		<div class="px-4 py-3 bg-brand flex justify-between items-center text-ink">
-			<h4 class="mb-0">
+	<div class="w-full bg-card dark:bg-card rounded-2xl shadow-lg border-2 border-border-brand dark:border-border mt-6 mb-4 overflow-hidden">
+		<div class="px-4 py-3 bg-brand flex justify-between items-center text-brand-fg">
+			<h4 class="mb-0 text-brand-fg">
 			Benchmark:
-			<a href="/benchmarks/ui/display/{{ assoc }}" class="text-ink underline font-semibold hover:opacity-80">
+			<a href="/benchmarks/ui/display/{{ assoc }}" class="text-brand-fg underline font-semibold hover:opacity-80">
 				<strong>{{ benchmarks[assoc].name }}</strong>
 			</a>
 			</h4>
@@ -378,7 +378,7 @@
 {% endfor %}
 
 {% if is_owner and ui_mode == request.app.state.TRAINING_MODE %}
-<div class="bg-card dark:bg-card rounded-2xl shadow-lg border-2 border-border-brand dark:border-border mb-6 overflow-hidden">
+<div class="w-full bg-card dark:bg-card rounded-2xl shadow-lg border-2 border-border-brand dark:border-border mb-6 overflow-hidden">
     <div class="px-4 py-3 border-b border-border bg-muted">
         <h3 class="mb-0 text-ink font-bold">Associated training experiments</h3>
     </div>
