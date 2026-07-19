@@ -100,7 +100,7 @@
                 <p class="text-sm text-muted-fg mb-4">A server certificate is already present.</p>
                 {% else %}
                 <p class="text-sm text-muted-fg mb-4">Obtain a server certificate for this aggregator address.</p>
-                <form id="get-server-cert-form" class="space-y-3 mt-auto" action="/aggregators/get_server_certificate" method="post" data-panel-title="Getting server certificate" data-confirm-message="get the server certificate for this aggregator?">
+                <form id="get-server-cert-form" class="space-y-3 mt-10" action="/aggregators/get_server_certificate" method="post" data-panel-title="Getting server certificate" data-confirm-message="get the server certificate for this aggregator?">
                     <input type="hidden" name="aggregator_id" value="{{ entity.id }}">
                     <button type="submit" class="w-full btn btn-sm btn-primary cursor-pointer" {% if task_running %} disabled {% endif %}>Get certificate</button>
                 </form>
