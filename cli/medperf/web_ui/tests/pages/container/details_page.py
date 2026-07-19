@@ -8,6 +8,7 @@ class ContainerDetailsPage(BasePage):
         By.CSS_SELECTOR,
         "button[data-testid='benchmark-associations-btn']",
     )
+    ASSOCIATIONS_LIST = (By.ID, "benchmark-associations-list")
     ASSOCIATION_CARDS = (
         By.CSS_SELECTOR,
         "div[data-testid='benchmark-associations'] div[data-testid='associated-benchmark-item'] a",
@@ -36,6 +37,8 @@ class ContainerDetailsPage(BasePage):
 
     def get_association_cards_titles(self):
         self.click(self.ASSOCIATIONS_BTN)
+        associations = self.find(self.ASSOCIATIONS_LIST)
+        self.wait_for_visibility_element(associations)
         return [i.text for i in self.driver.find_elements(*self.ASSOCIATION_CARDS)]
 
     def grant_access(self, benchmark, emails):
