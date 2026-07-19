@@ -304,6 +304,79 @@ def test_on_error_ignore_skips_subject(tmp_path):
     assert data["status"]["s2"] < 0  # recorded as an error
 
 
+def test_prepare_entrypoint_stops_before_sanity_check(tmp_path):
+    from ._helpers import Recorder
+
+    recorder = Recorder()
+    steps = {
+        "seed": SeedStep(["s1", "s2"]),
+        "prepare": RecordStep("prepare", recorder),
+        "SanityCheck": RecordStep("sanity", recorder, per_subject=False),
+        "Statistics": RecordStep("statistics", recorder, per_subject=False),
+    }
+    spec = {
+        "steps": [
+            {"id": "seed", "per_subject": False, "next": "prepare"},
+            {"id": "prepare", "next": None},
+            {
+                "id": "sanity_check",
+                "step": "SanityCheck",
+                "per_subject": False,
+                "next": "statistics",
+            },
+            {
+                "id": "statistics",
+                "step": "Statistics",
+                "per_subject": False,
+                "next": None,
+            },
+        ],
+    }
+    engine, report = build_engine(tmp_path, spec, steps)
+    engine.run("prepare")
+
+    assert sorted(recorder.runs("prepare")) == ["s1", "s2"]
+    assert recorder.runs("sanity") == []
+    assert recorder.runs("statistics") == []
+    assert report.is_done("s1") and report.is_done("s2")
+
+
+def test_sanity_check_entrypoint_skips_preparation(tmp_path):
+    from ._helpers import Recorder
+
+    recorder = Recorder()
+    steps = {
+        "seed": SeedStep(["unused"]),
+        "prepare": RecordStep("prepare", recorder),
+        "SanityCheck": RecordStep("sanity", recorder, per_subject=False),
+        "Statistics": RecordStep("statistics", recorder, per_subject=False),
+    }
+    spec = {
+        "steps": [
+            {"id": "seed", "per_subject": False, "next": "prepare"},
+            {"id": "prepare", "next": None},
+            {
+                "id": "sanity_check",
+                "step": "SanityCheck",
+                "per_subject": False,
+                "next": "statistics",
+            },
+            {
+                "id": "statistics",
+                "step": "Statistics",
+                "per_subject": False,
+                "next": None,
+            },
+        ],
+    }
+    engine, _ = build_engine(tmp_path, spec, steps)
+    engine.run("sanity_check", resume=False)
+
+    assert recorder.runs("prepare") == []
+    assert recorder.runs("sanity") == [None]
+    assert recorder.runs("statistics") == [None]
+
+
 def test_resume_skips_completed_steps(tmp_path):
     from ._helpers import Recorder
 

@@ -11,6 +11,9 @@ def test_template_workflow_is_valid():
     graph = Graph.from_yaml(os.path.join(ROOT, "template/project/workflow.yaml"))
     assert graph.start_id == "discover"
     assert graph.node("collect").is_terminal
+    assert graph.node("statistics").is_terminal
+    assert "SanityCheck" not in graph.reachable_step_names("prepare")
+    assert "Statistics" in graph.reachable_step_names("sanity_check")
 
 
 def test_ported_example_workflows_are_valid():
@@ -19,7 +22,11 @@ def test_ported_example_workflows_are_valid():
         "examples/hemnet/project/workflow.yaml",
         "examples/rano/project/workflow.yaml",
     ]:
-        Graph.from_yaml(os.path.join(ROOT, rel))  # parses + validates or raises
+        graph = Graph.from_yaml(os.path.join(ROOT, rel))
+        assert "SanityCheck" not in graph.reachable_step_names("prepare")
+        assert "Statistics" not in graph.reachable_step_names("prepare")
+        assert graph.start_at("sanity_check").step_name == "SanityCheck"
+        assert "Statistics" in graph.reachable_step_names("sanity_check")
 
 
 def test_rano_workflow_has_expected_shape():
@@ -31,7 +38,8 @@ def test_rano_workflow_has_expected_shape():
     assert review.else_target == "manual_review"
     # rollback cycles back to an earlier step
     assert graph.node("rollback").nxt == "brain_extraction"
-    # barrier join + manual-approval gate + terminal
+    # barrier join + manual-approval gate + separate terminal flows
     assert graph.node("calculate_changed_voxels").per_subject is False
     assert graph.node("final_confirmation").step_name == "ManualApproval"
     assert graph.node("consolidate").is_terminal
+    assert graph.node("statistics").is_terminal

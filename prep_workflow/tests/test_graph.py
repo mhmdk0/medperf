@@ -21,6 +21,39 @@ def test_parses_linear_chain():
     assert graph.node("a").ordinal == 2
 
 
+def test_start_at_prepare_uses_first_step():
+    graph = Graph.from_spec(_linear_spec())
+    assert graph.start_at("prepare").id == "setup"
+    assert graph.start_at().id == "setup"
+
+
+def test_start_at_resolves_step_id():
+    spec = {
+        "steps": [
+            {"id": "setup", "per_subject": False, "next": None},
+            {"id": "sanity_check", "per_subject": False, "next": None},
+        ]
+    }
+    graph = Graph.from_spec(spec)
+    assert graph.start_at("sanity_check").id == "sanity_check"
+    assert graph.reachable_step_names("sanity_check") == ["sanity_check"]
+
+
+def test_start_at_unknown_step_id():
+    graph = Graph.from_spec(_linear_spec())
+    with pytest.raises(WorkflowError, match="no step with id"):
+        graph.start_at("missing")
+
+
+def test_sanity_check_step_must_be_barrier():
+    spec = _linear_spec()
+    spec["steps"].append(
+        {"id": "sanity_check", "per_subject": True, "next": None}
+    )
+    with pytest.raises(WorkflowError, match="barrier"):
+        Graph.from_spec(spec)
+
+
 def test_parses_branch():
     spec = {
         "steps": [
