@@ -198,7 +198,7 @@
                 <p class="text-sm text-muted-fg">Set dataset to operational first.</p>
                 {% else %}
                 <div class="relative w-full mt-auto overflow-visible" x-data="{ trainingAssocOpen: false }" @click.outside="trainingAssocOpen = false">
-                    <button type="button" class="btn btn-sm btn-info btn-block disabled:cursor-not-allowed" @click="trainingAssocOpen = !trainingAssocOpen" {% if task_running %}disabled{% endif %}><i class="fas fa-link mr-2"></i>Associate with training experiment</button>
+                    <button type="button" class="btn btn-sm btn-info btn-block !h-auto min-h-[2.5rem] !px-5 !py-2.5 !whitespace-normal leading-snug disabled:cursor-not-allowed" @click="trainingAssocOpen = !trainingAssocOpen" {% if task_running %}disabled{% endif %}><i class="fas fa-link"></i>Associate with training experiment</button>
                     <div id="dropdown-training-div" class="absolute left-0 right-0 mt-2 rounded-xl bg-card dark:bg-card shadow-xl border-2 border-border py-2 z-[100] max-h-[400px] overflow-y-auto overflow-x-hidden min-w-[420px]" x-show="trainingAssocOpen" x-cloak x-transition style="display: none;">
                         {% if available_training_experiments %}
                         {% for exp in available_training_experiments %}
