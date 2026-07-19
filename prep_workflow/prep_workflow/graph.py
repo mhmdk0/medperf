@@ -3,6 +3,10 @@
 Only the *control* graph lives in YAML (which step follows which, and under what
 condition). Data flow is implicit: every step shares the container filesystem, so
 there are no per-step images or mounts.
+
+Starts are conventional rather than declared: preparation begins at the first
+step, and ``--start=sanity_check`` begins at the step whose ``id`` is
+``sanity_check``.
 """
 
 from __future__ import annotations
@@ -15,6 +19,8 @@ import yaml
 DEFAULT_WAIT = 60.0
 MANUAL_APPROVAL = "manual_approval"
 MANUAL_APPROVAL_STEP = "ManualApproval"
+PREPARE_START = "prepare"
+SANITY_CHECK_START = "sanity_check"
 
 
 class WorkflowError(Exception):
@@ -59,6 +65,18 @@ class Graph:
     def node(self, node_id: str) -> Node:
         return self.nodes[node_id]
 
+    def start_at(self, name: str = PREPARE_START) -> Node:
+        """Resolve a start name to a node.
+
+        ``prepare`` always begins at the first workflow step. Any other name is
+        treated as a step id (e.g. ``sanity_check``).
+        """
+        if name == PREPARE_START:
+            return self.start
+        if name not in self.nodes:
+            raise WorkflowError(f"workflow.yaml has no step with id '{name}'")
+        return self.nodes[name]
+
     @property
     def start(self) -> Node:
         return self.nodes[self.start_id]
@@ -71,6 +89,22 @@ class Graph:
         for n in self.nodes.values():
             if isinstance(n.nxt, Branch):
                 names.extend(c for c, _ in n.nxt.conditions)
+        return names
+
+    def reachable_step_names(self, start_name: str = PREPARE_START) -> List[str]:
+        """Return step names reachable from a conventional start."""
+        pending = [self.start_at(start_name).id]
+        visited = set()
+        names = []
+        while pending:
+            node_id = pending.pop()
+            if node_id in visited:
+                continue
+            visited.add(node_id)
+            node = self.node(node_id)
+            if node.step_name:
+                names.append(node.step_name)
+            pending.extend(_targets(node))
         return names
 
     # ---- construction ----------------------------------------------------------
@@ -180,4 +214,9 @@ def _validate(graph: Graph) -> None:
         raise WorkflowError(
             f"the first step '{graph.start_id}' must be a barrier (per_subject: false) "
             "so it can establish the subject list"
+        )
+
+    if SANITY_CHECK_START in graph.nodes and graph.node(SANITY_CHECK_START).per_subject:
+        raise WorkflowError(
+            f"step '{SANITY_CHECK_START}' must be a barrier (per_subject: false)"
         )

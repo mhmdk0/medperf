@@ -1,11 +1,12 @@
 """Container entrypoint.
 
-Exposes the three MedPerf data-preparation tasks so the container conforms to the
-standard cube contract:
+One executable drives the preparator through an optional start argument:
 
-* ``prepare``      -> run the full workflow graph
-* ``sanity_check`` -> run the author's ``SanityCheck`` step over the whole dataset
-* ``statistics``   -> run the author's ``Statistics`` step (writes statistics.yaml)
+* no argument               -> run preparation steps only (first workflow step)
+* ``--start=sanity_check``  -> start at the step whose ``id`` is ``sanity_check``
+
+Starts are conventional: preparation begins at the first step; validation begins
+at step id ``sanity_check``.
 
 Mount locations default to the standard MedPerf volume paths and can be overridden
 via environment variables (handy for tests).
@@ -24,8 +25,12 @@ from prep_workflow.builtins import builtin_steps
 from prep_workflow.context import ContextFactory
 from prep_workflow.discovery import add_to_path, discover_conditions, discover_steps
 from prep_workflow.engine import Engine
-from prep_workflow.graph import Graph
+from prep_workflow.graph import Graph, PREPARE_START, SANITY_CHECK_START, WorkflowError
 from prep_workflow.report import Report
+
+STARTS = (PREPARE_START, SANITY_CHECK_START)
+SANITY_CHECK_STEP = "SanityCheck"
+STATISTICS_STEP = "Statistics"
 
 _DEFAULTS = {
     "PROJECT_DIR": "/project",
@@ -74,9 +79,7 @@ def load_registries(
     return steps, conditions
 
 
-def build_engine(
-    workflow_yaml: str, project_dir: str, paths: Paths
-) -> Engine:
+def build_engine(workflow_yaml: str, project_dir: str, paths: Paths) -> Engine:
     graph = Graph.from_yaml(workflow_yaml)
     steps, conditions = load_registries(project_dir)
     _check_registered(graph, steps, conditions)
@@ -95,39 +98,39 @@ def _check_registered(graph: Graph, steps: Dict, conditions: Dict) -> None:
             f"workflow.yaml references unknown conditions: {missing_conditions}"
         )
 
+    try:
+        graph.start_at(SANITY_CHECK_START)
+    except WorkflowError as exc:
+        raise SystemExit(str(exc)) from exc
 
-def cmd_prepare() -> None:
-    build_engine(_env("WORKFLOW_YAML"), _env("PROJECT_DIR"), build_paths()).run()
+    required_steps = (SANITY_CHECK_STEP, STATISTICS_STEP)
+    prepare_steps = graph.reachable_step_names(PREPARE_START)
+    overlapping_steps = [name for name in required_steps if name in prepare_steps]
+    if overlapping_steps:
+        raise SystemExit(
+            "workflow.yaml prepare flow must stop before validation; "
+            f"unexpected steps: {overlapping_steps}"
+        )
 
-
-def _run_single(step_name: str) -> None:
-    """Run one author step once over the whole dataset (for sanity_check/statistics)."""
-    paths = build_paths()
-    steps, _ = load_registries(_env("PROJECT_DIR"))
-    step = steps.get(step_name)
-    if step is None:
-        logging.warning("No '%s' step defined; skipping.", step_name)
-        return
-    report = Report(paths.report_file)
-    report.load()
-    factory = ContextFactory(paths, report)
-    step.run(factory.make(subject=None, subjects=report.subjects()))
+    validation_steps = graph.reachable_step_names(SANITY_CHECK_START)
+    missing_required = [name for name in required_steps if name not in validation_steps]
+    if missing_required:
+        raise SystemExit(
+            f"workflow.yaml step '{SANITY_CHECK_START}' must reach "
+            f"{list(required_steps)}; missing: {missing_required}"
+        )
 
 
 def main(argv=None) -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    parser = argparse.ArgumentParser(description="MedPerf data-prep workflow runner")
-    parser.add_argument(
-        "task", choices=["prepare", "sanity_check", "statistics"]
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
+    parser = argparse.ArgumentParser(description="MedPerf data-prep workflow runner")
+    parser.add_argument("--start", choices=list(STARTS), default=PREPARE_START)
     args = parser.parse_args(argv)
 
-    if args.task == "prepare":
-        cmd_prepare()
-    elif args.task == "sanity_check":
-        _run_single("SanityCheck")
-    else:
-        _run_single("Statistics")
+    engine = build_engine(_env("WORKFLOW_YAML"), _env("PROJECT_DIR"), build_paths())
+    engine.run(args.start, resume=args.start == PREPARE_START)
 
 
 if __name__ == "__main__":

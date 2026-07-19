@@ -63,19 +63,33 @@ class Engine:
         self._live: Set[str] = set()
         self._all_subjects: List[str] = []
         self._failed: Optional[BaseException] = None
+        self._start: Optional[Node] = None
+        self._touch_report = True
 
     # ---- public ----------------------------------------------------------------
-    def run(self) -> None:
+    def run(self, entrypoint: str = "prepare", resume: bool = True) -> None:
+        self._start = self.graph.start_at(entrypoint)
+        self._touch_report = resume
         self.report.load()
         with ThreadPoolExecutor(max_workers=self.graph.max_workers) as self._pool:
-            self._seed()
+            self._seed(resume)
             self._loop()
         if self._failed is not None:
             raise self._failed
 
     # ---- seeding / resume ------------------------------------------------------
-    def _seed(self) -> None:
-        start = self.graph.start
+    def _seed(self, resume: bool) -> None:
+        start = self._start
+        if not resume:
+            # Validation runs over already-prepared data and must not alter the
+            # preparation resume state. A synthetic subject drives dataset-wide
+            # barriers when no preparation report exists (submit-as-prepared).
+            self._all_subjects = self.report.subjects() or ["dataset"]
+            self._live = set(self._all_subjects)
+            for subject in self._all_subjects:
+                self._arrive(subject, start.id)
+            return
+
         fresh = not self.report.has_subjects()
         if fresh:
             ctx = self.cf.make(None, [], start.config)
@@ -100,7 +114,7 @@ class Engine:
         node_id = self.report.get_node(subject)
         if node_id not in self.graph.nodes:
             # crashed before the first transition was recorded; restart after start
-            self._advance(subject, self.graph.start)
+            self._advance(subject, self._start)
         else:
             self._arrive(subject, node_id)
 
@@ -167,14 +181,16 @@ class Engine:
 
         subject = msg[2]
         if node.per_subject:
-            self.report.set_status(subject, node.ordinal, node.id)
+            if self._touch_report:
+                self.report.set_status(subject, node.ordinal, node.id)
             self._advance(subject, node)
         else:
             self._barrier_running.discard(node.id)
             for s in self._barrier_fired.pop(node.id, set()):
                 if s not in self._live:
                     continue
-                self.report.set_status(s, node.ordinal, node.id)
+                if self._touch_report:
+                    self.report.set_status(s, node.ordinal, node.id)
                 self._advance(s, node)
 
     def _handle_error(self, node: Node, subject, exc, tb: str) -> None:
@@ -183,7 +199,8 @@ class Engine:
             self.log.error("Barrier step '%s' failed:\n%s", node.id, tb)
             self._failed = exc
             return
-        self.report.set_error(subject, node.ordinal, node.id, tb)
+        if self._touch_report:
+            self.report.set_error(subject, node.ordinal, node.id, tb)
         if node.on_error == "ignore":
             self.log.warning("Subject '%s' failed at '%s'; skipping.", subject, node.id)
             self._invalidate(subject)
@@ -195,7 +212,8 @@ class Engine:
     def _advance(self, subject: str, node: Node) -> None:
         nxt = node.nxt
         if nxt is None:
-            self.report.mark_done(subject)
+            if self._touch_report:
+                self.report.mark_done(subject)
             self._live.discard(subject)
         elif isinstance(nxt, str):
             self._arrive(subject, nxt)
@@ -204,7 +222,8 @@ class Engine:
 
     def _arrive(self, subject: str, target_id: str) -> None:
         target = self.graph.node(target_id)
-        self.report.set_node(subject, target_id)
+        if self._touch_report:
+            self.report.set_node(subject, target_id)
         if target.per_subject:
             self._ready.append((subject, target_id))
         else:
@@ -221,7 +240,8 @@ class Engine:
             self._arrive(subject, branch.else_target)
             return
         # loop back to self: wait, then re-evaluate (the step is NOT re-run)
-        self.report.set_node(subject, node.id)
+        if self._touch_report:
+            self.report.set_node(subject, node.id)
         heapq.heappush(self._scheduled, (self._now() + branch.wait, subject, node.id))
 
     def _process_due_decisions(self) -> None:
