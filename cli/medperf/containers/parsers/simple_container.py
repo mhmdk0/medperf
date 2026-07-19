@@ -2,6 +2,10 @@ from medperf.containers.parsers.parser import Parser
 from medperf.exceptions import InvalidContainerSpec
 from medperf.enums import ContainerTypes
 import logging
+import shlex
+
+CHECK_NO_PREPARE_TASK = "check_no_prepare"
+SANITY_CHECK_START_ARG = "--start=sanity_check"
 
 
 class SimpleContainerParser(Parser):
@@ -33,6 +37,65 @@ class SimpleContainerParser(Parser):
                     raise InvalidContainerSpec(
                         "Mount type should be either a file or a directory."
                     )
+
+        self._check_data_preparator_constraints()
+
+    def _check_data_preparator_constraints(self):
+        tasks = self.container_config.get("tasks", {})
+        if "prepare" not in tasks:
+            return
+
+        if CHECK_NO_PREPARE_TASK not in tasks:
+            raise InvalidContainerSpec(
+                "Data preparator containers must define 'check_no_prepare' "
+                "alongside 'prepare'."
+            )
+
+        if "sanity_check" in tasks:
+            raise InvalidContainerSpec(
+                "Data preparator containers must generate statistics as part of "
+                "'prepare' and 'check_no_prepare', not as a separate "
+                "'sanity_check' task."
+            )
+
+        if "statistics" in tasks:
+            raise InvalidContainerSpec(
+                "Data preparator containers must generate statistics as part of "
+                "'prepare' and 'check_no_prepare', not as a separate "
+                "'statistics' task."
+            )
+
+        check_task = tasks[CHECK_NO_PREPARE_TASK]
+        command = check_task.get("run_args", {}).get("command", "")
+        if SANITY_CHECK_START_ARG not in self._tokenize_command(command):
+            raise InvalidContainerSpec(
+                "Data preparator 'check_no_prepare' task command must include "
+                f"'{SANITY_CHECK_START_ARG}'."
+            )
+
+        check_outputs = check_task.get("output_volumes", {})
+        if "output_path" not in check_outputs:
+            raise InvalidContainerSpec(
+                "Data preparator 'check_no_prepare' task must define an 'output_path' "
+                "output volume for generated statistics."
+            )
+
+    @staticmethod
+    def _tokenize_command(command) -> list:
+        """Normalize a task command into tokens.
+
+        Container commands may be given as a shell string or a pre-split list
+        (both are accepted by the runners), so mirror that here instead of
+        assuming a string.
+        """
+        if isinstance(command, str):
+            return shlex.split(command)
+        if isinstance(command, (list, tuple)):
+            return [str(token) for token in command]
+        raise InvalidContainerSpec(
+            "Data preparator 'check_no_prepare' task 'command' must be a string "
+            "or a list."
+        )
 
     def check_task_schema(self, task: str) -> str:
         tasks = self.container_config["tasks"]
