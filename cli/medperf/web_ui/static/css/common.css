@@ -50,6 +50,7 @@ pre {
 
 #datasets-associations,
 #models-associations,
+#benchmark-associations-list,
 #benchmark-results {
     display: flex;
     flex-wrap: wrap;

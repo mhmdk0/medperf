@@ -118,11 +118,21 @@
 </div>
 
 {% if is_owner and ui_mode == request.app.state.EVALUATION_MODE %}
-<div class="my-8" data-testid="benchmark-associations">
-    <h2 class="text-xl font-bold text-ink my-4">Associated Benchmarks</h2>
-    {% for assoc in benchmarks_associations.values() %}
+{% set benchmark_assoc_len = benchmarks_associations|length %}
+<div class="my-8 relative" x-data="{ open: false }" @click.outside="open = false" data-testid="benchmark-associations">
+    <button type="button" @click="open = !open" class="w-full bg-card dark:bg-card rounded-xl p-6 shadow-lg border-2 border-border-brand dark:border-border flex items-center justify-between cursor-pointer hover:bg-muted transition-colors text-left" data-testid="benchmark-associations-btn">
+        <h3 class="text-xl font-bold text-ink flex items-center flex-wrap gap-2">
+            <i class="fas fa-chart-line mr-1"></i>Associated Benchmarks
+            <span class="px-4 py-1 rounded-full text-sm font-bold text-brand-accent border-2 border-success bg-success-muted">{{ benchmark_assoc_len }}</span>
+        </h3>
+        <i class="fas fa-chevron-down text-muted-fg transition-transform duration-200 flex-shrink-0" :class="open && 'rotate-180'" aria-hidden="true"></i>
+    </button>
+    <div id="benchmark-associations-list" x-show="open" x-cloak x-transition class="mt-2 rounded-xl bg-card dark:bg-card shadow-xl border-2 border-border-brand dark:border-border max-h-[70vh] overflow-y-auto p-4 flex flex-wrap gap-4 justify-evenly"
+        style="display: none;">
+        {% for assoc in benchmarks_associations.values() %}
         {{ association_card_macros.association_card(assoc, benchmarks[assoc.benchmark], "benchmark") }}
-    {% endfor %}
+        {% endfor %}
+    </div>
 </div>
 {% endif %}
 
