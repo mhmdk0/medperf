@@ -1,5 +1,5 @@
-# The control graph for the `prepare` task. Only *ordering* lives here; every
-# step shares the container filesystem, so there are no images or mounts.
+# The control graph for preparation and validation. Only *ordering* lives here;
+# every step shares the container filesystem, so there are no images or mounts.
 #
 # The first step must be a barrier (per_subject: false) that establishes the
 # subject list. The built-in `DiscoverSubjects` registers one subject per
@@ -21,5 +21,15 @@ steps:
 
   - id: collect
     step: Collect
+    per_subject: false
+    next: null
+
+  - id: sanity_check
+    step: SanityCheck
+    per_subject: false
+    next: statistics
+
+  - id: statistics
+    step: Statistics
     per_subject: false
     next: null

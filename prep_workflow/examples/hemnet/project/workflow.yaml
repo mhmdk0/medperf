@@ -52,3 +52,13 @@ steps:
     step: Cleanup
     per_subject: false
     next: null
+
+  - id: sanity_check
+    step: SanityCheck
+    per_subject: false
+    next: statistics
+
+  - id: statistics
+    step: Statistics
+    per_subject: false
+    next: null
