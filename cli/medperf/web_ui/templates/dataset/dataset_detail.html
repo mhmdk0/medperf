@@ -17,7 +17,7 @@
         </div>
         <form action="/datasets/export/ui" method="POST" id="redirect-export-form" class="{% if not is_owner %}hidden{% endif %}">
             <input type="hidden" name="entity_id" value="{{ dataset.id }}">
-            <input class="btn btn-secondary cursor-pointer" type="submit" name="submit" value="Export Dataset">
+            <input class="btn btn-primary cursor-pointer" type="submit" name="submit" value="Export Dataset">
         </form>
     </div>
 </div>
@@ -252,9 +252,15 @@
         <h3 class="mb-0 text-ink font-bold">Associated benchmarks</h3>
     </div>
     <div class="p-6">
-        {% if benchmark_associations %}
+        {% set listed_associations = [] %}
+        {% for assoc in benchmark_associations %}
+        {% if assoc not in approved_benchmarks %}
+        {% set _ = listed_associations.append(assoc) %}
+        {% endif %}
+        {% endfor %}
+        {% if listed_associations %}
         <ul class="space-y-4 w-full">
-            {% for assoc in benchmark_associations %}
+            {% for assoc in listed_associations %}
             <li class="w-full flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted">
                 <div data-testid="associated-benchmark-item">
                     <a href="/benchmarks/ui/display/{{ assoc }}" class="text-brand-accent hover:underline font-semibold">{{ benchmarks[assoc].name }}</a>
@@ -265,7 +271,11 @@
             {% endfor %}
         </ul>
         {% else %}
+        {% if approved_benchmarks %}
+        <p class="text-muted-fg">Approved associations are shown in the benchmark sections below.</p>
+        {% else %}
         <p class="text-muted-fg">No benchmarks associated yet. Use the <strong>Associate with benchmark</strong> card in Actions above to request association (dataset must be operational to request association).</p>
+        {% endif %}
         {% endif %}
     </div>
 </div>
