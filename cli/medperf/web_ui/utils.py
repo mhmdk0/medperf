@@ -54,7 +54,7 @@ def get_container_type(container: Cube):
     container_config = container.container_config
     container_tasks = container_config.get("tasks", []).keys()
 
-    if "prepare" in container_tasks and "sanity_check" in container_tasks:
+    if "prepare" in container_tasks and "check_no_prepare" in container_tasks:
         return "data-prep-container"
     elif "infer" in container_tasks:
         return "reference-container"
