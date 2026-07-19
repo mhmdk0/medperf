@@ -38,7 +38,7 @@
         <div class="mb-4" id="email-chip-container">
             <label for="email-input" class="block text-secondary font-semibold mb-2">Allow list emails</label>
             <div class="email-container" id="allowed-email-list" data-allowed-list='{}'>
-                <input type="text" id="email-input" class="email-input w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink mt-2 focus:outline-none focus:border-brand-accent" placeholder="Type email and hit Enter, comma, or space" {% if task_running %}disabled{% endif %}>
+                <input type="text" id="email-input" class="email-input w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink mt-2 focus:outline-none focus:border-brand-accent" placeholder="Type email then hit Enter, comma, or space" {% if task_running %}disabled{% endif %}>
             </div>
         </div>
         <div class="text-center">
@@ -71,13 +71,16 @@
         <div class="mb-4" id="email-chip-container-auto">
             <label for="email-input-auto" class="block text-secondary font-semibold mb-2">Allow list emails</label>
             <div class="email-container" id="allowed-email-list-auto" data-allowed-list='{% if auto_access_for_this_model %}{{ selected_emails }}{% else %}{}{% endif %}'>
-                <input type="text" name="emails" id="email-input-auto" class="email-input w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink mt-2 focus:outline-none focus:border-brand-accent" placeholder="Type email and hit Enter, comma, or space" {% if task_running %}disabled{% endif %}>
+                <input type="text" name="emails" id="email-input-auto" class="email-input w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink mt-2 focus:outline-none focus:border-brand-accent" placeholder="Type email then hit Enter, comma, or space" {% if task_running %}disabled{% endif %}>
             </div>
         </div>
         <div class="text-center">
-            <button type="button" class="btn btn-info step-btn {% if auto_access_for_this_model %}hidden{% endif %}" id="start-auto-access-btn" data-model-id="{{ entity.id }}">Start Automatic Access</button>
-            <button type="button" class="btn btn-danger step-btn {% if not auto_access_for_this_model %}hidden{% endif %}" id="stop-auto-access-btn" data-model-id="{{ entity.id }}">Stop Automatic Access</button>
-            <span id="running-badge" class="px-3 py-1 rounded-full text-sm font-bold bg-success-muted text-success ml-3 align-middle {% if auto_access_for_this_model %}inline-block{% else %}hidden{% endif %}">Running</span>
+            {% if auto_access_for_this_model %}
+            <button type="button" class="btn btn-danger step-btn" id="stop-auto-access-btn" data-model-id="{{ entity.id }}">Stop Automatic Access</button>
+            <span id="running-badge" class="px-3 py-1 rounded-full text-sm font-bold bg-success-muted text-success ml-3 align-middle inline-block">Running</span>
+            {% else %}
+            <button type="button" class="btn btn-info step-btn" id="start-auto-access-btn" data-model-id="{{ entity.id }}">Start Automatic Access</button>
+            {% endif %}
         </div>
     </div>
 
@@ -122,7 +125,10 @@
         <input type="hidden" name="model_id" value="{{ entity.id }}">
         <h4 class="text-lg font-bold text-danger mb-2">Delete Keys</h4>
         <p class="text-muted-fg mb-4">This will delete all encrypted access keys for this container. Users will lose all ability to run or decrypt it until new keys are generated.</p>
-        <button type="submit" class="btn btn-danger step-btn" id="delete-keys-btn">Delete All Keys</button>
+        <button type="submit" class="btn btn-danger step-btn" id="delete-keys-btn" {% if not keys %}disabled{% endif %}>Delete All Keys</button>
+        {% if not keys %}
+        <p class="text-sm text-muted-fg mt-3">No keys to delete. Grant access first to create encrypted access keys.</p>
+        {% endif %}
     </form>
 </div>
 
