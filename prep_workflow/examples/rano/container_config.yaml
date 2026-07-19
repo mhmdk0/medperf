@@ -1,12 +1,12 @@
-# MedPerf sees an ordinary 3-task DockerImage preparator; the multi-step RANO
-# workflow runs inside the `prepare` task. Mount paths follow the /workspace
-# layout the reused stages expect.
+# Both tasks call the same workflow executable. The default flow prepares data;
+# check_no_prepare starts at validation (sanity_check) and also generates statistics.
+# Mount paths follow the /workspace layout the reused stages expect.
 container_type: DockerImage
 image: mlcommons/rano-data-prep-workflow:0.1.0
 tasks:
   prepare:
     run_args:
-      command: python3 -m prep_workflow.main prepare
+      command: python3 -m prep_workflow.main
     input_volumes:
       data_path:
         mount_path: /workspace/input_data
@@ -33,22 +33,9 @@ tasks:
       report_file:
         mount_path: /workspace/report.yaml
         type: file
-  sanity_check:
+  check_no_prepare:
     run_args:
-      command: python3 -m prep_workflow.main sanity_check
-    input_volumes:
-      data_path:
-        mount_path: /workspace/data
-        type: directory
-      labels_path:
-        mount_path: /workspace/labels
-        type: directory
-      parameters_file:
-        mount_path: /workspace/parameters.yaml
-        type: file
-  statistics:
-    run_args:
-      command: python3 -m prep_workflow.main statistics
+      command: python3 -m prep_workflow.main --start=sanity_check
     input_volumes:
       data_path:
         mount_path: /workspace/data

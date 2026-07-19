@@ -1,13 +1,16 @@
-# Standard MedPerf data-preparator manifest. To MedPerf this is an ordinary
-# single-container, 3-task preparator; the multi-step workflow happens inside the
-# `prepare` task. `report_file` and `metadata_path` are declared so MedPerf mounts
-# them and ships the per-subject progress the engine writes.
+# Starter MedPerf data-preparator manifest: copy this and adjust the image,
+# commands, and mount paths. Both tasks call the same workflow executable:
+# `prepare` runs preparation and stops before validation; `check_no_prepare`
+# starts at sanity_check and also generates statistics.
+# `report_file` and `metadata_path` on the `prepare` task are optional. Declare
+# `report_file` so MedPerf mounts it and streams the per-subject progress the
+# engine writes.
 container_type: DockerImage
 image: my-org/my-data-prep:0.0.1
 tasks:
   prepare:
     run_args:
-      command: prep-workflow prepare
+      command: prep-workflow
     input_volumes:
       data_path:
         mount_path: /mlcommons/volumes/raw_data
@@ -34,22 +37,9 @@ tasks:
       report_file:
         mount_path: /mlcommons/volumes/report/report.yaml
         type: file
-  sanity_check:
+  check_no_prepare:
     run_args:
-      command: prep-workflow sanity_check
-    input_volumes:
-      data_path:
-        mount_path: /mlcommons/volumes/data
-        type: directory
-      labels_path:
-        mount_path: /mlcommons/volumes/labels
-        type: directory
-      parameters_file:
-        mount_path: /mlcommons/volumes/parameters/parameters_file.yaml
-        type: file
-  statistics:
-    run_args:
-      command: prep-workflow statistics
+      command: prep-workflow --start=sanity_check
     input_volumes:
       data_path:
         mount_path: /mlcommons/volumes/data
