@@ -9,7 +9,14 @@
 {% if login_running %}
 {% set form_data = request.app.state.task.formData %}
 {% endif %}
-<div class="min-h-screen flex items-center justify-center p-4 login-page-bg w-full">
+{% block extra_css %}
+<style>
+    .main-content, .page-wrap {
+        padding: 0!important;
+    }
+</style>
+{% endblock %}
+<div class="min-h-screen flex items-center justify-center login-page-bg w-full">
     <div class="w-full max-w-md">
         <div class="text-center mb-12">
             <h1 class="text-5xl font-bold text-ink mb-3">MedPerf</h1>
