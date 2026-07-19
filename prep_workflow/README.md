@@ -2,8 +2,10 @@
 
 A small orchestration engine that runs a **multi-step, per-subject data-preparation
 workflow inside a single container**. To MedPerf it looks like an ordinary
-`DockerImage` data preparator with the usual `prepare` / `sanity_check` /
-`statistics` tasks — so no MedPerf CLI or server changes are needed. Inside, the
+`DockerImage` data preparator whose single executable runs preparation by
+default. MedPerf then invokes `check_no_prepare` with `--start=sanity_check` to
+run sanity checking and statistics, so no MedPerf CLI or server changes are needed. Already-prepared datasets skip the first run.
+Inside, the
 engine runs many steps per subject, in parallel, with branching and human review.
 
 ## Why in-container?
@@ -73,12 +75,23 @@ steps:
   - id: finalize
     step: Finalize
     per_subject: false            # barrier: runs once after all subjects arrive
-    next: null                    # terminal
+    next: null
+  - id: sanity_check              # --start=sanity_check begins here
+    step: SanityCheck
+    per_subject: false
+    next: statistics
+  - id: statistics
+    step: Statistics
+    per_subject: false
+    next: null
 ```
 
-`next` is a step id, `null` (terminal), or a branch (`if` / `else` / `wait`). A
-branch target pointing at an earlier step forms a retry cycle. `on_error: ignore`
-skips a failed subject instead of stopping the run.
+Starts are conventional: preparation begins at the first step and must stop
+before validation; `--start=sanity_check` begins at step id `sanity_check` and
+must reach `SanityCheck` and `Statistics`. `next` is a step id, `null`
+(terminal), or a branch (`if` / `else` / `wait`). A branch target pointing at an
+earlier step forms a retry cycle. `on_error: ignore` skips a failed subject
+instead of stopping the run.
 
 Built-ins: `DiscoverSubjects` (one subject per input sub-dir; `config: {single: true}`
 for a single-token dataset) and `ManualApproval` (`type: manual_approval` — a barrier

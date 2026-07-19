@@ -40,4 +40,4 @@ docker build -f examples/rano/Dockerfile -t mlcommons/rano-data-prep-workflow:0.
 | `final_confirmation`            | `final_confirmation` (type: manual_approval) |
 | `move_labeled_files`            | `move_labeled_files` / `MoveLabeledFiles` (barrier) |
 | `consolidation_stage`           | `consolidate` / `Consolidate` (barrier, terminal) |
-| `sanity_check` / `metrics`      | `sanity_check` / `statistics` tasks (`SanityCheck` / `Statistics`) |
+| `sanity_check` / `metrics`      | validation flow (`SanityCheck` → `Statistics`) |
