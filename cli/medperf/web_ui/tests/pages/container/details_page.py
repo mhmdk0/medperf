@@ -4,6 +4,10 @@ from ..base_page import BasePage
 
 class ContainerDetailsPage(BasePage):
     DROPDOWN_BTN = (By.ID, "associate-dropdown-btn")
+    ASSOCIATIONS_BTN = (
+        By.CSS_SELECTOR,
+        "button[data-testid='benchmark-associations-btn']",
+    )
     ASSOCIATION_CARDS = (
         By.CSS_SELECTOR,
         "div[data-testid='benchmark-associations'] div[data-testid='associated-benchmark-item'] a",
@@ -31,6 +35,7 @@ class ContainerDetailsPage(BasePage):
         self.click(self.ASSOCIATE_BTN)
 
     def get_association_cards_titles(self):
+        self.click(self.ASSOCIATIONS_BTN)
         return [i.text for i in self.driver.find_elements(*self.ASSOCIATION_CARDS)]
 
     def grant_access(self, benchmark, emails):
