@@ -84,24 +84,30 @@ class Cleanup(Step):
 
 
 class SanityCheck(Step):
-    """`sanity_check` task: the tiled output must be non-empty."""
+    """`check_no_prepare` task: the tiled output must be non-empty."""
 
     per_subject = False
 
     def run(self, ctx):
-        if not os.path.isdir(ctx.paths.output_data) or not os.listdir(ctx.paths.output_data):
+        if not os.path.isdir(ctx.paths.output_data) or not os.listdir(
+            ctx.paths.output_data
+        ):
             raise RuntimeError("no tiled output was produced")
 
 
 class Statistics(Step):
-    """`statistics` task: record how many slides were prepared."""
+    """`statistics` step: record how many slides were prepared."""
 
     per_subject = False
 
     def run(self, ctx):
         import yaml
 
-        n = len([p for p in os.listdir(ctx.paths.output_data)]) if os.path.isdir(ctx.paths.output_data) else 0
+        n = (
+            len([p for p in os.listdir(ctx.paths.output_data)])
+            if os.path.isdir(ctx.paths.output_data)
+            else 0
+        )
         os.makedirs(os.path.dirname(ctx.paths.statistics_file), exist_ok=True)
         with open(ctx.paths.statistics_file, "w") as f:
             yaml.safe_dump({"num_slides": n}, f)

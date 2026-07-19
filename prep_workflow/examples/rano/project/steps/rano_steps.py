@@ -137,9 +137,15 @@ class TumorExtraction(Step):
         os.makedirs(cbica_tmpfolder, exist_ok=True)
         os.environ["TMPDIR"] = tmpfolder
         os.environ["CBICA_TEMP_DIR"] = cbica_tmpfolder
-        os.environ["RESULTS_FOLDER"] = os.path.join(models_path, "nnUNet_trained_models")
-        os.environ["nnUNet_raw_data_base"] = os.path.join(tmpfolder, "nnUNet_raw_data_base")
-        os.environ["nnUNet_preprocessed"] = os.path.join(tmpfolder, "nnUNet_preprocessed")
+        os.environ["RESULTS_FOLDER"] = os.path.join(
+            models_path, "nnUNet_trained_models"
+        )
+        os.environ["nnUNet_raw_data_base"] = os.path.join(
+            tmpfolder, "nnUNet_raw_data_base"
+        )
+        os.environ["nnUNet_preprocessed"] = os.path.join(
+            tmpfolder, "nnUNet_preprocessed"
+        )
         ExtractNnUNet(
             data_csv=get_data_csv_filepath(ctx.subject),
             out_path=output_path,
@@ -238,7 +244,15 @@ class Consolidate(Step):
         from stages.split import SplitStage
 
         labels_out = os.path.join(WORKSPACE_DIR, LABELS_PATH)
-        subdirs = [BRAIN_PATH, AUX_FILES_PATH, PREP_PATH, TUMOR_PATH, RAW_PATH, VALID_PATH, MANUAL_REVIEW_PATH]
+        subdirs = [
+            BRAIN_PATH,
+            AUX_FILES_PATH,
+            PREP_PATH,
+            TUMOR_PATH,
+            RAW_PATH,
+            VALID_PATH,
+            MANUAL_REVIEW_PATH,
+        ]
         dirs_to_remove = [os.path.join(DATA_DIR, s) for s in subdirs]
         dirs_to_remove += [
             os.path.join(WORKSPACE_DIR, DATA_DIR, ".tmp"),
@@ -255,7 +269,7 @@ class Consolidate(Step):
 
 
 class SanityCheck(Step):
-    """`sanity_check` task."""
+    """`check_no_prepare` task"""
 
     per_subject = False
 
@@ -271,7 +285,7 @@ class SanityCheck(Step):
 
 
 class Statistics(Step):
-    """`statistics` task -> writes statistics to the MedPerf statistics mount."""
+    """`statistics` step: writes to the MedPerf statistics mount."""
 
     per_subject = False
 

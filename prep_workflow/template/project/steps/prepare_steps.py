@@ -41,7 +41,7 @@ class Collect(Step):
 
 
 class SanityCheck(Step):
-    """Invoked by the `sanity_check` task: fail if any subject is empty."""
+    """Invoked by the `check_no_prepare` task: fail if any subject is empty."""
 
     per_subject = False
 
@@ -53,7 +53,7 @@ class SanityCheck(Step):
 
 
 class Statistics(Step):
-    """Invoked by the `statistics` task: write statistics.yaml."""
+    """Final validation (`statistics`) step: write statistics.yaml."""
 
     per_subject = False
 
