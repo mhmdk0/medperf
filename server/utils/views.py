@@ -59,13 +59,15 @@ class BenchmarkList(SearchableOrderingListMixin, GenericAPIView):
 
     def get_object(self, pk):
         try:
-            return Benchmark.objects.filter(owner__id=pk)
+            owned = Benchmark.objects.filter(owner__id=pk)
+            committee = Benchmark.objects.filter(committee_members__id=pk)
+            return owned | committee
         except Benchmark.DoesNotExist:
             raise Http404
 
     def get(self, request, format=None):
         """
-        Retrieve all benchmarks owned by the current user
+        Retrieve all benchmarks owned or managed by the current user
         """
         benchmarks = self.get_object(request.user.id)
         benchmarks = self.filter_queryset(benchmarks)
@@ -310,9 +312,16 @@ class DatasetAssociationList(GenericAPIView):
 
     def get_object(self, pk):
         try:
-            return BenchmarkDataset.objects.filter(
-                Q(dataset__owner__id=pk) | Q(benchmark__owner__id=pk)
+            as_dataset_owner = BenchmarkDataset.objects.filter(dataset__owner__id=pk)
+            as_benchmark_owner = BenchmarkDataset.objects.filter(
+                benchmark__owner__id=pk
             )
+            as_committee_member = BenchmarkDataset.objects.filter(
+                benchmark__committee_members__id=pk
+            )
+            return (
+                as_dataset_owner | as_benchmark_owner | as_committee_member
+            ).distinct()
         except BenchmarkDataset.DoesNotExist:
             raise Http404
 
@@ -332,9 +341,14 @@ class ModelAssociationList(GenericAPIView):
 
     def get_object(self, pk):
         try:
-            return BenchmarkModel.objects.filter(
-                Q(model__owner__id=pk) | Q(benchmark__owner__id=pk)
+            as_model_owner = BenchmarkModel.objects.filter(model__owner__id=pk)
+            as_benchmark_owner = BenchmarkModel.objects.filter(benchmark__owner__id=pk)
+            as_committee_member = BenchmarkModel.objects.filter(
+                benchmark__committee_members__id=pk
             )
+            return (
+                as_model_owner | as_benchmark_owner | as_committee_member
+            ).distinct()
         except BenchmarkModel.DoesNotExist:
             raise Http404
 

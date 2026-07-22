@@ -58,7 +58,7 @@
             activeIndex = -1;
             if (!items.length) {
                 var empty = document.createElement("li");
-                empty.className = "px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400";
+                empty.className = "px-4 py-2.5 text-sm text-muted-fg";
                 empty.textContent = "No results found";
                 empty.setAttribute("role", "option");
                 resultsList.appendChild(empty);
@@ -69,7 +69,7 @@
             items.forEach(function (item) {
                 var label = entityLabel(item);
                 var li = document.createElement("li");
-                li.className = "searchable-select-option px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700";
+                li.className = "searchable-select-option px-4 py-2.5 text-sm text-ink cursor-pointer hover:bg-brand-subtle";
                 li.textContent = label;
                 li.dataset.value = String(item.id);
                 li.dataset.label = label;
@@ -193,8 +193,7 @@
             }
 
             options.forEach(function (opt, idx) {
-                opt.classList.toggle("bg-green-50", idx === activeIndex);
-                opt.classList.toggle("dark:bg-gray-700", idx === activeIndex);
+                opt.classList.toggle("bg-brand-subtle", idx === activeIndex);
             });
         });
 
