@@ -44,41 +44,54 @@
         </div>
         <div>
             <label for="data-preparation-container" class="block text-secondary font-semibold mb-2">Data Preparation Container</label>
-            {% set entity_type = "container" %}
-            {% set container_type = "data-prep-container" %}
-            {% set input_name = "data_preparation_container" %}
-            {% set input_id = "data-preparation-container" %}
-            {% set placeholder = "Search data preparation containers…" %}
-            {% set mine_only = true %}
-            {% set required = true %}
-            {% set selected_value = form_data.get('data_preparation_container', '') if benchmark_register_running else '' %}
-            {% set disabled = task_running %}
-            {% include "partials/searchable_select.html" %}
+            <div class="flex flex-wrap items-stretch gap-2">
+                {% set entity_type = "container" %}
+                {% set container_type = "data-prep-container" %}
+                {% set input_name = "data_preparation_container" %}
+                {% set input_id = "data-preparation-container" %}
+                {% set placeholder = "Search data preparation containers…" %}
+                {% set mine_only = true %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('data_preparation_container', '') if benchmark_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
+                <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_benchmark_data_preparation_container_id }}"><i class="fas fa-info-circle text-lg"></i></span>
+            </div>
         </div>
         <div>
             <label for="reference-model" class="block text-secondary font-semibold mb-2">Reference Model</label>
-            {% set entity_type = "model" %}
-            {% set input_name = "reference_model" %}
-            {% set input_id = "reference-model" %}
-            {% set placeholder = "Search your models…" %}
-            {% set mine_only = true %}
-            {% set required = true %}
-            {% set selected_value = form_data.get('reference_model', '') if benchmark_register_running else '' %}
-            {% set disabled = task_running %}
-            {% include "partials/searchable_select.html" %}
+            <div class="flex flex-wrap items-stretch gap-2">
+                {% set entity_type = "model" %}
+                {% set container_type = none %}
+                {% set input_name = "reference_model" %}
+                {% set input_id = "reference-model" %}
+                {% set placeholder = "Search your models…" %}
+                {% set mine_only = true %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('reference_model', '') if benchmark_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
+                <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_benchmark_reference_model_id }}"><i class="fas fa-info-circle text-lg"></i></span>
+            </div>
         </div>
         <div>
             <label for="evaluator-container" class="block text-secondary font-semibold mb-2">Metrics Container</label>
-            {% set entity_type = "container" %}
-            {% set container_type = "metrics-container" %}
-            {% set input_name = "evaluator_container" %}
-            {% set input_id = "evaluator-container" %}
-            {% set placeholder = "Search metrics containers…" %}
-            {% set mine_only = true %}
-            {% set required = true %}
-            {% set selected_value = form_data.get('evaluator_container', '') if benchmark_register_running else '' %}
-            {% set disabled = task_running %}
-            {% include "partials/searchable_select.html" %}
+            <div class="flex flex-wrap items-stretch gap-2">
+                {% set entity_type = "container" %}
+                {% set container_type = "metrics-container" %}
+                {% set input_name = "evaluator_container" %}
+                {% set input_id = "evaluator-container" %}
+                {% set placeholder = "Search metrics containers…" %}
+                {% set mine_only = true %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('evaluator_container', '') if benchmark_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
+                <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_benchmark_metrics_container_id }}"><i class="fas fa-info-circle text-lg"></i></span>
+            </div>
         </div>
         <div class="text-center pt-4">
             <button id="register-benchmark-btn" type="submit" class="btn btn-primary disabled:opacity-50 cursor-pointer" disabled>Register Benchmark</button>

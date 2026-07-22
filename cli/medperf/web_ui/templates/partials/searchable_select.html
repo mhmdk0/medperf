@@ -1,6 +1,6 @@
 {# Searchable entity picker. Requires searchable_select.js on the page. #}
 <div
-    class="searchable-select relative w-full {{ extra_class | default('', true) }}"
+    class="searchable-select relative {{ extra_class | default('w-full', true) }}"
     data-entity-type="{{ entity_type }}"
     data-input-name="{{ input_name }}"
     data-input-id="{{ input_id }}"
