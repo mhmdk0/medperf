@@ -4,7 +4,9 @@ from medperf.enums import ContainerTypes
 import logging
 import shlex
 
-CHECK_NO_PREPARE_TASK = "check_no_prepare"
+# Combined validation+statistics MedPerf task. It must start the in-container
+# workflow at the sanity_check step (which then runs Statistics).
+STATISTICS_TASK = "statistics"
 SANITY_CHECK_START_ARG = "--start=sanity_check"
 
 
@@ -45,38 +47,37 @@ class SimpleContainerParser(Parser):
         if "prepare" not in tasks:
             return
 
-        if CHECK_NO_PREPARE_TASK not in tasks:
+        if STATISTICS_TASK not in tasks:
             raise InvalidContainerSpec(
-                "Data preparator containers must define 'check_no_prepare' "
+                "Data preparator containers must define 'statistics' "
                 "alongside 'prepare'."
             )
 
         if "sanity_check" in tasks:
             raise InvalidContainerSpec(
-                "Data preparator containers must generate statistics as part of "
-                "'prepare' and 'check_no_prepare', not as a separate "
+                "Data preparator containers must run sanity checks as part of "
+                "'statistics' (via --start=sanity_check), not as a separate "
                 "'sanity_check' task."
             )
 
-        if "statistics" in tasks:
+        if "check_no_prepare" in tasks:
             raise InvalidContainerSpec(
-                "Data preparator containers must generate statistics as part of "
-                "'prepare' and 'check_no_prepare', not as a separate "
-                "'statistics' task."
+                "Data preparator containers must use the 'statistics' task "
+                "(not 'check_no_prepare') for sanity checks and statistics."
             )
 
-        check_task = tasks[CHECK_NO_PREPARE_TASK]
-        command = check_task.get("run_args", {}).get("command", "")
+        stats_task = tasks[STATISTICS_TASK]
+        command = stats_task.get("run_args", {}).get("command", "")
         if SANITY_CHECK_START_ARG not in self._tokenize_command(command):
             raise InvalidContainerSpec(
-                "Data preparator 'check_no_prepare' task command must include "
+                "Data preparator 'statistics' task command must include "
                 f"'{SANITY_CHECK_START_ARG}'."
             )
 
-        check_outputs = check_task.get("output_volumes", {})
-        if "output_path" not in check_outputs:
+        stats_outputs = stats_task.get("output_volumes", {})
+        if "output_path" not in stats_outputs:
             raise InvalidContainerSpec(
-                "Data preparator 'check_no_prepare' task must define an 'output_path' "
+                "Data preparator 'statistics' task must define an 'output_path' "
                 "output volume for generated statistics."
             )
 
@@ -93,8 +94,7 @@ class SimpleContainerParser(Parser):
         if isinstance(command, (list, tuple)):
             return [str(token) for token in command]
         raise InvalidContainerSpec(
-            "Data preparator 'check_no_prepare' task 'command' must be a string "
-            "or a list."
+            "Data preparator 'statistics' task 'command' must be a string " "or a list."
         )
 
     def check_task_schema(self, task: str) -> str:

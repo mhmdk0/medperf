@@ -187,7 +187,7 @@ def test_prepare_checks_report_and_metadata_path(
 @pytest.mark.parametrize(
     "report_specified,exception", [[False, ExecutionError], [True, CleanExit]]
 )
-def test_check_no_prepare_unmarks_the_dataset_as_ready_on_failure(
+def test_statistics_unmarks_the_dataset_as_ready_on_failure(
     mocker, data_preparation, cube, report_specified, exception
 ):
     # Arrange
@@ -200,14 +200,14 @@ def test_check_no_prepare_unmarks_the_dataset_as_ready_on_failure(
 
     # Act & assert
     with pytest.raises(exception):
-        data_preparation.run_check_no_prepare()
+        data_preparation.run_statistics()
 
     # Assert
     unmark_spy.assert_called_once()
 
 
 @pytest.mark.parametrize("metadata_specified", [False, True])
-def test_check_no_prepare_generates_statistics_and_checks_paths(
+def test_statistics_generates_statistics_and_checks_paths(
     mocker, data_preparation, metadata_specified, cube
 ):
     # Arrange
@@ -216,10 +216,10 @@ def test_check_no_prepare_generates_statistics_and_checks_paths(
     data_preparation.out_statistics_path = "test.yaml"
 
     # Act
-    data_preparation.run_check_no_prepare()
+    data_preparation.run_statistics()
 
     # Assert
-    assert spy.call_args.kwargs["task"] == "check_no_prepare"
+    assert spy.call_args.kwargs["task"] == "statistics"
     assert spy.call_args.kwargs["mounts"]["output_path"] == "test.yaml"
     if metadata_specified:
         assert "metadata_path" in spy.call_args.kwargs["mounts"].keys()

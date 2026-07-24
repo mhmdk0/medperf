@@ -97,7 +97,7 @@ class DataPreparation:
             with preparation.ui.interactive():
                 preparation.run_prepare()
         with preparation.ui.interactive():
-            preparation.run_check_no_prepare()
+            preparation.run_statistics()
 
         preparation.check_statistics()
         preparation.mark_dataset_as_ready()
@@ -210,26 +210,26 @@ class DataPreparation:
         self.ui.print("> Container execution complete")
         report_sender.stop("finished")
 
-    def run_check_no_prepare(self):
-        check_no_prepare_timeout = config.check_no_prepare_timeout
+    def run_statistics(self):
+        # The statistics task runs sanity_check then Statistics in the workflow.
+        statistics_timeout = config.statistics_timeout
         out_datapath = self.out_datapath
         out_labelspath = self.out_labelspath
 
-        # This entrypoint performs both the sanity check and statistics steps.
-        check_no_prepare_mounts = {
+        statistics_mounts = {
             "data_path": out_datapath,
             "labels_path": out_labelspath,
             "output_path": self.out_statistics_path,
         }
         if self.metadata_specified:
-            check_no_prepare_mounts["metadata_path"] = self.metadata_path
+            statistics_mounts["metadata_path"] = self.metadata_path
 
         self.ui.text = "Running sanity checks and statistics..."
         try:
             self.cube.run(
-                task="check_no_prepare",
-                timeout=check_no_prepare_timeout,
-                mounts=check_no_prepare_mounts,
+                task="statistics",
+                timeout=statistics_timeout,
+                mounts=statistics_mounts,
             )
         except ExecutionError:
             self.dataset.unmark_as_ready()
