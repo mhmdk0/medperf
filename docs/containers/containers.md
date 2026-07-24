@@ -13,13 +13,13 @@ This container interface should expose the following entrypoints:
 - **prepare:** Transforms the input data into the expected output data standard. It receives as input the location of the original data, as well as the location of the labels, and outputs the prepared dataset and accompanying labels. By default, inside the container filesystem, the container should read the input data from `/mlcommons/volumes/raw_data` and the input labels from `/mlcommons/volumes/raw_labels`, and should write the prepared/preprocessed version of the data in `/mlcommons/volumes/data` and `/mlcommons/volumes/labels`.
 
 
-- **check_no_prepare:** Invokes the same executable with `--start=sanity_check` and performs the sanity check and statistics generation. MedPerf runs it after `prepare`, or by itself when data was submitted as already prepared. It reads prepared data from `/mlcommons/volumes/data` and labels from `/mlcommons/volumes/labels`.
+- **statistics:** Invokes the same executable with `--start=sanity_check` and performs the sanity check and statistics generation. MedPerf runs it after `prepare`, or by itself when data was submitted as already prepared. It reads prepared data from `/mlcommons/volumes/data` and labels from `/mlcommons/volumes/labels`.
 
-`check_no_prepare` writes statistics to `/mlcommons/volumes/statistics/statistics.yaml`.
+`statistics` writes statistics to `/mlcommons/volumes/statistics/statistics.yaml`.
 
 **Validation and Statistics Generation**
 
-Both of the following run within the single `check_no_prepare` invocation, reading the prepared data from `/mlcommons/volumes/data` and the prepared labels from `/mlcommons/volumes/labels`:
+Both of the following run within the single `statistics` invocation, reading the prepared data from `/mlcommons/volumes/data` and the prepared labels from `/mlcommons/volumes/labels`:
 
 - **Sanity check:** ensures the integrity of the prepared data. It may check for anomalies and data corruption (e.g. blank images, empty test cases). It constitutes a set of conditions the prepared data should comply with.
 
