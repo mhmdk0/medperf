@@ -269,7 +269,7 @@ class Consolidate(Step):
 
 
 class SanityCheck(Step):
-    """`check_no_prepare` task"""
+    """First step of the `statistics` task, Invoked by (--start=sanity_check). Fail if any subject is empty."""
 
     per_subject = False
 
