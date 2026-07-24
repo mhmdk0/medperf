@@ -1,5 +1,5 @@
 # Both tasks call the same workflow executable. The default flow prepares data;
-# check_no_prepare starts at validation (sanity_check) and also generates statistics.
+# statistics starts at validation (sanity_check) and also generates statistics.
 container_type: DockerImage
 image: mlcommons/chestxray-prep-workflow:0.1.0
 tasks:
@@ -26,7 +26,7 @@ tasks:
       report_file:
         mount_path: /mlcommons/volumes/report/report.yaml
         type: file
-  check_no_prepare:
+  statistics:
     run_args:
       command: python3 -m prep_workflow.main --start=sanity_check
     input_volumes:

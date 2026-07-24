@@ -1,6 +1,6 @@
 # Starter MedPerf data-preparator manifest: copy this and adjust the image,
 # commands, and mount paths. Both tasks call the same workflow executable:
-# `prepare` runs preparation and stops before validation; `check_no_prepare`
+# `prepare` runs preparation and stops before validation; `statistics`
 # starts at sanity_check and also generates statistics.
 # `report_file` and `metadata_path` on the `prepare` task are optional. Declare
 # `report_file` so MedPerf mounts it and streams the per-subject progress the
@@ -37,7 +37,7 @@ tasks:
       report_file:
         mount_path: /mlcommons/volumes/report/report.yaml
         type: file
-  check_no_prepare:
+  statistics:
     run_args:
       command: prep-workflow --start=sanity_check
     input_volumes:
