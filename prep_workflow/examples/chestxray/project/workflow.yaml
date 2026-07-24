@@ -11,7 +11,7 @@ steps:
   - id: prepare
     step: Prepare
     per_subject: false
-    next: null
+    next: sanity_check
 
   - id: sanity_check
     step: SanityCheck

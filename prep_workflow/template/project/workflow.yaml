@@ -22,7 +22,7 @@ steps:
   - id: collect
     step: Collect
     per_subject: false
-    next: null
+    next: sanity_check
 
   - id: sanity_check
     step: SanityCheck
