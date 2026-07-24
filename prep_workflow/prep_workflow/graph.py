@@ -92,13 +92,22 @@ class Graph:
         return names
 
     def reachable_step_names(self, start_name: str = PREPARE_START) -> List[str]:
-        """Return step names reachable from a conventional start."""
+        """Return step names reachable from a conventional start.
+
+        Preparation keep ``next: sanity_check of the last prepare step`` so the YAML reads as one
+        continuous graph, but prepare reachability stops *before*
+        ``sanity_check`` - that boundary is only crossed by
+        ``--start=sanity_check``.
+        """
         pending = [self.start_at(start_name).id]
         visited = set()
         names = []
+        stop_before = SANITY_CHECK_START if start_name == PREPARE_START else None
         while pending:
             node_id = pending.pop()
             if node_id in visited:
+                continue
+            if stop_before and node_id == stop_before:
                 continue
             visited.add(node_id)
             node = self.node(node_id)
@@ -220,3 +229,15 @@ def _validate(graph: Graph) -> None:
         raise WorkflowError(
             f"step '{SANITY_CHECK_START}' must be a barrier (per_subject: false)"
         )
+
+    # The preparation graph should stay visually continuous (last prep step
+    # points at sanity_check) while the prepare run still stops at that boundary.
+    if SANITY_CHECK_START in graph.nodes:
+        predecessors = [
+            n.id for n in graph.nodes.values() if SANITY_CHECK_START in _targets(n)
+        ]
+        if not predecessors:
+            raise WorkflowError(
+                f"the last preparation step must set next: {SANITY_CHECK_START} "
+                "(prepare still stops before that step at runtime)"
+            )

@@ -231,7 +231,9 @@ def test_barrier_runs_once_after_all_subjects(tmp_path):
     recorder = Recorder()
     steps = {
         "seed": SeedStep(["s1", "s2", "s3"]),
-        "per": _SubjectAwareSleep("per", recorder, {"s1": 0.05, "s2": 0.15, "s3": 0.25}),
+        "per": _SubjectAwareSleep(
+            "per", recorder, {"s1": 0.05, "s2": 0.15, "s3": 0.25}
+        ),
         "barrier": RecordStep("barrier", recorder, per_subject=False),
         "fin": RecordStep("fin", recorder),
     }
@@ -250,7 +252,9 @@ def test_barrier_runs_once_after_all_subjects(tmp_path):
     order = recorder.order()
     barrier_start = order.index(("start", "barrier", None))
     per_ends = [i for i, (p, n, s) in enumerate(order) if p == "end" and n == "per"]
-    assert all(i < barrier_start for i in per_ends)  # all per-subject work finished first
+    assert all(
+        i < barrier_start for i in per_ends
+    )  # all per-subject work finished first
     assert recorder.runs("barrier") == [None]  # ran exactly once
     for s in ["s1", "s2", "s3"]:
         assert report.is_done(s)
@@ -317,7 +321,8 @@ def test_prepare_entrypoint_stops_before_sanity_check(tmp_path):
     spec = {
         "steps": [
             {"id": "seed", "per_subject": False, "next": "prepare"},
-            {"id": "prepare", "next": None},
+            # YAML keeps the graph continuous, but prepare must stop here.
+            {"id": "prepare", "next": "sanity_check"},
             {
                 "id": "sanity_check",
                 "step": "SanityCheck",
@@ -354,7 +359,7 @@ def test_sanity_check_entrypoint_skips_preparation(tmp_path):
     spec = {
         "steps": [
             {"id": "seed", "per_subject": False, "next": "prepare"},
-            {"id": "prepare", "next": None},
+            {"id": "prepare", "next": "sanity_check"},
             {
                 "id": "sanity_check",
                 "step": "SanityCheck",

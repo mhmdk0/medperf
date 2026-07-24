@@ -30,13 +30,15 @@ def test_start_at_prepare_uses_first_step():
 def test_start_at_resolves_step_id():
     spec = {
         "steps": [
-            {"id": "setup", "per_subject": False, "next": None},
+            {"id": "setup", "per_subject": False, "next": "sanity_check"},
             {"id": "sanity_check", "per_subject": False, "next": None},
         ]
     }
     graph = Graph.from_spec(spec)
     assert graph.start_at("sanity_check").id == "sanity_check"
     assert graph.reachable_step_names("sanity_check") == ["sanity_check"]
+    # prepare reachability stops before sanity_check even when next points there
+    assert "sanity_check" not in graph.reachable_step_names("prepare")
 
 
 def test_start_at_unknown_step_id():
@@ -46,11 +48,24 @@ def test_start_at_unknown_step_id():
 
 
 def test_sanity_check_step_must_be_barrier():
-    spec = _linear_spec()
-    spec["steps"].append(
-        {"id": "sanity_check", "per_subject": True, "next": None}
-    )
+    spec = {
+        "steps": [
+            {"id": "setup", "per_subject": False, "next": "sanity_check"},
+            {"id": "sanity_check", "per_subject": True, "next": None},
+        ]
+    }
     with pytest.raises(WorkflowError, match="barrier"):
+        Graph.from_spec(spec)
+
+
+def test_preparation_must_connect_into_sanity_check():
+    spec = {
+        "steps": [
+            {"id": "setup", "per_subject": False, "next": None},
+            {"id": "sanity_check", "per_subject": False, "next": None},
+        ]
+    }
+    with pytest.raises(WorkflowError, match="next: sanity_check"):
         Graph.from_spec(spec)
 
 

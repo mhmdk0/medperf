@@ -23,7 +23,13 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional, Set
 
 from prep_workflow.context import ContextFactory
-from prep_workflow.graph import Branch, Graph, Node
+from prep_workflow.graph import (
+    PREPARE_START,
+    SANITY_CHECK_START,
+    Branch,
+    Graph,
+    Node,
+)
 
 
 class EngineError(Exception):
@@ -55,19 +61,19 @@ class Engine:
         self._barrier_running: Set[str] = set()
         self._barrier_fired: Dict[str, Set[str]] = {}
         self._semaphores = {
-            n.id: threading.Semaphore(n.limit)
-            for n in graph.nodes.values()
-            if n.limit
+            n.id: threading.Semaphore(n.limit) for n in graph.nodes.values() if n.limit
         }
         self._inflight = 0
         self._live: Set[str] = set()
         self._all_subjects: List[str] = []
         self._failed: Optional[BaseException] = None
         self._start: Optional[Node] = None
+        self._entrypoint = PREPARE_START
         self._touch_report = True
 
     # ---- public ----------------------------------------------------------------
-    def run(self, entrypoint: str = "prepare", resume: bool = True) -> None:
+    def run(self, entrypoint: str = PREPARE_START, resume: bool = True) -> None:
+        self._entrypoint = entrypoint
         self._start = self.graph.start_at(entrypoint)
         self._touch_report = resume
         self.report.load()
@@ -221,6 +227,14 @@ class Engine:
             self._decide(subject, node)
 
     def _arrive(self, subject: str, target_id: str) -> None:
+        # Preparation keep next: sanity_check in YAML for readability, but
+        # the prepare run must stop at that boundary.
+        if self._entrypoint == PREPARE_START and target_id == SANITY_CHECK_START:
+            if self._touch_report:
+                self.report.mark_done(subject)
+            self._live.discard(subject)
+            return
+
         target = self.graph.node(target_id)
         if self._touch_report:
             self.report.set_node(subject, target_id)
