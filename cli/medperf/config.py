@@ -283,7 +283,7 @@ gpus = None
 shm_size = None
 platform = "docker"
 prepare_timeout = None
-check_no_prepare_timeout = None
+statistics_timeout = None
 infer_timeout = None
 evaluate_timeout = None
 container_loglevel = None
@@ -312,7 +312,7 @@ credentials_keyword = "credentials"
 inline_parameters = [
     "loglevel",
     "prepare_timeout",
-    "check_no_prepare_timeout",
+    "statistics_timeout",
     "infer_timeout",
     "evaluate_timeout",
     "platform",
@@ -324,7 +324,7 @@ inline_parameters = [
 configurable_parameters = [
     "loglevel",
     "prepare_timeout",
-    "check_no_prepare_timeout",
+    "statistics_timeout",
     "infer_timeout",
     "evaluate_timeout",
     "platform",
