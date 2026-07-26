@@ -91,15 +91,8 @@ def startup_event():
     # List of [schemas.Notification] will appear in the notifications tab
     web_app.state.notifications = []
 
-    # Container auto grant access initial values
-    web_app.state.model_auto_give_access = {
-        "running": False,
-        "worker": None,
-        "benchmark": 0,
-        "model": 0,
-        "emails": "",
-        "interval": 0,
-    }
+    # Dictionary for tracking auto give access status for each model and benchmark combination
+    web_app.state.model_auto_give_access = {}
 
     # Set default UI mode to evaluation on startup, will be updated by NavModeMiddleware on each request based on cookie
     web_app.state.ui_mode = UI_MODE_EVALUATION

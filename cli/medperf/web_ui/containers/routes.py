@@ -30,6 +30,27 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+def _auto_access_key(model_id: int, benchmark_id: int) -> str:
+    return f"{model_id}-{benchmark_id}"
+
+
+def _running_auto_access_for_container(
+    model_auto_give_access: dict, container_id: int
+) -> dict:
+    running = {}
+    for key, state in model_auto_give_access.items():
+        try:
+            model_id_str, benchmark_id_str = key.split("-", 1)
+            if int(model_id_str) == container_id:
+                running[int(benchmark_id_str)] = {
+                    "emails": state["emails"],
+                    "interval": state["interval"],
+                }
+        except (ValueError, IndexError):
+            continue
+    return running
+
+
 @router.get("/ui", response_class=HTMLResponse)
 def containers_ui(
     request: Request,
@@ -232,6 +253,9 @@ def container_access_ui(
             "is_owner": is_owner,
             "benchmarks": benchmarks,
             "keys": existing_keys,
+            "running_auto_access": _running_auto_access_for_container(
+                request.app.state.model_auto_give_access, container_id
+            ),
         },
     )
 
@@ -296,12 +320,12 @@ def start_auto_access(
     emails: str = Form(...),
     current_user: bool = Depends(check_user_api),
 ):
-    if request.app.state.model_auto_give_access["running"]:
-        bmk = request.app.state.model_auto_give_access["benchmark"]
-        model = request.app.state.model_auto_give_access["model"]
+    model_auto_give_access = request.app.state.model_auto_give_access
+    key = _auto_access_key(model_id, benchmark_id)
+    if key in model_auto_give_access:
         return {
             "status": "failed",
-            "error": f"Auto give access is already running for benchmark: {bmk}, model: {model}",
+            "error": "Auto give access is already running for the selected container and benchmark.",
         }
 
     return_response = {"status": "", "error": ""}
@@ -313,6 +337,12 @@ def start_auto_access(
             daemon=True,
         )
         auto_access_worker.start()
+        model_auto_give_access[key] = {
+            "worker": auto_access_worker,
+            "event": event,
+            "emails": emails,
+            "interval": interval,
+        }
         return_response["status"] = "success"
         notification_message = "Successfully started automatic grant access."
     except Exception as exp:
@@ -326,16 +356,6 @@ def start_auto_access(
         return_response=return_response,
         url=f"/containers/ui/display/{model_id}/access",
     )
-
-    request.app.state.model_auto_give_access = {
-        "running": True,
-        "worker": auto_access_worker,
-        "event": event,
-        "benchmark": benchmark_id,
-        "model": model_id,
-        "emails": emails,
-        "interval": interval,
-    }
     return return_response
 
 
@@ -343,9 +363,12 @@ def start_auto_access(
 def stop_auto_access(
     request: Request,
     model_id: int = Form(...),
+    benchmark_id: int = Form(...),
     current_user: bool = Depends(check_user_api),
 ):
-    if not request.app.state.model_auto_give_access["running"]:
+    model_auto_give_access = request.app.state.model_auto_give_access
+    key = _auto_access_key(model_id, benchmark_id)
+    if key not in model_auto_give_access:
         return {
             "status": "failed",
             "error": "Auto give access is not started, nothing to stop.",
@@ -353,8 +376,9 @@ def stop_auto_access(
 
     return_response = {"status": "", "error": ""}
     try:
-        request.app.state.model_auto_give_access["event"].set()
-        request.app.state.model_auto_give_access["worker"].join()
+        model_auto_give_access[key]["event"].set()
+        model_auto_give_access[key]["worker"].join()
+        del model_auto_give_access[key]
         return_response["status"] = "success"
         notification_message = "Successfully stopped automatic grant access."
     except Exception as exp:
@@ -368,17 +392,6 @@ def stop_auto_access(
         return_response=return_response,
         url=f"/containers/ui/display/{model_id}/access",
     )
-
-    request.app.state.model_auto_give_access = {
-        "running": False,
-        "worker": None,
-        "event": None,
-        "benchmark": 0,
-        "model": 0,
-        "emails": "",
-        "interval": 0,
-    }
-
     return return_response
 
 
