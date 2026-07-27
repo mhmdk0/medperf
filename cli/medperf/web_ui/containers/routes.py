@@ -302,8 +302,8 @@ def grant_access_worker(
             GrantAccess.run(
                 benchmark_id=benchmark_id,
                 model_id=model_id,
-                emails=emails,
                 approved=True,
+                allowed_emails=emails,
             )
         except Exception:
             pass
