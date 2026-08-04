@@ -25,6 +25,7 @@
     </div>
 
     {% set entity_name = "datasets" %}
+    {% set empty_msg_testid = "no-dsets-msg" %}
     {% set has_items = datasets %}
     {% include "partials/listing_controls.html" %}
 
@@ -34,7 +35,7 @@
         {{ dataset_macros.dataset_card(dataset) }}
         {% endfor %}
         {% else %}
-        <h3 class="col-span-full text-center py-12 text-muted-fg text-xl" data-testid="no-dsets-msg">No datasets found</h3>
+        {% include "partials/listing_no_results.html" %}
         {% endif %}
     </div>
 

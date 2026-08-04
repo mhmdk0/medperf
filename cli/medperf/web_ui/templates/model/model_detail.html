@@ -75,20 +75,22 @@
     </div>
     {% endif %}
     {% if ui_mode == request.app.state.EVALUATION_MODE %}
-    <div class="mt-6 p-4 rounded-xl bg-muted text-center" x-data="{ associateOpen: false }" @click.outside="associateOpen = false">
+    <div class="mt-6 p-4 rounded-xl bg-muted text-center" x-data="{ associateOpen: false, listFilter: '' }" @click.outside="associateOpen = false">
         {% if entity.state == "OPERATION" %}
         {% set available_benchmarks = [] %}
         {% for benchmark in benchmarks.values() %}
-        {% if benchmark.id not in benchmark_associations or (benchmark.id in benchmark_associations and benchmark_associations[benchmark.id].approval_status == "REJECTED" ) %}
+        {% if benchmark.id not in benchmarks_associations or (benchmark.id in benchmarks_associations and benchmarks_associations[benchmark.id].approval_status == "REJECTED" ) %}
         {% set _ = available_benchmarks.append(benchmark) %}
         {% endif %}
         {% endfor %}
         <div class="relative inline-block w-full max-w-lg">
             <button type="button" id="associate-dropdown-btn" class="step-btn btn btn-info disabled:opacity-50" @click="associateOpen = !associateOpen" {% if task_running %}disabled{% endif %}>Associate with Benchmark</button>
             <div id="dropdown-div" class="absolute left-0 right-0 mt-2 rounded-xl bg-card dark:bg-card shadow-xl border-2 border-border py-2 z-20 max-h-[70vh] overflow-y-auto" x-show="associateOpen" x-cloak x-transition style="display: none;">
+                {% if available_benchmarks %}
+                {% include "partials/association_dropdown_search.html" %}
                 {% for benchmark in available_benchmarks %}
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 hover:bg-muted border-b border-border last:border-b-0">
-                    <div class="font-semibold text-ink min-w-0 break-words">{{ benchmark.id }} - {{ benchmark.name }}</div>
+                <div class="association-dropdown-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 hover:bg-muted border-b border-border last:border-b-0" data-search-text="{{ benchmark.id }} — {{ benchmark.name }}" x-show="!listFilter || ($el.dataset.searchText || '').toLowerCase().includes(listFilter.trim().toLowerCase())">
+                    <div class="font-semibold text-ink min-w-0 break-words">{{ benchmark.id }} — {{ benchmark.name }}</div>
                     <div class="flex gap-2 flex-shrink-0">
                         <a href="/benchmarks/ui/display/{{ benchmark.id }}" class="btn btn-xs btn-secondary whitespace-nowrap">View</a>
                         <form id="model-association-form-{{ benchmark.id }}" action="/models/associate" method="post" class="inline model-action-form" data-panel-title="Requesting model association" data-confirm-message="request model association with this benchmark?">
@@ -99,7 +101,7 @@
                     </div>
                 </div>
                 {% endfor %}
-                {% if not available_benchmarks %}
+                {% else %}
                 <p class="px-4 py-3 text-muted-fg text-sm">No benchmarks available for association</p>
                 {% endif %}
             </div>

@@ -18,6 +18,7 @@
     </div>
 
     {% set entity_name = "containers" %}
+    {% set empty_msg_testid = "no-conts-msg" %}
     {% set has_items = containers %}
     {% include "partials/listing_controls.html" %}
 
@@ -27,7 +28,7 @@
         {{ container_macros.container_card(container) }}
         {% endfor %}
         {% else %}
-        <h3 class="col-span-full text-center py-12 text-muted-fg text-xl" data-testid="no-conts-msg">No containers found</h3>
+        {% include "partials/listing_no_results.html" %}
         {% endif %}
     </div>
 

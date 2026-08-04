@@ -14,6 +14,11 @@ footer.site-footer {
     height: var(--footer-h);
 }
 
+.searchable-select-results .searchable-select-option[aria-selected="true"],
+.searchable-select-results .searchable-select-option.bg-brand-subtle {
+    background-color: var(--theme-brand-subtle);
+}
+
 .invalid-card {
     background-color: var(--theme-invalid-bg);
 }
