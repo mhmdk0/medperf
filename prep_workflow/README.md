@@ -111,6 +111,52 @@ extra work.
 # then register the container_config.yaml with MedPerf as a normal data preparator
 ```
 
+## Test locally
+
+Before registering with MedPerf, run the built image directly with
+`medperf container run_test` — the same developer utility used by every other
+MedPerf container example (see e.g. `examples/fl/prep/test.sh`). `template/test.sh`
+does this for you: it runs `prepare` then `statistics` against local folders
+under `template/workspace/`, exactly the way MedPerf would run them.
+
+1. Update `image:` in `container_config.yaml` to match the tag you built (or
+   leave `my-org/my-data-prep:0.0.1` if that's what you used).
+2. Set up `template/workspace/`:
+   ```bash
+   mkdir -p template/workspace/input_data/subject1 template/workspace/input_labels
+   cp <your-raw-files-for-subject1> template/workspace/input_data/subject1/
+   # repeat for as many workspace/input_data/<subject-id>/ folders as you want
+   # to test with — DiscoverSubjects registers one subject per sub-directory.
+   echo "{}" > template/workspace/parameters.yaml   # replace with your real params
+   # optional: drop any extra files your steps need (e.g. model weights) into
+   # template/workspace/additional_files/ — test.sh already mounts it via
+   # --additional_files_path.
+   ```
+3. Run it:
+   ```bash
+   bash template/test.sh
+   ```
+   `prepare` writes into `workspace/data` / `workspace/labels` (plus
+   `workspace/metadata` and `workspace/report.yaml`); `statistics` then reads
+   those as its input and writes `workspace/statistics.yaml`. Logs land next to
+   the script as `logs_prepare.log` / `logs_statistics.log`.
+4. `bash template/clean.sh` removes the generated outputs (`data`, `labels`,
+   `metadata`, `report.yaml`, `statistics.yaml`) so you can re-run `prepare`
+   from a clean state — your `input_data`, `input_labels` and `parameters.yaml`
+   are left untouched.
+
+To point the test at different locations (or add volumes you've added to
+`container_config.yaml`), edit the `--mounts` key=value pairs in `test.sh`
+directly — each key must match a volume name declared under the task's
+`input_volumes`/`output_volumes` in `container_config.yaml`. Two volumes are
+the exception: `parameters_file` and `additional_files` are never set via
+`--mounts` — a key by either of those names there is silently ignored,
+because `medperf container run_test` always overrides them from its own
+`--parameters_file_path` / `--additional_files_path` flags (see
+`cli/medperf/entities/cube.py`'s `extra_mounts`). `test.sh` already passes
+`--parameters_file_path`; add `--additional_files_path` too if your task
+declares an `additional_files` volume (see `examples/rano/test.sh`).
+
 ## Develop / test the engine
 
 ```bash
