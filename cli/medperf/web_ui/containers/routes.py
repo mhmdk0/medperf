@@ -265,7 +265,7 @@ def grant_access(
     request: Request,
     benchmark_id: int = Form(...),
     model_id: int = Form(...),
-    emails: str = Form(...),
+    emails: str = Form(""),
     current_user: bool = Depends(check_user_api),
 ):
 
@@ -317,7 +317,7 @@ def start_auto_access(
     benchmark_id: int = Form(...),
     model_id: int = Form(...),
     interval: int = Form(...),
-    emails: str = Form(...),
+    emails: str = Form(""),
     current_user: bool = Depends(check_user_api),
 ):
     model_auto_give_access = request.app.state.model_auto_give_access

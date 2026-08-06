@@ -128,20 +128,14 @@ function updateAutoAccessUI() {
 }
 
 function checkAccessForm() {
-    var allowListArr = getEmailsList(document.getElementById("allowed-email-list"));
     if (!document.getElementById("benchmark") || !document.getElementById("benchmark").value) {
         showErrorToast("Make sure that you've selected a benchmark");
-        return false;
-    }
-    if (!allowListArr.length) {
-        showErrorToast("Make sure that the email allow list is not empty");
         return false;
     }
     return true;
 }
 
 function checkAutoAccessForm() {
-    var allowListArr = getEmailsList(document.getElementById("allowed-email-list-auto"));
     if (!getSelectedBenchmarkId()) {
         showErrorToast("Make sure that you've selected a benchmark");
         return false;
@@ -152,11 +146,13 @@ function checkAutoAccessForm() {
         showErrorToast("Make sure that the time interval is between 5 and 60 (inclusive)");
         return false;
     }
-    if (!allowListArr.length) {
-        showErrorToast("Make sure that the email allow list is not empty");
-        return false;
-    }
     return true;
+}
+
+function emptyAllowListWarning(allowListArr, message) {
+    if (allowListArr.length) return message;
+    return message + " Note: no emails were added - this will grant access to ALL " +
+        "eligible data owners, with no email filtering.";
 }
 
 function startAutoGrant(startBtn) {
@@ -235,7 +231,10 @@ function init() {
 
     var startBtn = document.getElementById("start-auto-access-btn");
     if (startBtn) startBtn.addEventListener("click", function (e) {
-        if (checkAutoAccessForm()) showConfirmModal(e.currentTarget, startAutoGrant, "start automatic grant access for the selected benchmark?");
+        if (!checkAutoAccessForm()) return;
+        var allowListArr = getEmailsList(document.getElementById("allowed-email-list-auto"));
+        var message = emptyAllowListWarning(allowListArr, "start automatic grant access for the selected benchmark?");
+        showConfirmModal(e.currentTarget, startAutoGrant, message);
     });
     var stopBtn = document.getElementById("stop-auto-access-btn");
     if (stopBtn) stopBtn.addEventListener("click", function (e) {
