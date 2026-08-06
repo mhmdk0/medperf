@@ -1,5 +1,6 @@
 {% extends "detail_base.html" %}
 {% import 'macros/container_macros.html' as container_macros %}
+{% import 'macros/association_card_macros.html' as association_card_macros %}
 {% import "macros/modal_macros.html" as modal_macros %}
 
 {% block title %}Training Experiment Details{% endblock %}
@@ -92,27 +93,26 @@
         </div>
         {% else %}
         <p class="text-muted-fg mb-4">No aggregator set yet.</p>
-        {% if available_aggregators %}
         <form id="set-aggregator-form" action="/training/add_aggregator" method="post" class="training-action-form" data-panel-title="Setting aggregator" data-confirm-message="set this aggregator for this training experiment?">
             <input type="hidden" name="training_exp_id" value="{{ entity.id }}">
             <div class="flex flex-wrap items-center gap-3">
-                <select name="aggregator_id" class="flex-1 min-w-[200px] px-4 py-2.5 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent cursor-pointer" required>
-                    <option value="" disabled selected>Select an aggregator</option>
-                    {% for agg in available_aggregators %}
-                    <option value="{{ agg.id }}">{{ agg.name }} ({{ agg.address }}:{{ agg.port }})</option>
-                    {% endfor %}
-                </select>
+                {% set entity_type = "aggregator" %}
+                {% set input_name = "aggregator_id" %}
+                {% set input_id = "aggregator-id" %}
+                {% set placeholder = "Search aggregators…" %}
+                {% set mine_only = false %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-[200px]" %}
+                {% include "partials/searchable_select.html" %}
                 <button type="submit" class="btn btn-sm btn-primary inline-flex items-center gap-2">
                     <i class="fas fa-link"></i> Set aggregator
                 </button>
             </div>
         </form>
-        {% else %}
-        <a href="/aggregators/register/ui" class="btn btn-sm btn-primary">
-            <i class="fas fa-plus"></i> Register an aggregator
-        </a>
-        <p class="text-sm text-muted-fg mt-2">No aggregators registered. Register an aggregator first, then set it for this experiment.</p>
-        {% endif %}
+        <p class="text-sm text-muted-fg mt-2">
+            Need one?
+            <a href="/aggregators/register/ui" class="text-brand-accent hover:underline">Register an aggregator</a>
+        </p>
         {% endif %}
     </div>
 </div>
@@ -212,45 +212,22 @@
     </div>
 </div>
 
-<div class="bg-card dark:bg-card rounded-2xl shadow-lg border-2 border-border-brand dark:border-border mb-6 overflow-hidden">
-    <div class="px-4 py-3 border-b border-border bg-muted flex flex-wrap justify-between items-center gap-2">
-        <h3 class="mb-0 text-ink font-bold">Dataset Associations</h3>
-        {% if dataset_assoc_pending %}<span class="text-sm text-warning-fg font-semibold">Pending approvals</span>{% endif %}
-    </div>
-    <div class="p-6">
-        {% if dataset_associations %}
-        <ul class="space-y-4">
-            {% for assoc in dataset_associations %}
-            <li class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted">
-                <div>
-                    {% if assoc.dataset and assoc.dataset in datasets %}
-                    <a href="/datasets/ui/display/{{ assoc.dataset }}" class="text-brand-accent hover:underline font-semibold">{{ datasets[assoc.dataset].name }}</a>
-                    <span class="text-muted-fg text-sm ml-2">ID: {{ assoc.dataset }}</span>
-                    {% else %}
-                    <span class="font-semibold text-ink">Dataset {{ assoc.dataset }}</span>
-                    {% endif %}
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold {% if assoc.approval_status == 'APPROVED' %}bg-success-muted text-brand-accent{% elif assoc.approval_status == 'REJECTED' %}bg-danger-muted text-danger-fg{% else %}bg-warning-muted text-warning-fg{% endif %}">{{ assoc.approval_status }}</span>
-                    {% if assoc.approval_status == 'PENDING' %}
-                    <form action="/training/approve" method="post" class="inline training-approve-reject-form" data-panel-title="Approving association" data-confirm-message="approve this dataset association?">
-                        <input type="hidden" name="training_exp_id" value="{{ entity.id }}">
-                        <input type="hidden" name="dataset_id" value="{{ assoc.dataset }}">
-                        <button type="submit" class="btn btn-xs btn-primary cursor-pointer">Approve</button>
-                    </form>
-                    <form action="/training/reject" method="post" class="inline training-approve-reject-form" data-panel-title="Rejecting association" data-confirm-message="reject this dataset association?">
-                        <input type="hidden" name="training_exp_id" value="{{ entity.id }}">
-                        <input type="hidden" name="dataset_id" value="{{ assoc.dataset }}">
-                        <button type="submit" class="btn btn-xs btn-danger cursor-pointer">Reject</button>
-                    </form>
-                    {% endif %}
-                </div>
-            </li>
+<div class="space-y-4">
+    {% set dataset_assoc_len = datasets_associations|length %}
+    <div class="relative" x-data="{ open: false }" @click.outside="open = false" data-testid="datasets-associations">
+        <button type="button" @click="open = !open" class="w-full bg-card dark:bg-card rounded-xl p-6 shadow-lg border-2 border-border-brand dark:border-border flex items-center justify-between cursor-pointer hover:bg-muted transition-colors text-left" data-testid="datasets-associations-btn">
+            <h3 class="text-xl font-bold text-ink flex items-center flex-wrap gap-2">
+                <i class="fas fa-database mr-1"></i>Dataset Associations
+                <span class="px-4 py-1 rounded-full text-sm font-bold text-brand-accent border-2 border-success bg-success-muted">{{ dataset_assoc_len }}</span>
+                {% if dataset_assoc_pending %}<span class="italic text-sm text-muted-fg">You have pending associations</span>{% endif %}
+            </h3>
+            <i class="fas fa-chevron-down text-muted-fg transition-transform duration-200 flex-shrink-0" :class="open && 'rotate-180'" aria-hidden="true"></i>
+        </button>
+        <div id="datasets-associations" x-show="open" x-cloak x-transition class="mt-2 rounded-xl bg-card dark:bg-card shadow-xl border-2 border-border-brand dark:border-border max-h-[70vh] overflow-y-auto p-4 flex flex-wrap gap-4 justify-evenly" style="display: none;">
+            {% for assoc in datasets_associations %}
+            {{ association_card_macros.association_card(assoc, datasets[assoc.dataset], "dataset", training_exp_id=entity.id) }}
             {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-muted-fg">No datasets associated yet.</p>
-        {% endif %}
+        </div>
     </div>
 </div>
 {% endif %}
@@ -270,6 +247,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/folder_browsing.js') }}"></script>
 <script src="{{ url_for('static', path='js/training/training_detail.js') }}"></script>

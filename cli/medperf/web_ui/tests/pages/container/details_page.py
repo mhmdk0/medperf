@@ -42,7 +42,7 @@ class ContainerDetailsPage(BasePage):
         return [i.text for i in self.driver.find_elements(*self.ASSOCIATION_CARDS)]
 
     def grant_access(self, benchmark, emails):
-        self.select_by_text(self.BENCHMARK, benchmark)
+        self.select_searchable_entity(self.BENCHMARK, benchmark)
         self.type(self.EMAILS, ",".join(emails) + ",")
         self.click(self.GRANT_ACCESS)
 

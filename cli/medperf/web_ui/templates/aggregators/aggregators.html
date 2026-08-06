@@ -18,6 +18,7 @@
     </div>
 
     {% set entity_name = "aggregators" %}
+    {% set empty_msg_testid = "no-aggs-msg" %}
     {% set has_items = aggregators %}
     {% include "partials/listing_controls.html" %}
 
@@ -27,7 +28,7 @@
         {{ aggregator_macros.aggregator_card(agg) }}
         {% endfor %}
         {% else %}
-        <h3 class="col-span-full text-center py-12 text-muted-fg text-xl" data-testid="no-aggs-msg">No aggregators found</h3>
+        {% include "partials/listing_no_results.html" %}
         {% endif %}
     </div>
 

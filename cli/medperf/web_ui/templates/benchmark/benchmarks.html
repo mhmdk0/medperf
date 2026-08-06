@@ -18,6 +18,7 @@
     </div>
 
     {% set entity_name = "benchmarks" %}
+    {% set empty_msg_testid = "no-bmks-msg" %}
     {% set has_items = benchmarks %}
     {% include "partials/listing_controls.html" %}
 
@@ -27,7 +28,7 @@
         {{ benchmark_macros.benchmark_card(benchmark) }}
         {% endfor %}
         {% else %}
-        <h3 class="col-span-full text-center py-12 text-muted-fg text-xl" data-testid="no-bmks-msg">No benchmarks found</h3>
+        {% include "partials/listing_no_results.html" %}
         {% endif %}
     </div>
 

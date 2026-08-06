@@ -47,16 +47,16 @@
         <div>
             <label for="aggregation_mlcube" class="block text-secondary font-semibold mb-2">Aggregation Container</label>
             <div class="flex flex-wrap items-stretch gap-2">
-                <select name="aggregation_mlcube" id="aggregation-mlcube" class="flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent cursor-pointer" {% if task_running %}disabled{% endif %}>
-                    <option value="" disabled selected>Select a Container</option>
-                    {% if containers | length > 0 %}
-                    {% for c in containers %}
-                    <option value="{{ c['id'] }}" {% if agg_register_running and form_data.get("aggregation_mlcube") == c['id']|string %}selected{% endif %}>{{ c.name }}</option>
-                    {% endfor %}
-                    {% else %}
-                    <option value="" disabled>No containers available</option>
-                    {% endif %}
-                </select>
+                {% set entity_type = "container" %}
+                {% set input_name = "aggregation_mlcube" %}
+                {% set input_id = "aggregation-mlcube" %}
+                {% set placeholder = "Search containers…" %}
+                {% set mine_only = false %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('aggregation_mlcube', '') if agg_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
                 <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_aggregator_aggregation_mlcube }}"><i class="fas fa-info-circle text-lg"></i></span>
             </div>
         </div>
@@ -73,6 +73,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/aggregators/aggregator_register.js') }}"></script>
 {% if task_running and request.app.state.task.name == "register_aggregator" %}

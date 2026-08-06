@@ -40,46 +40,51 @@
         <div>
             <label for="data_preparation_container" class="block text-secondary font-semibold mb-2">Data Preparation Container</label>
             <div class="flex flex-wrap items-stretch gap-2">
-                <select name="data_preparation_container" id="data-preparation-container" class="flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent cursor-pointer" {% if task_running %}disabled{% endif %}>
-                    <option value="" disabled selected>Select a Container</option>
-                    {% if data_prep_containers | length > 0 %}
-                    {% for container in data_prep_containers %}
-                    <option value="{{ container['id'] }}" {% if training_register_running and form_data.get("data_preparation_container") == container['id']|string %}selected{% endif %}>{{ container.name }}</option>
-                    {% endfor %}
-                    {% else %}
-                    <option value="" disabled>No Data Preparation Containers available</option>
-                    {% endif %}
-                </select>
+                {% set entity_type = "container" %}
+                {% set container_type = "data-prep-container" %}
+                {% set input_name = "data_preparation_container" %}
+                {% set input_id = "data-preparation-container" %}
+                {% set placeholder = "Search data preparation containers…" %}
+                {% set mine_only = true %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('data_preparation_container', '') if training_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
                 <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_training_data_preparation_container }}"><i class="fas fa-info-circle text-lg"></i></span>
             </div>
         </div>
         <div>
             <label for="fl_container" class="block text-secondary font-semibold mb-2">FL Container</label>
             <div class="flex flex-wrap items-stretch gap-2">
-                <select name="fl_container" id="fl-container" class="flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent cursor-pointer" {% if task_running %}disabled{% endif %}>
-                    <option value="" disabled selected>Select a Container</option>
-                    {% if all_containers | length > 0 %}
-                    {% for container in all_containers %}
-                    <option value="{{ container['id'] }}" {% if training_register_running and form_data.get("fl_container") == container['id']|string %}selected{% endif %}>{{ container.name }}</option>
-                    {% endfor %}
-                    {% else %}
-                    <option value="" disabled>No containers available</option>
-                    {% endif %}
-                </select>
+                {% set entity_type = "container" %}
+                {% set container_type = "non-data-prep-container" %}
+                {% set input_name = "fl_container" %}
+                {% set input_id = "fl-container" %}
+                {% set placeholder = "Search FL containers…" %}
+                {% set mine_only = true %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('fl_container', '') if training_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
                 <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_training_fl_container }}"><i class="fas fa-info-circle text-lg"></i></span>
             </div>
         </div>
         <div>
             <label for="fl_admin_container" class="block text-secondary font-semibold mb-2">FL Admin Container (optional)</label>
             <div class="flex flex-wrap items-stretch gap-2">
-                <select name="fl_admin_container" id="fl-admin-container" class="flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent cursor-pointer" {% if task_running %}disabled{% endif %}>
-                    <option value="">None</option>
-                    {% if all_containers | length > 0 %}
-                    {% for container in all_containers %}
-                    <option value="{{ container['id'] }}" {% if training_register_running and form_data.get("fl_admin_container") == container['id']|string %}selected{% endif %}>{{ container.name }}</option>
-                    {% endfor %}
-                    {% endif %}
-                </select>
+                {% set entity_type = "container" %}
+                {% set container_type = "non-data-prep-container" %}
+                {% set input_name = "fl_admin_container" %}
+                {% set input_id = "fl-admin-container" %}
+                {% set placeholder = "Search FL admin containers (optional)…" %}
+                {% set mine_only = true %}
+                {% set required = false %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('fl_admin_container', '') if training_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
                 <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_training_fl_admin_container }}"><i class="fas fa-info-circle text-lg"></i></span>
             </div>
         </div>
@@ -96,6 +101,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/training/training_register.js') }}"></script>
 {% if task_running and request.app.state.task.name == "register_training_experiment" %}

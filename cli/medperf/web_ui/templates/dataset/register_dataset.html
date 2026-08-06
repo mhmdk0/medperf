@@ -17,27 +17,31 @@
         {% if request.app.state.ui_mode == request.app.state.EVALUATION_MODE %}
         <div>
             <label for="benchmark" class="block text-secondary font-semibold mb-2">Select Benchmark</label>
-            <select name="benchmark" id="benchmark" class="w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent cursor-pointer" {% if task_running %}disabled{% endif %}>
-                <option value="" disabled selected>Select a benchmark</option>
-                {% for benchmark in benchmarks %}
-                <option value="{{ benchmark.id }}" {% if dataset_register_running and form_data.get("benchmark") == benchmark.id|string %}selected{% endif %}>{{ benchmark.name }}</option>
-                {% endfor %}
-            </select>
+            {% set entity_type = "benchmark" %}
+            {% set input_name = "benchmark" %}
+            {% set input_id = "benchmark" %}
+            {% set placeholder = "Search benchmarks…" %}
+            {% set mine_only = false %}
+            {% set required = true %}
+            {% set selected_value = form_data.get('benchmark', '') if dataset_register_running else '' %}
+            {% set disabled = task_running %}
+            {% include "partials/searchable_select.html" %}
         </div>
         {% else %}
         <div>
             <label for="prep_cube_uid" class="block text-secondary font-semibold mb-2">Data Preparation Container</label>
             <div class="flex flex-wrap items-stretch gap-2">
-                <select name="prep_cube_uid" id="data-preparation-container" class="flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent cursor-pointer" {% if task_running %}disabled{% endif %}>
-                    <option value="" disabled selected>Select a Container</option>
-                    {% if data_prep_containers | length > 0 %}
-                    {% for container in data_prep_containers %}
-                    <option value="{{ container['id'] }}" {% if training_register_running and form_data.get("prep_cube_uid") == container['id']|string %}selected{% endif %}>{{ container.name }}</option>
-                    {% endfor %}
-                    {% else %}
-                    <option value="" disabled>No Data Preparation Containers available</option>
-                    {% endif %}
-                </select>
+                {% set entity_type = "container" %}
+                {% set container_type = "data-prep-container" %}
+                {% set input_name = "prep_cube_uid" %}
+                {% set input_id = "data-preparation-container" %}
+                {% set placeholder = "Search data preparation containers…" %}
+                {% set mine_only = false %}
+                {% set required = true %}
+                {% set extra_class = "flex-1 min-w-0" %}
+                {% set selected_value = form_data.get('prep_cube_uid', '') if dataset_register_running else '' %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
                 <span class="inline-flex items-center px-3 tooltip-icon text-brand-accent" title="{{ tooltips.register_training_data_preparation_container }}"><i class="fas fa-info-circle text-lg"></i></span>
             </div>
         </div>
@@ -106,6 +110,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/datasets/dataset_register.js') }}"></script>
 <script src="{{ url_for('static', path='js/folder_browsing.js') }}"></script>

@@ -16,16 +16,14 @@
         <p class="text-muted-fg mb-4">Add users who can decrypt and run this container.</p>
         <div class="mb-4">
             <label for="benchmark" class="block text-secondary font-semibold mb-2">Benchmark</label>
-            <select name="benchmark" id="benchmark" class="w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent" {% if task_running %}disabled{% endif %}>
-                <option value="" disabled selected>Select a benchmark</option>
-                {% if benchmarks %}
-                {% for benchmark in benchmarks %}
-                <option value="{{ benchmark }}">{{ benchmarks[benchmark] }}</option>
-                {% endfor %}
-                {% else %}
-                <option value="" disabled>No approved benchmarks to be selected</option>
-                {% endif %}
-            </select>
+            {% set entity_type = "benchmark" %}
+            {% set input_name = "benchmark" %}
+            {% set input_id = "benchmark" %}
+            {% set placeholder = "Search approved benchmarks…" %}
+            {% set allowed_ids = benchmark_allowed_ids %}
+            {% set required = true %}
+            {% set disabled = task_running %}
+            {% include "partials/searchable_select.html" %}
         </div>
         <div class="mb-4" id="email-chip-container">
             <label for="email-input" class="block text-secondary font-semibold mb-2">Allow list emails</label>
@@ -41,20 +39,21 @@
     <div id="auto-access-panel" class="bg-card dark:bg-card rounded-2xl p-6 shadow-lg border-2 border-border-brand dark:border-border mb-6" data-model-id="{{ entity.id }}" data-running-auto-access='{{ running_auto_access | tojson }}'>
         <h3 class="text-lg font-bold text-ink mb-2">Automatic Access</h3>
         <p class="text-muted-fg mb-4">Automatically grant access to new data owners associated to a benchmark.</p>
+        {% if running_benchmark_names %}
+        <p class="text-sm text-muted-fg mb-4">Currently running for: {{ running_benchmark_names | join(", ") }}</p>
+        {% endif %}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
                 <label for="benchmark-auto" class="block text-secondary font-semibold mb-2">Benchmark</label>
-                <select id="benchmark-auto" class="w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink focus:outline-none focus:border-brand-accent">
-                    <option value="" disabled selected>Select a benchmark</option>
-                    {% if benchmarks %}
-                    {% for benchmark in benchmarks %}
-                    <option value="{{ benchmark }}">{{ benchmarks[benchmark] }}{% if benchmark in running_auto_access %} (running){% endif %}</option>
-                    {% endfor %}
-                    {% else %}
-                    <option value="" disabled>No approved benchmarks to be selected</option>
-                    {% endif %}
-                </select>
+                {% set entity_type = "benchmark" %}
+                {% set input_name = "" %}
+                {% set input_id = "benchmark-auto" %}
+                {% set placeholder = "Search approved benchmarks…" %}
+                {% set allowed_ids = benchmark_allowed_ids %}
+                {% set required = false %}
+                {% set disabled = task_running %}
+                {% include "partials/searchable_select.html" %}
             </div>
             <div>
                 <label for="interval-auto" class="block text-secondary font-semibold mb-2">Interval (minutes)</label>
@@ -129,6 +128,7 @@
 {% endblock detail_panel %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/containers/container_access.js') }}"></script>
 {% if task_running %}
