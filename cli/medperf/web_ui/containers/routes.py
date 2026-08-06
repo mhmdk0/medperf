@@ -240,6 +240,13 @@ def container_access_ui(
             if cert_id in certs_mapping:
                 existing_keys[key_id] = certs_mapping[cert_id]
 
+    running_auto_access = _running_auto_access_for_container(
+        request.app.state.model_auto_give_access, container_id
+    )
+    running_benchmark_names = [
+        Benchmark.get(benchmark_id).name for benchmark_id in running_auto_access
+    ]
+
     return templates.TemplateResponse(
         "container/container_access.html",
         {
@@ -249,9 +256,8 @@ def container_access_ui(
             "is_owner": is_owner,
             "benchmark_allowed_ids": benchmark_allowed_ids,
             "keys": existing_keys,
-            "running_auto_access": _running_auto_access_for_container(
-                request.app.state.model_auto_give_access, container_id
-            ),
+            "running_auto_access": running_auto_access,
+            "running_benchmark_names": running_benchmark_names,
         },
     )
 

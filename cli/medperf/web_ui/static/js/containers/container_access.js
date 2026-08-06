@@ -78,7 +78,6 @@ function updateAutoAccessUI() {
     var startBtn = document.getElementById("start-auto-access-btn");
     var stopBtn = document.getElementById("stop-auto-access-btn");
     var runningBadge = document.getElementById("running-badge");
-    var benchmarkEl = document.getElementById("benchmark-auto");
     var intervalEl = document.getElementById("interval-auto");
     var emailContainer = document.getElementById("allowed-email-list-auto");
     var emailInput = document.getElementById("email-input-auto");
@@ -98,7 +97,6 @@ function updateAutoAccessUI() {
             intervalEl.disabled = true;
         }
         if (emailInput) emailInput.disabled = true;
-        if (benchmarkEl) benchmarkEl.disabled = false;
         clearEmailChips(emailContainer);
         return;
     }
@@ -111,7 +109,6 @@ function updateAutoAccessUI() {
             intervalEl.disabled = true;
         }
         if (emailInput) emailInput.disabled = true;
-        if (benchmarkEl) benchmarkEl.disabled = true;
         setEmailChips(emailContainer, parseStoredEmails(runningState.emails));
         setElementVisible(stopBtn, true);
         setElementVisible(runningBadge, true);
@@ -121,7 +118,6 @@ function updateAutoAccessUI() {
             intervalEl.disabled = false;
         }
         if (emailInput) emailInput.disabled = false;
-        if (benchmarkEl) benchmarkEl.disabled = false;
         clearEmailChips(emailContainer);
         setElementVisible(startBtn, true);
     }
