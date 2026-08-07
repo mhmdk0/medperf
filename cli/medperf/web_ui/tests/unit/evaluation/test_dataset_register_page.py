@@ -116,7 +116,7 @@ def test_dataset_registration_page_content(page, mocker):
     assert page.get_text(page.LABELS_LABEL) == "Labels Folder"
     assert page.get_text(page.REGISTER) == "Register Dataset"
 
-    spy_benchmarks.assert_called_once()
+    spy_benchmarks.assert_not_called()
 
 
 def test_dataset_registration_page_tooltips(page, mocker):

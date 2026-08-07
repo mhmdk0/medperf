@@ -1,5 +1,6 @@
 import logging
 import threading
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -24,6 +25,7 @@ from medperf.web_ui.common import (
     check_user_ui,
     sanitize_redirect_url,
 )
+from medperf.web_ui.listing import fetch_listing_page
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -33,24 +35,32 @@ logger = logging.getLogger(__name__)
 def containers_ui(
     request: Request,
     mine_only: bool = False,
+    page: int = 1,
+    page_size: int = 9,
+    ordering: str = "created_at_desc",
+    search: Optional[str] = None,
     current_user: bool = Depends(check_user_ui),
 ):
-    filters = {}
     my_user_id = get_medperf_user_data()["id"]
-    if mine_only:
-        filters["owner"] = my_user_id
-
-    containers = Cube.all(
-        filters=filters,
+    containers, search_query, pagination_context = fetch_listing_page(
+        Cube,
+        page=page,
+        page_size=page_size,
+        ordering=ordering,
+        mine_only=mine_only,
+        my_user_id=my_user_id,
+        search=search,
     )
-    containers = sorted(containers, key=lambda x: x.created_at, reverse=True)
-    # sort by (mine recent) (mine oldish), (other recent), (other oldish)
-    my_containers = [c for c in containers if c.owner == my_user_id]
-    other_containers = [c for c in containers if c.owner != my_user_id]
-    containers = my_containers + other_containers
+
     return templates.TemplateResponse(
         "container/containers.html",
-        {"request": request, "containers": containers, "mine_only": mine_only},
+        {
+            "request": request,
+            "containers": containers,
+            "mine_only": mine_only,
+            "search_query": search_query,
+            **pagination_context,
+        },
     )
 
 
@@ -179,21 +189,25 @@ def container_access_ui(
     for assoc in benchmark_assocs:
         benchmark_associations[assoc["benchmark"]] = assoc
 
-    benchmarks = Benchmark.all()
-    benchmarks = {
-        b.id: b.name
-        for b in benchmarks
-        if b.id in benchmark_associations
-        and benchmark_associations[b.id]["approval_status"] == "APPROVED"
-    }
+    benchmark_allowed_ids = ",".join(
+        str(benchmark_id)
+        for benchmark_id, assoc in benchmark_associations.items()
+        if assoc["approval_status"] == "APPROVED"
+    )
 
     existing_keys = {
         i.id: i.certificate for i in EncryptedKey.get_container_keys(container_id)
     }
 
+    approved_benchmark_ids = [
+        int(benchmark_id)
+        for benchmark_id, assoc in benchmark_associations.items()
+        if assoc["approval_status"] == "APPROVED"
+    ]
+
     if existing_keys:
         certs_mapping = {}
-        for benchmark_id in benchmarks:
+        for benchmark_id in approved_benchmark_ids:
             _, cert_user_info = Certificate.get_benchmark_datasets_certificates(
                 benchmark_id
             )
@@ -212,7 +226,7 @@ def container_access_ui(
             "entity": container,
             "entity_name": container.name,
             "is_owner": is_owner,
-            "benchmarks": benchmarks,
+            "benchmark_allowed_ids": benchmark_allowed_ids,
             "keys": existing_keys,
         },
     )

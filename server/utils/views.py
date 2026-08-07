@@ -37,6 +37,7 @@ from certificate.models import Certificate
 from certificate.serializers import CertificateDetailSerializer
 from encrypted_key.models import EncryptedKey
 from encrypted_key.serializers import EncryptedKeyDetailSerializer
+from utils.list_mixins import SearchableOrderingListMixin
 
 
 class User(GenericAPIView):
@@ -52,27 +53,30 @@ class User(GenericAPIView):
         return Response(serializer.data)
 
 
-class BenchmarkList(GenericAPIView):
+class BenchmarkList(SearchableOrderingListMixin, GenericAPIView):
     serializer_class = BenchmarkSerializer
     queryset = ""
 
     def get_object(self, pk):
         try:
-            return Benchmark.objects.filter(owner__id=pk)
+            owned = Benchmark.objects.filter(owner__id=pk)
+            committee = Benchmark.objects.filter(committee_members__id=pk)
+            return owned | committee
         except Benchmark.DoesNotExist:
             raise Http404
 
     def get(self, request, format=None):
         """
-        Retrieve all benchmarks owned by the current user
+        Retrieve all benchmarks owned or managed by the current user
         """
         benchmarks = self.get_object(request.user.id)
+        benchmarks = self.filter_queryset(benchmarks)
         benchmarks = self.paginate_queryset(benchmarks)
         serializer = BenchmarkSerializer(benchmarks, many=True)
         return self.get_paginated_response(serializer.data)
 
 
-class TrainingExperimentList(GenericAPIView):
+class TrainingExperimentList(SearchableOrderingListMixin, GenericAPIView):
     serializer_class = ReadTrainingExperimentSerializer
     queryset = ""
 
@@ -87,6 +91,7 @@ class TrainingExperimentList(GenericAPIView):
         Retrieve all training_exps owned by the current user
         """
         training_exps = self.get_object(request.user.id)
+        training_exps = self.filter_queryset(training_exps)
         training_exps = self.paginate_queryset(training_exps)
         serializer = ReadTrainingExperimentSerializer(training_exps, many=True)
         return self.get_paginated_response(serializer.data)
@@ -112,7 +117,7 @@ class TrainingEventList(GenericAPIView):
         return self.get_paginated_response(serializer.data)
 
 
-class AggregatorList(GenericAPIView):
+class AggregatorList(SearchableOrderingListMixin, GenericAPIView):
     serializer_class = AggregatorSerializer
     queryset = ""
 
@@ -127,6 +132,7 @@ class AggregatorList(GenericAPIView):
         Retrieve all aggregators owned by the current user
         """
         aggregators = self.get_object(request.user.id)
+        aggregators = self.filter_queryset(aggregators)
         aggregators = self.paginate_queryset(aggregators)
         serializer = AggregatorSerializer(aggregators, many=True)
         return self.get_paginated_response(serializer.data)
@@ -152,7 +158,7 @@ class CAList(GenericAPIView):
         return self.get_paginated_response(serializer.data)
 
 
-class MlCubeList(GenericAPIView):
+class MlCubeList(SearchableOrderingListMixin, GenericAPIView):
     serializer_class = MlCubeSerializer
     queryset = ""
 
@@ -167,12 +173,13 @@ class MlCubeList(GenericAPIView):
         Retrieve all mlcubes associated with the current user
         """
         mlcubes = self.get_object(request.user.id)
+        mlcubes = self.filter_queryset(mlcubes)
         mlcubes = self.paginate_queryset(mlcubes)
         serializer = MlCubeSerializer(mlcubes, many=True)
         return self.get_paginated_response(serializer.data)
 
 
-class AssetList(GenericAPIView):
+class AssetList(SearchableOrderingListMixin, GenericAPIView):
     serializer_class = AssetSerializer
     queryset = ""
 
@@ -187,12 +194,13 @@ class AssetList(GenericAPIView):
         Retrieve all assets associated with the current user
         """
         assets = self.get_object(request.user.id)
+        assets = self.filter_queryset(assets)
         assets = self.paginate_queryset(assets)
         serializer = AssetSerializer(assets, many=True)
         return self.get_paginated_response(serializer.data)
 
 
-class ModelList(GenericAPIView):
+class ModelList(SearchableOrderingListMixin, GenericAPIView):
     serializer_class = ModelSerializer
     queryset = ""
 
@@ -207,12 +215,13 @@ class ModelList(GenericAPIView):
         Retrieve all models associated with the current user
         """
         models = self.get_object(request.user.id)
+        models = self.filter_queryset(models)
         models = self.paginate_queryset(models)
         serializer = ModelSerializer(models, many=True)
         return self.get_paginated_response(serializer.data)
 
 
-class DatasetList(GenericAPIView):
+class DatasetList(SearchableOrderingListMixin, GenericAPIView):
     serializer_class = DatasetFullSerializer
     queryset = ""
 
@@ -227,6 +236,7 @@ class DatasetList(GenericAPIView):
         Retrieve all datasets associated with the current user
         """
         datasets = self.get_object(request.user.id)
+        datasets = self.filter_queryset(datasets)
         datasets = self.paginate_queryset(datasets)
         serializer = DatasetFullSerializer(datasets, many=True)
         return self.get_paginated_response(serializer.data)
@@ -302,9 +312,16 @@ class DatasetAssociationList(GenericAPIView):
 
     def get_object(self, pk):
         try:
-            return BenchmarkDataset.objects.filter(
-                Q(dataset__owner__id=pk) | Q(benchmark__owner__id=pk)
+            as_dataset_owner = BenchmarkDataset.objects.filter(dataset__owner__id=pk)
+            as_benchmark_owner = BenchmarkDataset.objects.filter(
+                benchmark__owner__id=pk
             )
+            as_committee_member = BenchmarkDataset.objects.filter(
+                benchmark__committee_members__id=pk
+            )
+            return (
+                as_dataset_owner | as_benchmark_owner | as_committee_member
+            ).distinct()
         except BenchmarkDataset.DoesNotExist:
             raise Http404
 
@@ -324,9 +341,14 @@ class ModelAssociationList(GenericAPIView):
 
     def get_object(self, pk):
         try:
-            return BenchmarkModel.objects.filter(
-                Q(model__owner__id=pk) | Q(benchmark__owner__id=pk)
+            as_model_owner = BenchmarkModel.objects.filter(model__owner__id=pk)
+            as_benchmark_owner = BenchmarkModel.objects.filter(benchmark__owner__id=pk)
+            as_committee_member = BenchmarkModel.objects.filter(
+                benchmark__committee_members__id=pk
             )
+            return (
+                as_model_owner | as_benchmark_owner | as_committee_member
+            ).distinct()
         except BenchmarkModel.DoesNotExist:
             raise Http404
 

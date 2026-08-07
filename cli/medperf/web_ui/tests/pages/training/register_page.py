@@ -49,7 +49,8 @@ class RegTrainingPage(BasePage):
     ):
         self.type(self.NAME, name)
         self.type(self.DESCRIPTION, description)
-        self.select_by_text(self.DATA_PREP, data_prep)
-        self.select_by_text(self.FL, fl_container)
-        self.select_by_text(self.FL_ADMIN, fl_admin_container)
+        self.select_searchable_entity(self.DATA_PREP, data_prep)
+        self.select_searchable_entity(self.FL, fl_container)
+        if fl_admin_container and fl_admin_container != "None":
+            self.select_searchable_entity(self.FL_ADMIN, fl_admin_container)
         self.click(self.REGISTER)

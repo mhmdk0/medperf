@@ -42,6 +42,10 @@ class Benchmark(Entity):
     def get_comms_uploader():
         return config.comms.upload_benchmark
 
+    @staticmethod
+    def get_comms_counter():
+        return config.comms.get_benchmarks_count
+
     @handle_validation_error
     def __init__(self, **kwargs):
         """Creates a new benchmark instance
@@ -71,6 +75,18 @@ class Benchmark(Entity):
         self.dataset_auto_approval_mode = self._model.dataset_auto_approval_mode
         self.model_auto_approval_allow_list = self._model.model_auto_approval_allow_list
         self.model_auto_approval_mode = self._model.model_auto_approval_mode
+        self.committee_member_emails = self._model.committee_member_emails
+
+    def user_can_manage(self, user_data=None):
+        user_data = user_data or get_medperf_user_data()
+        if self.owner == user_data["id"]:
+            return True
+
+        user_email = user_data["email"].lower()
+        committee_emails = [email.lower() for email in self.committee_member_emails]
+        if user_email in committee_emails:
+            return True
+        return False
 
     @property
     def local_id(self):
@@ -164,7 +180,7 @@ class Benchmark(Entity):
         associations = get_user_associations(
             experiment_type=experiment_type,
             component_type=component_type,
-            approval_status=None,  # TODO
+            approval_status=None,
         )
 
         associations = [a for a in associations if a["benchmark"] == benchmark_uid]

@@ -377,10 +377,10 @@ def test_dataset_details_state(
 
     if TEST_DATASET.state == "OPERATION":
         assert page.get_text(page.STATE) == "OPERATIONAL"
-        assert "green" in page.get_attribute(page.STATE, "class").lower()
+        assert "success" in page.get_attribute(page.STATE, "class").lower()
     else:
         assert page.get_text(page.STATE) == TEST_DATASET.state
-        assert "yellow" in page.get_attribute(page.STATE, "class").lower()
+        assert "warning" in page.get_attribute(page.STATE, "class").lower()
 
     TEST_DATASET.state = "DEVELOPMENT"
 
@@ -398,10 +398,10 @@ def test_dataset_details_validity(
 
     if TEST_DATASET.is_valid:
         assert page.get_text(page.VALID) == "VALID"
-        assert "green" in page.get_attribute(page.VALID, "class").lower()
+        assert "success" in page.get_attribute(page.VALID, "class").lower()
     else:
         assert page.get_text(page.VALID) == "INVALID"
-        assert "red" in page.get_attribute(page.VALID, "class").lower()
+        assert "danger" in page.get_attribute(page.VALID, "class").lower()
 
     TEST_DATASET.is_valid = True
 
@@ -1003,7 +1003,7 @@ def test_dataset_details_non_approved_associations_content(
         assert assoc_status == BENCHMARKS_ASSOCS[str(bmk_id)]["approval_status"]
 
         if assoc_status == "REJECTED":
-            assert "red" in status_el.get_attribute("class").lower()
+            assert "danger" in status_el.get_attribute("class").lower()
 
     TEST_DATASET.state = "DEVELOPMENT"
 

@@ -13,7 +13,7 @@ from medperf.web_ui.tests.unit.helpers import stub_event_generator, switch_to_ui
 
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_CONTAINERS = "medperf.entities.cube.Cube.all"
-PATCH_GET_CONTAINERS_TYPE = "medperf.web_ui.training.routes.get_container_type"
+PATCH_GET_CONTAINERS_TYPE = "medperf.web_ui.entity_search.get_container_type"
 PATCH_REGISTER = "medperf.commands.training.submit.SubmitTrainingExp.run"
 PATCH_ROUTE = "medperf.web_ui.training.routes.{}"
 
@@ -24,6 +24,10 @@ TEST_CONTAINERS = [TestCube(id=1, name="prep"), TestCube(id=2, name="fl")]
 def patch_login(mocker):
     mocker.patch(
         "medperf.web_ui.training.routes.get_medperf_user_data",
+        return_value={"id": 1, "email": "training-ui-test@local"},
+    )
+    mocker.patch(
+        "medperf.web_ui.entity_search.get_medperf_user_data",
         return_value={"id": 1, "email": "training-ui-test@local"},
     )
 

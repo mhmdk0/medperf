@@ -56,7 +56,7 @@ def test_dataset_registration_page_differs_by_mode(reg_page, mocker):
         "medperf.entities.cube.Cube.all", return_value=[TestCube(id=1, name="prep")]
     )
     mocker.patch(
-        "medperf.web_ui.datasets.routes.get_container_type",
+        "medperf.web_ui.entity_search.get_container_type",
         return_value="data-prep-container",
     )
 

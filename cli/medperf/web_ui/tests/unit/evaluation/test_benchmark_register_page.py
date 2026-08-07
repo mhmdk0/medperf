@@ -17,7 +17,7 @@ from medperf.web_ui.tests.unit.helpers import stub_event_generator
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_CONTAINERS = "medperf.entities.cube.Cube.all"
 PATCH_GET_MODELS = "medperf.entities.model.Model.all"
-PATCH_GET_CONTAINERS_TYPE = "medperf.web_ui.benchmarks.routes.get_container_type"
+PATCH_GET_CONTAINERS_TYPE = "medperf.web_ui.entity_search.get_container_type"
 PATCH_REGISTER = "medperf.commands.benchmark.submit.SubmitBenchmark.run"
 PATCH_ROUTE = "medperf.web_ui.benchmarks.routes.{}"
 
@@ -217,7 +217,7 @@ def test_benchmark_registration_fails(page, mocker, ui, patch_common):
         bmk_info, skip_data_preparation_step=False, skip_compatibility_tests=False
     )
 
-    spy_containers.assert_called_once()
+    assert spy_containers.call_count == 2
     spy_models.assert_called_once()
     spy_task_id.assert_called_once()
     spy_reset.assert_called_once()
@@ -225,7 +225,7 @@ def test_benchmark_registration_fails(page, mocker, ui, patch_common):
 
     ui.end_task.assert_called_once()
 
-    assert spy_type.call_count == len(TEST_CONTAINERS)
+    assert spy_type.call_count == len(TEST_CONTAINERS) * 2
 
 
 def test_benchmark_registration_succeed(page, mocker, ui, patch_common):
@@ -294,7 +294,7 @@ def test_benchmark_registration_succeed(page, mocker, ui, patch_common):
         bmk_info, skip_data_preparation_step=True, skip_compatibility_tests=False
     )
 
-    spy_containers.assert_called_once()
+    assert spy_containers.call_count == 2
     spy_models.assert_called_once()
     spy_task_id.assert_called_once()
     spy_reset.assert_called_once()
@@ -302,7 +302,7 @@ def test_benchmark_registration_succeed(page, mocker, ui, patch_common):
 
     ui.end_task.assert_called_once()
 
-    assert spy_type.call_count == len(TEST_CONTAINERS)
+    assert spy_type.call_count == len(TEST_CONTAINERS) * 2
 
 
 def test_benchmark_registration_page_task_running(page, mocker, ui, patch_common):

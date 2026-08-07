@@ -69,7 +69,7 @@ class RegDatasetPage(BasePage):
         data_path,
         labels_path,
     ):
-        self.select_by_text(self.BENCHMARK, benchmark)
+        self.select_searchable_entity(self.BENCHMARK, benchmark)
 
         self.type(self.NAME, name)
         self.type(self.DESCRIPTION, description)
@@ -88,7 +88,7 @@ class RegDatasetPage(BasePage):
         data_path,
         labels_path,
     ):
-        self.select_by_text(self.DATA_PREP, data_prep_name)
+        self.select_searchable_entity(self.DATA_PREP, data_prep_name)
         self.type(self.NAME, name)
         self.type(self.DESCRIPTION, description)
         self.type(self.LOCATION, location)

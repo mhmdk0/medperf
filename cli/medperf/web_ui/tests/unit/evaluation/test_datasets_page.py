@@ -8,8 +8,10 @@ import selenium.common.exceptions as selenium_exceptions
 
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_DATASETS = "medperf.entities.dataset.Dataset.all"
+PATCH_GET_DATASETS_COUNT = "medperf.entities.dataset.Dataset.get_count"
 PATCH_GET_USER_ID = "medperf.web_ui.datasets.routes.get_medperf_user_data"
 USER_ID = 1
+PAGINATION = {"limit": 9, "offset": 0, "ordering": "-created_at"}
 
 TEST_DATASETS = {
     "1": TestDataset(
@@ -41,14 +43,15 @@ def page(driver):
 
 
 def test_empty_datasets_ui_page_content(page, mocker):
-    filters = {"owner": USER_ID}
+    filters = {"owner": USER_ID, **PAGINATION}
 
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_DATASETS_COUNT, return_value=0)
     spy_datasets = mocker.patch(PATCH_GET_DATASETS, return_value=[])
 
     page.open(BASE_URL.format("/datasets/ui"))
 
-    spy_datasets.assert_called_with(filters={})
+    spy_datasets.assert_called_with(filters=PAGINATION)
     assert page.get_text(page.REG_DSET_BTN) == "Register a New Dataset"
     assert page.get_text(page.IMPORT_DSET_BTN) == "Import Dataset"
     assert page.get_text(page.HEADER) == "Datasets"
@@ -68,13 +71,14 @@ def test_empty_datasets_ui_page_content(page, mocker):
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
-    spy_datasets.assert_called_with(filters={})
+    spy_datasets.assert_called_with(filters=PAGINATION)
 
     assert spy_datasets.call_count == 3
 
 
 def test_datasets_ui_page_content(page, mocker):
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_DATASETS_COUNT, return_value=len(TEST_DATASETS))
     mocker.patch(PATCH_GET_DATASETS, return_value=list(TEST_DATASETS.values()))
 
     page.open(BASE_URL.format("/datasets/ui"))

@@ -126,10 +126,10 @@ def test_container_details_state(page, mocker, container_mock, user_id, state):
     state_text = badges[0].text
     if state == "OPERATION":
         assert state_text == "OPERATIONAL"
-        assert "green" in badges[0].get_attribute("class")
+        assert "success" in badges[0].get_attribute("class")
     else:
         assert state_text == state
-        assert "yellow" in badges[0].get_attribute("class")
+        assert "warning" in badges[0].get_attribute("class")
 
 
 @pytest.mark.parametrize("user_id", [CONTAINER_OWNER, CONTAINER_OWNER + 1])
@@ -145,10 +145,10 @@ def test_container_details_validity(page, mocker, container_mock, user_id, is_va
     valid_el = badges[1]
     if is_valid:
         assert valid_el.text == "VALID"
-        assert "green" in valid_el.get_attribute("class")
+        assert "success" in valid_el.get_attribute("class")
     else:
         assert valid_el.text == "INVALID"
-        assert "red" in valid_el.get_attribute("class")
+        assert "danger" in valid_el.get_attribute("class")
 
 
 @pytest.mark.parametrize("user_id", [CONTAINER_OWNER, CONTAINER_OWNER + 1])

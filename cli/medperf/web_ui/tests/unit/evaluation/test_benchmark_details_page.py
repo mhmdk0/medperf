@@ -397,7 +397,7 @@ def test_benchmark_details_common_content(
     data_prep_date = page.get_attribute(page.DATA_PREP_DATE, "data-date")
     assert parse_ui_date(data_prep_date) == TEST_CONTAINERS[data_prep_cube].modified_at
     data_prep_cls = page.get_attribute(page.DATA_PREP_STATE, "class")
-    assert "fa-check-circle" in data_prep_cls and "text-green" in data_prep_cls
+    assert "fa-check-circle" in data_prep_cls and "text-brand-accent" in data_prep_cls
 
     assert page.get_text(page.REF_MODEL_LABEL) == "Reference Model"
     assert page.get_text(page.REF_MODEL) == TEST_CONTAINERS[ref_model_cube].name
@@ -407,7 +407,7 @@ def test_benchmark_details_common_content(
     ref_model_date = page.get_attribute(page.REF_MODEL_DATE, "data-date")
     assert parse_ui_date(ref_model_date) == TEST_CONTAINERS[ref_model_cube].modified_at
     ref_model_cls = page.get_attribute(page.REF_MODEL_STATE, "class")
-    assert "fa-check-circle" in ref_model_cls and "text-green" in ref_model_cls
+    assert "fa-check-circle" in ref_model_cls and "text-brand-accent" in ref_model_cls
 
     assert page.get_text(page.METRICS_LABEL) == "Metrics Container"
     assert page.get_text(page.METRICS) == TEST_CONTAINERS[metrics_cube].name
@@ -417,7 +417,7 @@ def test_benchmark_details_common_content(
     metrics_date = page.get_attribute(page.METRICS_DATE, "data-date")
     assert parse_ui_date(metrics_date) == TEST_CONTAINERS[metrics_cube].modified_at
     metrics_cls = page.get_attribute(page.METRICS_STATE, "class")
-    assert "fa-check-circle" in metrics_cls and "text-green" in metrics_cls
+    assert "fa-check-circle" in metrics_cls and "text-brand-accent" in metrics_cls
 
     assert page.get_text(page.OWNER_LABEL) == "Owner"
     owner_text = page.get_text(page.OWNER)
@@ -481,10 +481,10 @@ def test_benchmark_details_state(
 
     if TEST_BENCHMARK.state == "OPERATION":
         assert page.get_text(page.STATE) == "OPERATIONAL"
-        assert "text-green-700" in page.get_attribute(page.STATE, "class")
+        assert "success" in page.get_attribute(page.STATE, "class")
     else:
         assert page.get_text(page.STATE) == TEST_BENCHMARK.state
-        assert "text-yellow-700" in page.get_attribute(page.STATE, "class")
+        assert "warning" in page.get_attribute(page.STATE, "class")
 
     TEST_BENCHMARK.state = "OPERATION"
 
@@ -502,10 +502,10 @@ def test_benchmark_details_validity(
 
     if TEST_BENCHMARK.is_valid:
         assert page.get_text(page.VALID) == "VALID"
-        assert "text-green-700" in page.get_attribute(page.VALID, "class")
+        assert "success" in page.get_attribute(page.VALID, "class")
     else:
         assert page.get_text(page.VALID) == "INVALID"
-        assert "text-red-700" in page.get_attribute(page.VALID, "class")
+        assert "danger" in page.get_attribute(page.VALID, "class")
 
     TEST_BENCHMARK.is_valid = True
 

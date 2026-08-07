@@ -49,5 +49,5 @@ class RegAggregatorPage(BasePage):
         self.type(self.ADDRESS, address)
         self.type(self.PORT, str(port))
         self.type(self.ADMIN_PORT, str(admin_port))
-        self.select_by_text(self.AGGREGATION_MLCUBE, aggregation_mlcube)
+        self.select_searchable_entity(self.AGGREGATION_MLCUBE, aggregation_mlcube)
         self.click(self.REGISTER)

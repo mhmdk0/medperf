@@ -44,6 +44,10 @@ class Dataset(Entity):
     def get_comms_uploader():
         return config.comms.upload_dataset
 
+    @staticmethod
+    def get_comms_counter():
+        return config.comms.get_datasets_count
+
     @handle_validation_error
     def __init__(self, **kwargs):
         self._model = DatasetSchema(**kwargs)
@@ -175,9 +179,10 @@ class Dataset(Entity):
             comms_fn = config.comms.get_user_datasets
 
         if "mlcube" in filters and filters["mlcube"] is not None:
+            mlcube_id = filters["mlcube"]
 
-            def func():
-                return config.comms.get_mlcube_datasets(filters["mlcube"])
+            def func(filters: dict):
+                return config.comms.get_mlcube_datasets(mlcube_id)
 
             comms_fn = func
 

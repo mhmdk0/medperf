@@ -1,5 +1,8 @@
 import os
-from medperf.commands.association.utils import get_experiment_associations
+from medperf.commands.association.utils import (
+    get_experiment_associations,
+    get_user_associations,
+)
 import yaml
 from typing import List
 import medperf.config as config
@@ -39,6 +42,10 @@ class TrainingExp(Entity):
     @staticmethod
     def get_comms_uploader():
         return config.comms.upload_training_exp
+
+    @staticmethod
+    def get_comms_counter():
+        return config.comms.get_experiments_count
 
     @handle_validation_error
     def __init__(self, **kwargs):
@@ -110,6 +117,16 @@ class TrainingExp(Entity):
         )
         datasets_uids = [assoc["dataset"] for assoc in associations]
         return datasets_uids
+
+    @classmethod
+    def get_datasets_associations(cls, training_exp_uid: int) -> List[dict]:
+        """Retrieves dataset associations for a training experiment."""
+        associations = get_user_associations(
+            experiment_type="training_exp",
+            component_type="dataset",
+            approval_status=None,
+        )
+        return [a for a in associations if a["training_exp"] == training_exp_uid]
 
     @classmethod
     def get_datasets_with_users(cls, training_exp_uid: int) -> List[int]:

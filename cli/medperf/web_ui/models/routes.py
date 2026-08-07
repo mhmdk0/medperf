@@ -18,6 +18,9 @@ from medperf.web_ui.common import (
     templates,
     check_user_ui,
 )
+from typing import Optional
+
+from medperf.web_ui.listing import fetch_listing_page
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -27,22 +30,32 @@ logger = logging.getLogger(__name__)
 def models_ui(
     request: Request,
     mine_only: bool = False,
+    page: int = 1,
+    page_size: int = 9,
+    ordering: str = "created_at_desc",
+    search: Optional[str] = None,
     current_user: bool = Depends(check_user_ui),
 ):
-    filters = {}
     my_user_id = get_medperf_user_data()["id"]
-    if mine_only:
-        filters["owner"] = my_user_id
+    models, search_query, pagination_context = fetch_listing_page(
+        Model,
+        page=page,
+        page_size=page_size,
+        ordering=ordering,
+        mine_only=mine_only,
+        my_user_id=my_user_id,
+        search=search,
+    )
 
-    models = Model.all(filters=filters)
-    models = sorted(models, key=lambda x: x.created_at, reverse=True)
-    # sort by (mine recent) (mine oldish), (other recent), (other oldish)
-    my_models = [c for c in models if c.owner == my_user_id]
-    other_models = [c for c in models if c.owner != my_user_id]
-    models = my_models + other_models
     return templates.TemplateResponse(
         "model/models.html",
-        {"request": request, "models": models, "mine_only": mine_only},
+        {
+            "request": request,
+            "models": models,
+            "mine_only": mine_only,
+            "search_query": search_query,
+            **pagination_context,
+        },
     )
 
 
