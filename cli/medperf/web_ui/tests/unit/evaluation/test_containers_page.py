@@ -8,8 +8,10 @@ import selenium.common.exceptions as selenium_exceptions
 
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_CONTAINERS = "medperf.entities.cube.Cube.all"
+PATCH_GET_CONTAINERS_COUNT = "medperf.entities.cube.Cube.get_count"
 PATCH_GET_USER_ID = "medperf.web_ui.containers.routes.get_medperf_user_data"
 USER_ID = 1
+PAGINATION = {"limit": 9, "offset": 0, "ordering": "-created_at"}
 
 TEST_CONTAINERS = {
     "1": TestCube(
@@ -30,18 +32,19 @@ def page(driver):
 
 
 def test_empty_containers_ui_page_content(page, mocker):
-    filters = {"owner": USER_ID}
+    filters = {"owner": USER_ID, **PAGINATION}
 
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_CONTAINERS_COUNT, return_value=0)
     spy_containers = mocker.patch(PATCH_GET_CONTAINERS, return_value=[])
 
     page.open(BASE_URL.format("/containers/ui"))
 
-    spy_containers.assert_called_with(filters={})
+    spy_containers.assert_called_with(filters=PAGINATION)
     assert page.get_text(page.REG_DSET_BTN) == "Register a New Container"
     assert page.get_text(page.HEADER) == "Containers"
-    assert page.get_text(page.MINE_LABEL) == "Show only my containers"
-    assert page.get_text(page.NO_CONTAINERS) == "No containers yet"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
+    assert page.get_text(page.NO_CONTAINERS) == "No containers found"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "containers"
 
     old_url = page.current_url
@@ -56,11 +59,12 @@ def test_empty_containers_ui_page_content(page, mocker):
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
-    spy_containers.assert_called_with(filters={})
+    spy_containers.assert_called_with(filters=PAGINATION)
 
 
 def test_containers_ui_page_content(page, mocker):
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_CONTAINERS_COUNT, return_value=len(TEST_CONTAINERS))
     mocker.patch(PATCH_GET_CONTAINERS, return_value=list(TEST_CONTAINERS.values()))
 
     page.open(BASE_URL.format("/containers/ui"))
@@ -110,7 +114,7 @@ def test_containers_ui_page_content(page, mocker):
 
     assert page.get_text(page.REG_DSET_BTN) == "Register a New Container"
     assert page.get_text(page.HEADER) == "Containers"
-    assert page.get_text(page.MINE_LABEL) == "Show only my containers"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "containers"
 
     old_url = page.current_url
@@ -124,3 +128,44 @@ def test_containers_ui_page_content(page, mocker):
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
+
+
+def test_containers_ui_page_search_sort_pagination(page, mocker):
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_CONTAINERS_COUNT, return_value=30)
+    spy_containers = mocker.patch(
+        PATCH_GET_CONTAINERS, return_value=list(TEST_CONTAINERS.values())
+    )
+
+    page.open(BASE_URL.format("/containers/ui"))
+
+    old_url = page.current_url
+    page.search("test_container1")
+    page.wait_for_url_change(old_url)
+
+    assert "search=test_container1" in page.current_url
+    spy_containers.assert_called_with(filters={"search": "test_container1", **PAGINATION})
+
+    old_url = page.current_url
+    page.set_ordering("Name A–Z")
+    page.wait_for_url_change(old_url)
+
+    spy_containers.assert_called_with(
+        filters={"search": "test_container1", "limit": 9, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.set_page_size(24)
+    page.wait_for_url_change(old_url)
+
+    spy_containers.assert_called_with(
+        filters={"search": "test_container1", "limit": 24, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.click(page.page_link(2))
+    page.wait_for_url_change(old_url)
+
+    spy_containers.assert_called_with(
+        filters={"search": "test_container1", "limit": 24, "offset": 24, "ordering": "name"}
+    )

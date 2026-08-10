@@ -47,10 +47,6 @@ class ContainerDetailsPage(BasePage):
         By.CSS_SELECTOR,
         "div[data-testid='benchmark-associations'] div[data-testid='associated-benchmark-item'] a",
     )
-    BENCHMARK = (By.ID, "benchmark")
-    EMAILS = (By.ID, "email-input")
-    GRANT_ACCESS = (By.ID, "grant-access-btn")
-    DELETE_KEYS = (By.ID, "delete-keys-btn")
 
     def __init__(self, driver, container="", benchmark=""):
         super().__init__(driver)
@@ -72,11 +68,3 @@ class ContainerDetailsPage(BasePage):
         associations = self.find(self.ASSOCIATIONS_LIST)
         self.wait_for_visibility_element(associations)
         return [i.text for i in self.driver.find_elements(*self.ASSOCIATION_CARDS)]
-
-    def grant_access(self, benchmark, emails):
-        self.select_searchable_entity(self.BENCHMARK, benchmark)
-        self.type(self.EMAILS, ",".join(emails) + ",")
-        self.click(self.GRANT_ACCESS)
-
-    def delete_keys(self):
-        self.click(self.DELETE_KEYS)

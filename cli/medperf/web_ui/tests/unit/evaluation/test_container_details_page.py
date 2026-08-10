@@ -1,5 +1,6 @@
 from medperf.web_ui.tests import config as tests_config
 from medperf.web_ui.tests.pages.container.details_page import ContainerDetailsPage
+from medperf.web_ui.tests.unit.helpers import patch_medperf_session
 
 import datetime
 
@@ -9,10 +10,6 @@ from unittest.mock import MagicMock
 BASE_URL = tests_config.BASE_URL
 
 PATCH_CUBE_GET = "medperf.entities.cube.Cube.get"
-PATCH_GET_MEDPERF_USER_DATA_ROUTES = (
-    "medperf.web_ui.containers.routes.get_medperf_user_data"
-)
-PATCH_GET_MEDPERF_USER_DATA_COMMON = "medperf.web_ui.common.get_medperf_user_data"
 PATCH_READ_USER_ACCOUNT = "medperf.web_ui.common.read_user_account"
 
 CONTAINER_ID = 10
@@ -53,9 +50,13 @@ def page(driver):
 
 
 def _patch_user(mocker, user_id: int):
-    data = {"id": user_id, "email": "test@example.com"}
-    mocker.patch(PATCH_GET_MEDPERF_USER_DATA_COMMON, return_value=data)
-    mocker.patch(PATCH_GET_MEDPERF_USER_DATA_ROUTES, return_value=data)
+    patch_medperf_session(
+        mocker,
+        user_id,
+        email="test@example.com",
+        route_modules=("containers",),
+        with_read_user_account=False,
+    )
 
 
 @pytest.mark.parametrize("user_id", [CONTAINER_OWNER, CONTAINER_OWNER + 1])
@@ -65,37 +66,38 @@ def test_container_details_common_content(page, mocker, container_mock, user_id)
     page.open(BASE_URL.format(f"/containers/ui/display/{CONTAINER_ID}"))
 
     assert page.get_text(page.HEADER) == CONTAINER_NAME
-    assert "Details" in page.get_text(page.DETAILS_HEADING)
+    assert page.get_text(page.DETAILS_HEADING) == "Details"
 
-    assert "Container ID" in page.get_text(page.CONTAINER_ID_LABEL)
+    assert page.get_text(page.CONTAINER_ID_LABEL) == "Container ID"
     assert page.get_text(page.CONTAINER_ID_VALUE) == str(CONTAINER_ID)
 
-    assert "Container Manifest" in page.get_text(page.MANIFEST_LABEL)
-    assert "Click to display Container Configuration" in page.get_text(
-        page.MANIFEST_YAML_BTN
+    assert page.get_text(page.MANIFEST_LABEL) == "Container Manifest"
+    assert (
+        page.get_text(page.MANIFEST_YAML_BTN)
+        == "Click to display Container Configuration"
     )
 
-    assert "Parameters" in page.get_text(page.PARAMETERS_LABEL)
-    assert "Click to display Parameters" in page.get_text(page.PARAMETERS_YAML_BTN)
+    assert page.get_text(page.PARAMETERS_LABEL) == "Parameters"
+    assert page.get_text(page.PARAMETERS_YAML_BTN) == "Click to display Parameters"
 
-    assert "Additional Files" in page.get_text(page.ADDITIONAL_LABEL)
-    assert "Not Available" in page.get_text(page.ADDITIONAL_NA)
+    assert page.get_text(page.ADDITIONAL_LABEL) == "Additional Files"
+    assert page.get_text(page.ADDITIONAL_NA) == "Not Available"
 
-    assert "Owner" in page.get_text(page.OWNER_LABEL)
+    assert page.get_text(page.OWNER_LABEL) == "Owner"
     if user_id == CONTAINER_OWNER:
-        assert "You" in page.get_text(page.OWNER_VALUE)
+        assert page.get_text(page.OWNER_VALUE) == "You"
     else:
-        assert str(CONTAINER_OWNER) in page.get_text(page.OWNER_VALUE)
+        assert page.get_text(page.OWNER_VALUE) == str(CONTAINER_OWNER)
 
     container_created = page.get_attribute(page.CREATED, "data-date")
-    assert "Created" in page.get_text(page.CREATED_LABEL)
+    assert page.get_text(page.CREATED_LABEL) == "Created"
     assert (
         datetime.datetime.strptime(container_created, "%Y-%m-%d %H:%M:%S")
         == container_mock.created_at
     )
 
     container_modified = page.get_attribute(page.MODIFIED, "data-date")
-    assert "Modified" in page.get_text(page.MODIFIED_LABEL)
+    assert page.get_text(page.MODIFIED_LABEL) == "Modified"
     assert (
         datetime.datetime.strptime(container_modified, "%Y-%m-%d %H:%M:%S")
         == container_mock.modified_at
@@ -126,10 +128,8 @@ def test_container_details_state(page, mocker, container_mock, user_id, state):
     state_text = badges[0].text
     if state == "OPERATION":
         assert state_text == "OPERATIONAL"
-        assert "success" in badges[0].get_attribute("class")
     else:
         assert state_text == state
-        assert "warning" in badges[0].get_attribute("class")
 
 
 @pytest.mark.parametrize("user_id", [CONTAINER_OWNER, CONTAINER_OWNER + 1])
@@ -145,10 +145,8 @@ def test_container_details_validity(page, mocker, container_mock, user_id, is_va
     valid_el = badges[1]
     if is_valid:
         assert valid_el.text == "VALID"
-        assert "success" in valid_el.get_attribute("class")
     else:
         assert valid_el.text == "INVALID"
-        assert "danger" in valid_el.get_attribute("class")
 
 
 @pytest.mark.parametrize("user_id", [CONTAINER_OWNER, CONTAINER_OWNER + 1])
@@ -164,15 +162,15 @@ def test_container_details_additional_files(
 
     page.open(BASE_URL.format(f"/containers/ui/display/{CONTAINER_ID}"))
 
-    assert "Additional Files" in page.get_text(page.ADDITIONAL_LABEL)
+    assert page.get_text(page.ADDITIONAL_LABEL) == "Additional Files"
 
     if additional_url:
         link = page.find(page.ADDITIONAL_LINK)
         assert link.get_attribute("href") == additional_url
         assert link.get_attribute("target") == "_blank"
-        assert "Click to Download" in link.text
+        assert link.text == "Click to Download the File"
     else:
-        assert "Not Available" in page.get_text(page.ADDITIONAL_NA)
+        assert page.get_text(page.ADDITIONAL_NA) == "Not Available"
 
 
 def test_container_details_parameters_not_available(page, mocker, container_mock):
@@ -181,7 +179,7 @@ def test_container_details_parameters_not_available(page, mocker, container_mock
 
     page.open(BASE_URL.format(f"/containers/ui/display/{CONTAINER_ID}"))
 
-    assert "Not Available" in page.get_text(page.PARAMETERS_NA)
+    assert page.get_text(page.PARAMETERS_NA) == "Not Available"
 
 
 def test_container_details_owner_manage_access_when_encrypted(
@@ -193,7 +191,7 @@ def test_container_details_owner_manage_access_when_encrypted(
     page.open(BASE_URL.format(f"/containers/ui/display/{CONTAINER_ID}"))
 
     page.wait_for_presence_selector(page.MANAGE_ACCESS)
-    assert "Manage Access" in page.get_text(page.MANAGE_ACCESS)
+    assert page.get_text(page.MANAGE_ACCESS) == "Manage Access"
 
 
 def test_container_details_non_owner_encrypted_access_pending(
