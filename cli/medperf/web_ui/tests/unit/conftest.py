@@ -12,7 +12,7 @@ from medperf import config
 from medperf.comms.rest import REST
 from medperf.init import initialize
 from medperf.ui.interface import UI
-from medperf.web_ui.app import run, web_app
+from medperf.web_ui.app import run, web_app, UI_MODE_COOKIE
 from medperf.web_ui.tests import config as tests_config
 
 truncate.DEFAULT_MAX_LINES = 9999
@@ -114,7 +114,7 @@ def driver(sec_token):
     from selenium.webdriver.chrome.options import Options
 
     opts = Options()
-    opts.add_argument("--headless=true")
+    # opts.add_argument("--headless=true")
     opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--no-sandbox")
     opts.add_argument("--disable-gpu")
@@ -127,8 +127,19 @@ def driver(sec_token):
 
 
 @pytest.fixture(autouse=True)
-def reset_app():
+def reset_app(request):
     web_app.state.task_running = False
     web_app.state.task.running = False
     web_app.state.task.name = ""
     web_app.state.task.formData = {}
+    yield
+    # The session-scoped `driver` shares one browser (and its cookie jar)
+    # across every test in the run. Tests that call switch_to_ui_mode(...,
+    # "training") set the medperf-mode cookie via a real page navigation,
+    # which otherwise leaks into whichever unrelated test runs next and
+    # silently flips it into training mode. Only touch the cookie for tests
+    # that actually pulled in the driver, so browser-less tests (e.g.
+    # test_entity_search.py, which only uses `requests`) never pay to spin
+    # one up just for this reset.
+    if "driver" in request.fixturenames:
+        request.getfixturevalue("driver").delete_cookie(UI_MODE_COOKIE)
