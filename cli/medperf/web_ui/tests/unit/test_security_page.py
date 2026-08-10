@@ -21,7 +21,7 @@ def test_security_page_content(driver_noauth):
 
     page.click(page.HELP_BTN)
     page.wait_for_visibility_element(page.find(page.PAGE_MODAL))
-    assert "Help" in page.get_text(page.PAGE_MODAL_TITLE)
+    assert page.get_text(page.PAGE_MODAL_TITLE) == "Security Check Help"
 
     hide_btn = page.find(page.ERROR_HIDE)
     page.ensure_element_ready(hide_btn)
