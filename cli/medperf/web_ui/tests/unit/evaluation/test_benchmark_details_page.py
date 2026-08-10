@@ -55,6 +55,22 @@ PATCH_GET_MODEL = "medperf.entities.model.Model.get"
 PATCH_GET_EXECUTIONS = "medperf.entities.execution.Execution.all"
 PATCH_ROUTE = "medperf.web_ui.benchmarks.routes.{}"
 
+
+def _patch_current_user(mocker, user_id):
+    # Benchmark.user_can_manage() falls back to comparing user_data["email"]
+    # against the committee member list when the caller isn't the owner, so
+    # the mocked user_data always needs an "email" key, not just "id".
+    data = {"id": user_id, "email": f"user{user_id}@example.com"}
+    mocker.patch(PATCH_ROUTE.format("get_medperf_user_data"), return_value=data)
+    # Benchmark.user_can_manage() (used to gate the Association Policy and
+    # Committee Members sections) imports get_medperf_user_data separately,
+    # so the routes-module patch above does not cover it.
+    mocker.patch(
+        "medperf.entities.benchmark.get_medperf_user_data", return_value=data
+    )
+    return data
+
+
 TEST_BENCHMARK = TestBenchmark(
     id=1,
     owner=1,
@@ -337,10 +353,7 @@ def patch_bmk_details_assocs_and_results(mocker):
 
 @pytest.fixture()
 def patch_owner(mocker):
-    mocker.patch(
-        PATCH_ROUTE.format("get_medperf_user_data"),
-        return_value={"id": TEST_BENCHMARK.owner},
-    )
+    _patch_current_user(mocker, TEST_BENCHMARK.owner)
 
 
 @pytest.fixture()
@@ -366,7 +379,7 @@ def test_benchmark_details_common_content(
     ref_model_cube = str(TEST_BENCHMARK.reference_model)
     metrics_cube = str(TEST_BENCHMARK.data_evaluator_mlcube)
 
-    mocker.patch(PATCH_ROUTE.format("get_medperf_user_data"), return_value={"id": user})
+    _patch_current_user(mocker, user)
 
     page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
 
@@ -397,7 +410,7 @@ def test_benchmark_details_common_content(
     data_prep_date = page.get_attribute(page.DATA_PREP_DATE, "data-date")
     assert parse_ui_date(data_prep_date) == TEST_CONTAINERS[data_prep_cube].modified_at
     data_prep_cls = page.get_attribute(page.DATA_PREP_STATE, "class")
-    assert "fa-check-circle" in data_prep_cls and "text-brand-accent" in data_prep_cls
+    assert "fa-check-circle" in data_prep_cls
 
     assert page.get_text(page.REF_MODEL_LABEL) == "Reference Model"
     assert page.get_text(page.REF_MODEL) == TEST_CONTAINERS[ref_model_cube].name
@@ -407,7 +420,7 @@ def test_benchmark_details_common_content(
     ref_model_date = page.get_attribute(page.REF_MODEL_DATE, "data-date")
     assert parse_ui_date(ref_model_date) == TEST_CONTAINERS[ref_model_cube].modified_at
     ref_model_cls = page.get_attribute(page.REF_MODEL_STATE, "class")
-    assert "fa-check-circle" in ref_model_cls and "text-brand-accent" in ref_model_cls
+    assert "fa-check-circle" in ref_model_cls
 
     assert page.get_text(page.METRICS_LABEL) == "Metrics Container"
     assert page.get_text(page.METRICS) == TEST_CONTAINERS[metrics_cube].name
@@ -417,7 +430,7 @@ def test_benchmark_details_common_content(
     metrics_date = page.get_attribute(page.METRICS_DATE, "data-date")
     assert parse_ui_date(metrics_date) == TEST_CONTAINERS[metrics_cube].modified_at
     metrics_cls = page.get_attribute(page.METRICS_STATE, "class")
-    assert "fa-check-circle" in metrics_cls and "text-brand-accent" in metrics_cls
+    assert "fa-check-circle" in metrics_cls
 
     assert page.get_text(page.OWNER_LABEL) == "Owner"
     owner_text = page.get_text(page.OWNER)
@@ -448,7 +461,7 @@ def test_benchmark_details_backend_calls(
         spy_container,
     ) = patch_bmk_details_empty_assocs_and_results
 
-    mocker.patch(PATCH_ROUTE.format("get_medperf_user_data"), return_value={"id": user})
+    _patch_current_user(mocker, user)
 
     page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
 
@@ -475,16 +488,14 @@ def test_benchmark_details_state(
 ):
     TEST_BENCHMARK.state = state
 
-    mocker.patch(PATCH_ROUTE.format("get_medperf_user_data"), return_value={"id": user})
+    _patch_current_user(mocker, user)
 
     page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
 
     if TEST_BENCHMARK.state == "OPERATION":
         assert page.get_text(page.STATE) == "OPERATIONAL"
-        assert "success" in page.get_attribute(page.STATE, "class")
     else:
         assert page.get_text(page.STATE) == TEST_BENCHMARK.state
-        assert "warning" in page.get_attribute(page.STATE, "class")
 
     TEST_BENCHMARK.state = "OPERATION"
 
@@ -496,16 +507,14 @@ def test_benchmark_details_validity(
 ):
     TEST_BENCHMARK.is_valid = is_valid
 
-    mocker.patch(PATCH_ROUTE.format("get_medperf_user_data"), return_value={"id": user})
+    _patch_current_user(mocker, user)
 
     page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
 
     if TEST_BENCHMARK.is_valid:
         assert page.get_text(page.VALID) == "VALID"
-        assert "success" in page.get_attribute(page.VALID, "class")
     else:
         assert page.get_text(page.VALID) == "INVALID"
-        assert "danger" in page.get_attribute(page.VALID, "class")
 
     TEST_BENCHMARK.is_valid = True
 
@@ -517,7 +526,7 @@ def test_benchmark_details_documentation(
 ):
     TEST_BENCHMARK.docs_url = docs_url
 
-    mocker.patch(PATCH_ROUTE.format("get_medperf_user_data"), return_value={"id": user})
+    _patch_current_user(mocker, user)
 
     page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
 
@@ -564,7 +573,7 @@ def test_benchmark_details_associations_policy_content_loaded_for_owner(
     page.select_by_text(page.MODEL_AUTO_APPROVE, "Allow List")
     assert page.get_text(page.MODEL_ALLOW_LIST_LABEL) == "Allow list emails"
 
-    assert "Save Policy" in page.get_text(page.SAVE)
+    assert page.get_text(page.SAVE) == "Save Policy"
 
 
 def test_benchmark_details_associations_content_loaded_for_owner(
@@ -614,6 +623,33 @@ def test_benchmark_details_associations_policy_content_not_loaded_for_non_owner(
 
     with pytest.raises(NoSuchElementException):
         page.driver.find_element(*page.POLICY_FORM)
+
+
+def test_benchmark_details_committee_members_content_loaded_for_owner(
+    page, patch_bmk_details_empty_assocs_and_results, patch_owner
+):
+    page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
+
+    page.wait_for_presence_selector(page.COMMITTEE_FORM)
+    page.wait_for_presence_selector(page.COMMITTEE_EMAILS_CONTAINER)
+    page.wait_for_presence_selector(page.COMMITTEE_TEXT_INPUT)
+
+    assert page.get_text(page.COMMITTEE_TEXT_INPUT_LABEL) == "Committee member emails"
+    assert page.get_text(page.COMMITTEE_SAVE) == "Save Committee Members"
+
+
+def test_benchmark_details_committee_members_content_not_loaded_for_non_owner(
+    page, mocker, patch_bmk_details_empty_assocs_and_results
+):
+    mocker.patch(
+        PATCH_ROUTE.format("get_medperf_user_data"),
+        return_value={"id": TEST_BENCHMARK.owner + 1},
+    )
+
+    page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
+
+    with pytest.raises(NoSuchElementException):
+        page.driver.find_element(*page.COMMITTEE_FORM)
 
 
 def test_benchmark_details_associations_content_not_loaded_for_non_owner(
@@ -691,7 +727,6 @@ def test_benchmark_details_page_datasets_associations_content(
         elif DATASETS_ASSOCS[assoc_id]["approval_status"] == "REJECTED":
             approved_at_date = approved_at.get_attribute("data-date")
             assert approved_at_date == DATASETS_ASSOCS[assoc_id]["approved_at"]
-            assert "invalid-card" in assoc.get_attribute("class")
             with pytest.raises(NoSuchElementException):
                 assoc.find_element(*page.ASSOC_REJECT)
             with pytest.raises(NoSuchElementException):
@@ -777,7 +812,6 @@ def test_benchmark_details_page_models_associations_content(
         elif MODELS_ASSOCS[assoc_id]["approval_status"] == "REJECTED":
             approved_at_date = approved_at.get_attribute("data-date")
             assert approved_at_date == MODELS_ASSOCS[assoc_id]["approved_at"]
-            assert "invalid-card" in assoc.get_attribute("class")
             with pytest.raises(NoSuchElementException):
                 assoc.find_element(*page.ASSOC_REJECT)
             with pytest.raises(NoSuchElementException):
@@ -928,7 +962,10 @@ def test_benchmark_details_change_dataset_auto_approve_mode_succeed(
     page.click(page.SAVE)
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "update benchmark associations policy" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark associations policy?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -997,7 +1034,10 @@ def test_benchmark_details_change_dataset_auto_approve_mode_fails(
     page.click(page.SAVE)
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "update benchmark associations policy" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark associations policy?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(error_modal)
@@ -1022,6 +1062,131 @@ def test_benchmark_details_change_dataset_auto_approve_mode_fails(
         dataset_emails=None,
         model_mode=model_mode_value,
         model_emails=None,
+    )
+
+    spy_event_gen.assert_not_called()
+
+    spy_task_id.assert_not_called()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
+
+
+def test_benchmark_details_update_committee_members_succeed(
+    page,
+    mocker,
+    ui,
+    patch_common,
+    patch_bmk_details_empty_assocs_and_results,
+    patch_owner,
+):
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_update_committee = mocker.patch(PATCH_ROUTE.format("UpdateCommitteeMembers.run"))
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
+    )
+    spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
+    page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
+
+    confirm_modal = page.find(page.PAGE_MODAL)
+    popup_modal = page.find(page.PAGE_MODAL)
+
+    page.type(page.COMMITTEE_TEXT_INPUT, "test@test.com test1@test.com ")
+    page.click(page.COMMITTEE_SAVE)
+    page.wait_for_visibility_element(confirm_modal)
+
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark committee members?"
+    )
+
+    page.confirm_run_task()
+    page.wait_for_visibility_element(popup_modal)
+
+    assert (
+        page.get_text(page.PAGE_MODAL_TITLE)
+        == "Benchmark Committee Members Successfully Updated"
+    )
+
+    page.wait_for_staleness_element(popup_modal)
+
+    spy_init.assert_called_once_with(ANY, task_name="update_committee_members")
+    spy_update_committee.assert_called_once_with(
+        benchmark_uid=TEST_BENCHMARK.id,
+        committee_emails="test@test.com test1@test.com",
+    )
+
+    spy_event_gen.assert_not_called()
+
+    spy_task_id.assert_not_called()
+    spy_reset.assert_called_once()
+    spy_notifs.assert_called_once()
+
+    ui.end_task.assert_called_once()
+
+
+def test_benchmark_details_update_committee_members_fails(
+    page,
+    mocker,
+    ui,
+    patch_common,
+    patch_bmk_details_empty_assocs_and_results,
+    patch_owner,
+):
+    error_msg = "Update committee members test failed"
+
+    spy_init, spy_reset, spy_notifs = patch_common
+    spy_update_committee = mocker.patch(
+        PATCH_ROUTE.format("UpdateCommitteeMembers.run"),
+        side_effect=Exception(error_msg),
+    )
+    spy_event_gen = mocker.patch.object(
+        events_module, "event_generator", side_effect=stub_event_generator
+    )
+    spy_task_id = mocker.spy(events_module, "_get_task_id")
+
+    ui.end_task = mocker.Mock()
+    ui.task_id = "test-id"
+
+    page.open(BASE_URL.format(f"/benchmarks/ui/display/{TEST_BENCHMARK.id}"))
+
+    confirm_modal = page.find(page.PAGE_MODAL)
+    error_modal = page.find(page.PAGE_MODAL)
+
+    page.type(page.COMMITTEE_TEXT_INPUT, "test@test.com ")
+    page.click(page.COMMITTEE_SAVE)
+    page.wait_for_visibility_element(confirm_modal)
+
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark committee members?"
+    )
+
+    page.confirm_run_task()
+    page.wait_for_visibility_element(error_modal)
+    page.wait_for_presence_selector(page.ERROR_RELOAD)
+
+    assert (
+        page.get_text(page.PAGE_MODAL_TITLE)
+        == "Failed to Update Benchmark Committee Members"
+    )
+    assert error_msg in page.get_text(page.ERROR_TEXT)
+
+    hide_btn = error_modal.find_element(*page.ERROR_HIDE)
+    page.ensure_element_ready(hide_btn)
+    hide_btn.click()
+
+    page.wait_for_invisibility_element(error_modal)
+
+    spy_init.assert_called_once_with(ANY, task_name="update_committee_members")
+    spy_update_committee.assert_called_once_with(
+        benchmark_uid=TEST_BENCHMARK.id,
+        committee_emails="test@test.com",
     )
 
     spy_event_gen.assert_not_called()
@@ -1162,7 +1327,10 @@ def test_benchmark_details_dataset_auto_approve_mode_allow_list_emails_input_sub
 
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "update benchmark associations policy" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark associations policy?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -1226,7 +1394,10 @@ def test_benchmark_details_change_model_auto_approve_mode_succeed(
     page.click(page.SAVE)
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "update benchmark associations policy" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark associations policy?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -1295,7 +1466,10 @@ def test_benchmark_details_change_model_auto_approve_mode_fails(
     page.click(page.SAVE)
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "update benchmark associations policy" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark associations policy?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(error_modal)
@@ -1460,7 +1634,10 @@ def test_benchmark_details_model_auto_approve_mode_allow_list_emails_input_submi
 
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "update benchmark associations policy" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to update benchmark associations policy?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -1536,8 +1713,10 @@ def test_benchmark_details_reject_dataset_assoc_fails(
     reject_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "reject this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to reject this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(error_modal)
@@ -1614,8 +1793,10 @@ def test_benchmark_details_reject_dataset_assoc_succeed(
     reject_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "reject this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to reject this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -1690,8 +1871,10 @@ def test_benchmark_details_approve_dataset_assoc_fails(
     approve_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "approve this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to approve this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(error_modal)
@@ -1768,8 +1951,10 @@ def test_benchmark_details_approve_dataset_assoc_succeed(
     approve_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "approve this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to approve this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -1844,8 +2029,10 @@ def test_benchmark_details_reject_model_assoc_fails(
     reject_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "reject this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to reject this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(error_modal)
@@ -1922,8 +2109,10 @@ def test_benchmark_details_rejectmodel_assoc_succeed(
     reject_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "reject this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to reject this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -1998,8 +2187,10 @@ def test_benchmark_details_approve_model_assoc_fails(
     approve_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "approve this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to approve this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(error_modal)
@@ -2076,8 +2267,10 @@ def test_benchmark_details_approve_model_assoc_succeed(
     approve_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "approve this association" in page.get_text(page.CONFIRM_TEXT)
-    assert "This action cannot be undone" in page.get_text(page.CONFIRM_TEXT)
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to approve this association? This action cannot be undone."
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)

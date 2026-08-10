@@ -8,8 +8,10 @@ import selenium.common.exceptions as selenium_exceptions
 
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_BENCHMARKS = "medperf.entities.benchmark.Benchmark.all"
+PATCH_GET_BENCHMARKS_COUNT = "medperf.entities.benchmark.Benchmark.get_count"
 PATCH_GET_USER_ID = "medperf.web_ui.benchmarks.routes.get_medperf_user_data"
 USER_ID = 1
+PAGINATION = {"limit": 9, "offset": 0, "ordering": "-created_at"}
 
 TEST_BENCHMARKS = {
     "1": TestBenchmark(
@@ -39,18 +41,19 @@ def page(driver):
 
 
 def test_empty_benchmarks_ui_page_content(page, mocker):
-    filters = {"owner": USER_ID}
+    filters = {"owner": USER_ID, **PAGINATION}
 
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_BENCHMARKS_COUNT, return_value=0)
     spy_benchmarks = mocker.patch(PATCH_GET_BENCHMARKS, return_value=[])
 
     page.open(BASE_URL.format("/benchmarks/ui"))
 
-    spy_benchmarks.assert_called_with(filters={})
+    spy_benchmarks.assert_called_with(filters=PAGINATION)
     assert page.get_text(page.REG_BMK_BTN) == "Register Benchmark"
     assert page.get_text(page.HEADER) == "Benchmarks"
-    assert page.get_text(page.MINE_LABEL) == "Show only my benchmarks"
-    assert page.get_text(page.NO_BENCHMARKS) == "No benchmarks yet"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
+    assert page.get_text(page.NO_BENCHMARKS) == "No benchmarks found"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "benchmarks"
 
     old_url = page.current_url
@@ -65,11 +68,12 @@ def test_empty_benchmarks_ui_page_content(page, mocker):
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
-    spy_benchmarks.assert_called_with(filters={})
+    spy_benchmarks.assert_called_with(filters=PAGINATION)
 
 
 def test_benchmarks_ui_page_content(page, mocker):
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_BENCHMARKS_COUNT, return_value=len(TEST_BENCHMARKS))
     mocker.patch(PATCH_GET_BENCHMARKS, return_value=list(TEST_BENCHMARKS.values()))
 
     page.open(BASE_URL.format("/benchmarks/ui"))
@@ -135,7 +139,7 @@ def test_benchmarks_ui_page_content(page, mocker):
 
     assert page.get_text(page.REG_BMK_BTN) == "Register Benchmark"
     assert page.get_text(page.HEADER) == "Benchmarks"
-    assert page.get_text(page.MINE_LABEL) == "Show only my benchmarks"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "benchmarks"
 
     old_url = page.current_url
@@ -149,3 +153,46 @@ def test_benchmarks_ui_page_content(page, mocker):
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
+
+
+def test_benchmarks_ui_page_search_sort_pagination(page, mocker):
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_BENCHMARKS_COUNT, return_value=30)
+    spy_benchmarks = mocker.patch(
+        PATCH_GET_BENCHMARKS, return_value=list(TEST_BENCHMARKS.values())
+    )
+
+    page.open(BASE_URL.format("/benchmarks/ui"))
+
+    old_url = page.current_url
+    page.search("test_benchmark1")
+    page.wait_for_url_change(old_url)
+
+    assert "search=test_benchmark1" in page.current_url
+    spy_benchmarks.assert_called_with(
+        filters={"search": "test_benchmark1", **PAGINATION}
+    )
+
+    old_url = page.current_url
+    page.set_ordering("Name A–Z")
+    page.wait_for_url_change(old_url)
+
+    spy_benchmarks.assert_called_with(
+        filters={"search": "test_benchmark1", "limit": 9, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.set_page_size(24)
+    page.wait_for_url_change(old_url)
+
+    spy_benchmarks.assert_called_with(
+        filters={"search": "test_benchmark1", "limit": 24, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.click(page.page_link(2))
+    page.wait_for_url_change(old_url)
+
+    spy_benchmarks.assert_called_with(
+        filters={"search": "test_benchmark1", "limit": 24, "offset": 24, "ordering": "name"}
+    )

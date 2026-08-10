@@ -73,6 +73,15 @@ class BenchmarkDetailsPage(BasePage):
     REMOVE_EMAIL = (By.CSS_SELECTOR, ".remove-btn")
     SAVE = (By.ID, "save-policy-btn")
 
+    COMMITTEE_FORM = (By.ID, "committee-members-form")
+    COMMITTEE_TEXT_INPUT_LABEL = (
+        By.CSS_SELECTOR,
+        "label[for='committee-members-text-input']",
+    )
+    COMMITTEE_EMAILS_CONTAINER = (By.ID, "committee-members-emails")
+    COMMITTEE_TEXT_INPUT = (By.ID, "committee-members-text-input")
+    COMMITTEE_SAVE = (By.ID, "save-committee-members-btn")
+
     DATASETS_ASSOCIATIONS_BTN = (
         By.CSS_SELECTOR,
         "button[data-testid='datasets-associations-btn']",

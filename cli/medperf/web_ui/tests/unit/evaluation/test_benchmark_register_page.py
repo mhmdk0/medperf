@@ -71,6 +71,23 @@ def patch_login(mocker):
         "medperf.web_ui.benchmarks.routes.get_medperf_user_data",
         return_value={"id": 99, "email": "test@example.com"},
     )
+    # The data-preparation-container searchable_select uses mine_only=true,
+    # which makes search_entities() call get_medperf_user_data() too (a
+    # separate import binding in entity_search.py) to build the owner
+    # filter. Without this, that call hits the real, unmocked function and
+    # raises AuthenticationError, silently breaking the /api/entity_search
+    # response and leaving the dropdown permanently empty.
+    mocker.patch(
+        "medperf.web_ui.entity_search.get_medperf_user_data",
+        return_value={"id": 99, "email": "test@example.com"},
+    )
+    # A successful registration redirects to the benchmark detail page,
+    # whose Benchmark.user_can_manage() falls back to yet another separate
+    # import binding of get_medperf_user_data.
+    mocker.patch(
+        "medperf.entities.benchmark.get_medperf_user_data",
+        return_value={"id": 99, "email": "test@example.com"},
+    )
 
 
 @pytest.fixture
