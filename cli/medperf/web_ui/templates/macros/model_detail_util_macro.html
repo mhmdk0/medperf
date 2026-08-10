@@ -18,11 +18,11 @@
 
 {% macro asset_detail_util(asset) %}
 <div class="mb-6">
-    <p class="text-sm text-muted-fg mb-2 font-semibold">Asset</p>
-    {% if asset._is_local %}<span class="text-ink">This asset is local</span>{% else %}<a href="{{ asset.asset_url }}" class="text-brand-accent hover:underline" target="_blank">Click to Download the File</a>{% endif %}
+    <p class="text-sm text-muted-fg mb-2 font-semibold" data-testid="asset-label">Asset</p>
+    {% if asset._is_local %}<span data-testid="asset-local" class="text-ink">This asset is local</span>{% else %}<a data-testid="asset-link" href="{{ asset.asset_url }}" class="text-brand-accent hover:underline" target="_blank">Click to Download the File</a>{% endif %}
 </div>
 <div class="mb-6">
-    <p class="text-sm text-muted-fg mb-2 font-semibold">Asset Hash</p>
-    <span class="text-ink font-medium">{{ asset.asset_hash }}</span>
+    <p class="text-sm text-muted-fg mb-2 font-semibold" data-testid="asset-hash-label">Asset Hash</p>
+    <span data-testid="asset-hash" class="text-ink font-medium">{{ asset.asset_hash }}</span>
 </div>
 {% endmacro %}
