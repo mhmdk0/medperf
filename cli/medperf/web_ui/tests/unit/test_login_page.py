@@ -15,8 +15,7 @@ PATCH_ROUTE = "medperf.web_ui.medperf_login.{}"
 
 
 def _confirm_modal_mentions_login(confirm_text: str) -> None:
-    lowered = confirm_text.lower()
-    assert "sign in" in lowered and "email" in lowered
+    assert confirm_text == "Are you sure you want to sign in with this email?"
 
 
 @pytest.fixture()
@@ -45,9 +44,9 @@ def test_login_page_content(page, mocker):
 
     assert page.get_text(page.HEADER) == "Welcome Back"
     email_label = page.get_text(page.EMAIL_LABEL).replace("\n", " ").strip()
-    assert "Email Address" in email_label
+    assert email_label == "Email Address"
     login_btn = page.get_text(page.LOGIN).replace("\n", " ").strip()
-    assert "Sign In" in login_btn
+    assert login_btn == "Sign In"
 
 
 def test_login_page_already_logged_in(page, mocker, patch_common, ui):
