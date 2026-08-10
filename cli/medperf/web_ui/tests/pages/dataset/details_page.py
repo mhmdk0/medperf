@@ -110,14 +110,25 @@ class DatasetDetailsPage(BasePage):
     BMK_VIEW = (By.XPATH, ".//a[contains(@href,'/benchmarks/ui/display/')]")
     BMK_ASSOCIATE = (By.CSS_SELECTOR, "[data-testid='request-bmk-association']")
 
+    # Anchored on the "Benchmark:" heading + the model-list container rather
+    # than a Tailwind utility class, since those get renamed across
+    # brand-token passes (this previously matched a stale "medperf-bg" class
+    # that no longer exists in the template). Requiring a `.benchmark-section`
+    # descendant (not just the run-all form) rules out the inner header div,
+    # which also has the h4 + form but not the model list. The trailing
+    # `not(.//div[...])` keeps only the innermost matching div (the actual
+    # card) - without it, every page-layout ancestor that transitively
+    # contains both the heading and the model list matches too.
     APPROVED_BMKS = (
         By.XPATH,
-        "//div[contains(@class,'medperf-bg')][.//form[starts-with(@id,'run-all-')]]"
-        "/parent::div",
+        "//div[.//h4[contains(., 'Benchmark:')]]"
+        "[.//div[contains(@class,'benchmark-section')]]"
+        "[not(.//div[.//h4[contains(., 'Benchmark:')]]"
+        "[.//div[contains(@class,'benchmark-section')]])]",
     )
 
-    BMK_LABEL = (By.XPATH, ".//div[contains(@class,'medperf-bg')]//h4")
-    BMK_NAME = (By.XPATH, ".//div[contains(@class,'medperf-bg')]//h4//a")
+    BMK_LABEL = (By.XPATH, ".//h4")
+    BMK_NAME = (By.XPATH, ".//h4//a")
     BMK_RUN_ALL = (By.CSS_SELECTOR, "button.run-all-btn")
 
     REF_MODEL_LABEL = (
@@ -208,6 +219,11 @@ class DatasetDetailsPage(BasePage):
 
     STOP_BTN = (By.ID, "stop-training-btn")
 
+    # Emitted by macros/cc_asset_macro.html::gcp_asset()
+    CC_CONFIGURE_CHECKBOX = (By.ID, "configure-cc")
+    CC_APPLY_BTN = (By.ID, "apply-cc-asset-btn")
+    CC_SYNC_BTN = (By.ID, "sync-cc-policy-btn")
+
     def __init__(self, driver, dataset="", benchmark=""):
         super().__init__(driver)
         self.DATASET_NAME_BTN = (
@@ -296,6 +312,10 @@ class DatasetDetailsPage(BasePage):
 
     def request_training_association_for_experiment(self, experiment_name: str):
         self.click(self.TRAINING_ASSOCIATE_DROPDOWN_BTN)
+        # Wait for the Alpine x-show transition to finish opening the
+        # dropdown before searching inside it - under load, ensure_element_ready
+        # can time out on a button that's still mid fade-in.
+        self.wait_for_visibility_element(self.find((By.ID, "dropdown-training-div")))
         req_btn_locator = (
             By.XPATH,
             "//div[@id='dropdown-training-div']"
@@ -323,3 +343,18 @@ class DatasetDetailsPage(BasePage):
 
     def stop_training(self):
         self.click(self.STOP_BTN)
+
+    def cc_field(self, name):
+        return (By.ID, f"cc-{name}")
+
+    def configure_cc(self, values: dict):
+        # sr-only peer checkbox (visually hidden toggle UI) - needs a JS
+        # click, a plain WebElement.click() isn't considered interactable.
+        checkbox = self.find(self.CC_CONFIGURE_CHECKBOX)
+        self.driver.execute_script("arguments[0].click();", checkbox)
+        for field, value in values.items():
+            self.type(self.cc_field(field), value)
+        self.click(self.CC_APPLY_BTN)
+
+    def sync_cc_policy(self):
+        self.click(self.CC_SYNC_BTN)

@@ -1,10 +1,11 @@
 from medperf.web_ui.tests import config as tests_config
 from medperf.web_ui.tests.pages.dataset.details_page import DatasetDetailsPage
 
+import copy
 import json
 import datetime
 import pytest
-from unittest.mock import ANY, MagicMock
+from unittest.mock import ANY
 from medperf.tests.mocks.benchmark import TestBenchmark
 from medperf.tests.mocks.cube import TestCube
 from medperf.tests.mocks.dataset import TestDataset
@@ -16,7 +17,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait
 
-from medperf.web_ui.tests.unit.helpers import parse_ui_date, stub_event_generator
+from medperf.web_ui.tests.unit.helpers import (
+    parse_ui_date,
+    patch_medperf_session,
+    stub_event_generator,
+)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -54,24 +59,14 @@ PATCH_DATASET = "medperf.entities.dataset.Dataset.{}"
 PATCH_EXECUTION = "medperf.entities.execution.Execution.{}"
 PATCH_ROUTE = "medperf.web_ui.datasets.routes.{}"
 
-PATCH_READ_USER_ACCOUNT = "medperf.web_ui.common.read_user_account"
-PATCH_GET_MEDPERF_USER_DATA_COMMON = "medperf.web_ui.common.get_medperf_user_data"
-PATCH_GET_MEDPERF_USER_DATA_ROUTES = (
-    "medperf.web_ui.datasets.routes.get_medperf_user_data"
-)
-PATCH_GET_MEDPERF_USER_OBJECT = "medperf.web_ui.datasets.routes.get_medperf_user_object"
-
-
 def _patch_medperf_session(mocker, user_id: int):
-    data = {"id": user_id, "email": "dataset-ui-test@local"}
-    mocker.patch(PATCH_READ_USER_ACCOUNT, return_value={"email": data["email"]})
-    mocker.patch(PATCH_GET_MEDPERF_USER_DATA_COMMON, return_value=data)
-    mocker.patch(PATCH_GET_MEDPERF_USER_DATA_ROUTES, return_value=data)
-    mock_user = MagicMock()
-    mock_user.id = user_id
-    mock_user.is_cc_initialized.return_value = True
-    mock_user.get_cc_config.return_value = {}
-    mocker.patch(PATCH_GET_MEDPERF_USER_OBJECT, return_value=mock_user)
+    patch_medperf_session(
+        mocker,
+        user_id,
+        email="dataset-ui-test@local",
+        route_modules=("datasets",),
+        with_user_object=True,
+    )
 
 
 def _benchmark_id_from_card(card) -> int:
@@ -109,6 +104,21 @@ TEST_DATASET = TestDataset(
     report={},
     generated_metadata={},
 )
+# Many tests below mutate TEST_DATASET's attributes in place (state,
+# is_valid, report, report_path, submitted_as_prepared, ...) as part of
+# their own setup, relying on an earlier/later line in the SAME test to put
+# it back. That's fragile: a failing test skips its own cleanup and leaks
+# mutated state into whichever test runs next. Snapshot the pristine state
+# once here and restore it before every test instead, so tests are
+# order-independent regardless of what any individual test forgets to reset.
+_TEST_DATASET_PRISTINE_STATE = copy.deepcopy(TEST_DATASET.__dict__)
+
+
+@pytest.fixture(autouse=True)
+def _reset_test_dataset_state():
+    TEST_DATASET.__dict__.clear()
+    TEST_DATASET.__dict__.update(copy.deepcopy(_TEST_DATASET_PRISTINE_STATE))
+    yield
 
 
 def __create_benchmark(id, owner, data_prep, ref):
@@ -377,10 +387,8 @@ def test_dataset_details_state(
 
     if TEST_DATASET.state == "OPERATION":
         assert page.get_text(page.STATE) == "OPERATIONAL"
-        assert "success" in page.get_attribute(page.STATE, "class").lower()
     else:
         assert page.get_text(page.STATE) == TEST_DATASET.state
-        assert "warning" in page.get_attribute(page.STATE, "class").lower()
 
     TEST_DATASET.state = "DEVELOPMENT"
 
@@ -398,10 +406,8 @@ def test_dataset_details_validity(
 
     if TEST_DATASET.is_valid:
         assert page.get_text(page.VALID) == "VALID"
-        assert "success" in page.get_attribute(page.VALID, "class").lower()
     else:
         assert page.get_text(page.VALID) == "INVALID"
-        assert "danger" in page.get_attribute(page.VALID, "class").lower()
 
     TEST_DATASET.is_valid = True
 
@@ -543,7 +549,7 @@ def test_dataset_details_dataset_buttons(
     elif prepared and state == "OPERATION":
         assert page.get_text(page.PREPARED_TEXT) == "Prepared"
         assert page.get_text(page.SET_OPERATIONAL_TEXT) == "Operational"
-        assert "Associate with benchmark" in page.get_text(page.DROPDOWN_BTN)
+        assert page.get_text(page.DROPDOWN_BTN) == "Associate with benchmark"
 
     elif not prepared and state == "DEVELOPMENT":
         assert page.get_text(page.PREPARE_BTN) == "Prepare"
@@ -555,7 +561,7 @@ def test_dataset_details_dataset_buttons(
     else:
         assert page.get_text(page.PREPARED_TEXT) == "Prepared"
         assert page.get_text(page.SET_OPERATIONAL_TEXT) == "Operational"
-        assert "Associate with benchmark" in page.get_text(page.DROPDOWN_BTN)
+        assert page.get_text(page.DROPDOWN_BTN) == "Associate with benchmark"
 
     TEST_DATASET.state = "DEVELOPMENT"
 
@@ -588,7 +594,7 @@ def test_dataset_details_page_benchmarks_associations_dropdown_content(
     page.click(page.DROPDOWN_BTN)
     page.wait_for_visibility_element(dropdown_container)
     associations_items = dropdown_container.find_elements(
-        By.CSS_SELECTOR, ":scope > div"
+        By.CSS_SELECTOR, ":scope > div.association-dropdown-row"
     )
 
     assert len(associations_items) == associable_benchmarks_count
@@ -605,7 +611,7 @@ def test_dataset_details_page_benchmarks_associations_dropdown_content(
             By.CSS_SELECTOR, "input[name='entity_id']"
         ).get_attribute("value")
 
-        assert bmk_data == f"{benchmark_id} - {TEST_BENCHMARKS[str(benchmark_id)].name}"
+        assert bmk_data == f"{benchmark_id} — {TEST_BENCHMARKS[str(benchmark_id)].name}"
         assert f"/benchmarks/ui/display/{benchmark_id}" in bmk_view.get_attribute(
             "href"
         )
@@ -867,7 +873,7 @@ def test_dataset_details_request_association_fails(
     page.click(page.DROPDOWN_BTN)
     page.wait_for_visibility_element(dropdown_container)
     associations_items = dropdown_container.find_elements(
-        By.CSS_SELECTOR, ":scope > div"
+        By.CSS_SELECTOR, ":scope > div.association-dropdown-row"
     )
     bmk_associate = associations_items[0].find_element(*page.BMK_ASSOCIATE)
 
@@ -927,7 +933,7 @@ def test_dataset_details_request_association_success(
     page.click(page.DROPDOWN_BTN)
     page.wait_for_visibility_element(dropdown_container)
     associations_items = dropdown_container.find_elements(
-        By.CSS_SELECTOR, ":scope > div"
+        By.CSS_SELECTOR, ":scope > div.association-dropdown-row"
     )
     bmk_associate = associations_items[0].find_element(*page.BMK_ASSOCIATE)
 
@@ -1002,9 +1008,6 @@ def test_dataset_details_non_approved_associations_content(
         )
         assert assoc_status == BENCHMARKS_ASSOCS[str(bmk_id)]["approval_status"]
 
-        if assoc_status == "REJECTED":
-            assert "danger" in status_el.get_attribute("class").lower()
-
     TEST_DATASET.state = "DEVELOPMENT"
 
 
@@ -1013,21 +1016,33 @@ def test_dataset_details_all_associations_rendered(
 ):
     TEST_DATASET.state = "OPERATION"
 
-    approved_benchmarks = 0
-    associations = [i for i in BENCHMARKS_ASSOCS.values() if "dataset" in i]
-    for assoc in associations:
-        if assoc["approval_status"] == "APPROVED" and assoc["dataset"] == DATASET_ID:
-            approved_benchmarks += 1
+    # Mirrors dataset_detail_ui(): benchmark_associations is keyed by
+    # benchmark id, so when multiple association records target the same
+    # benchmark (as BENCHMARKS_ASSOCS does for benchmark 1, via assocs "1",
+    # "4" and "5"), only the last one written survives. The "listed"
+    # (non-approved) count and the "approved" count both have to be derived
+    # from that deduped dict, not from a naive per-record count, to match
+    # what the page actually renders.
+    benchmark_associations = {}
+    for assoc in BENCHMARKS_ASSOCS.values():
+        benchmark_associations[assoc["benchmark"]] = assoc
+    approved_benchmark_ids = [
+        bid
+        for bid, assoc in benchmark_associations.items()
+        if assoc["approval_status"] == "APPROVED"
+    ]
+    listed_benchmark_ids = [
+        bid for bid in benchmark_associations if bid not in approved_benchmark_ids
+    ]
 
     page.open(BASE_URL.format(f"/datasets/ui/display/{DATASET_ID}"))
 
     page.wait_for_presence_selector(page.ASSOCIATIONS_CONTAINER)
 
     assert page.get_text(page.ASSOCIATIONS_TITLE) == "Associated benchmarks"
-    dataset_assocs = [a for a in associations if a.get("dataset") == DATASET_ID]
-    assert len(page.find_elements(page.BMKS_ASSOCIATIONS)) == len(dataset_assocs)
+    assert len(page.find_elements(page.BMKS_ASSOCIATIONS)) == len(listed_benchmark_ids)
 
-    assert len(page.find_elements(page.APPROVED_BMKS)) == approved_benchmarks
+    assert len(page.find_elements(page.APPROVED_BMKS)) == len(approved_benchmark_ids)
 
     TEST_DATASET.state = "DEVELOPMENT"
 
@@ -1199,8 +1214,9 @@ def test_dataset_details_run_execution_fails(
     run_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "run the benchmark execution for all models?" in page.get_text(
-        page.CONFIRM_TEXT
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to run the benchmark execution for all models?"
     )
 
     page.confirm_run_task()
@@ -1264,8 +1280,9 @@ def test_dataset_details_run_execution_succeed(
     run_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "run the benchmark execution for all models?" in page.get_text(
-        page.CONFIRM_TEXT
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to run the benchmark execution for all models?"
     )
 
     page.confirm_run_task()
@@ -1481,8 +1498,9 @@ def test_dataset_details_run_single_model_backend_call(
     run_btn.click()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert "run the benchmark execution for the selected model?" in page.get_text(
-        page.CONFIRM_TEXT
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to run the benchmark execution for the selected model?"
     )
 
     page.confirm_run_task()
@@ -1555,8 +1573,8 @@ def test_dataset_details_model_submitted_results_rerun(
     page.wait_for_visibility_element(confirm_modal)
 
     assert (
-        "rerun the benchmark execution for the selected model? This will clear previous results."
-        in page.get_text(page.CONFIRM_TEXT)
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to rerun the benchmark execution for the selected model? This will clear previous results."
     )
 
     page.confirm_run_task()

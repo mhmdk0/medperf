@@ -55,8 +55,8 @@ def test_empty_datasets_ui_page_content(page, mocker):
     assert page.get_text(page.REG_DSET_BTN) == "Register a New Dataset"
     assert page.get_text(page.IMPORT_DSET_BTN) == "Import Dataset"
     assert page.get_text(page.HEADER) == "Datasets"
-    assert page.get_text(page.MINE_LABEL) == "Show only my datasets"
-    assert page.get_text(page.NO_DATASETS) == "No datasets yet"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
+    assert page.get_text(page.NO_DATASETS) == "No datasets found"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "datasets"
 
     old_url = page.current_url
@@ -137,7 +137,7 @@ def test_datasets_ui_page_content(page, mocker):
     assert page.get_text(page.REG_DSET_BTN) == "Register a New Dataset"
     assert page.get_text(page.IMPORT_DSET_BTN) == "Import Dataset"
     assert page.get_text(page.HEADER) == "Datasets"
-    assert page.get_text(page.MINE_LABEL) == "Show only my datasets"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "datasets"
 
     old_url = page.current_url
@@ -151,3 +151,44 @@ def test_datasets_ui_page_content(page, mocker):
     page.wait_for_url_change(old_url)
 
     assert page.not_mine()
+
+
+def test_datasets_ui_page_search_sort_pagination(page, mocker):
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_DATASETS_COUNT, return_value=30)
+    spy_datasets = mocker.patch(
+        PATCH_GET_DATASETS, return_value=list(TEST_DATASETS.values())
+    )
+
+    page.open(BASE_URL.format("/datasets/ui"))
+
+    old_url = page.current_url
+    page.search("test_dataset1")
+    page.wait_for_url_change(old_url)
+
+    assert "search=test_dataset1" in page.current_url
+    spy_datasets.assert_called_with(filters={"search": "test_dataset1", **PAGINATION})
+
+    old_url = page.current_url
+    page.set_ordering("Name A–Z")
+    page.wait_for_url_change(old_url)
+
+    spy_datasets.assert_called_with(
+        filters={"search": "test_dataset1", "limit": 9, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.set_page_size(24)
+    page.wait_for_url_change(old_url)
+
+    spy_datasets.assert_called_with(
+        filters={"search": "test_dataset1", "limit": 24, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.click(page.page_link(2))
+    page.wait_for_url_change(old_url)
+
+    spy_datasets.assert_called_with(
+        filters={"search": "test_dataset1", "limit": 24, "offset": 24, "ordering": "name"}
+    )
