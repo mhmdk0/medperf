@@ -45,23 +45,19 @@ class AggregatorDetailsPage(BasePage):
         By.CSS_SELECTOR,
         "#get-server-cert-form button[type='submit']",
     )
-    TRAINING_EXP_SELECT = (
-        By.CSS_SELECTOR,
-        "#start-aggregator-form select[name='training_exp_id']",
-    )
+    # The training-experiment picker is a searchable_select widget (hidden
+    # input + JS-driven query/listbox), not a real <select> element.
+    TRAINING_EXP_SELECT = (By.ID, "training-exp-id")
+    PUBLISH_ON_INPUT = (By.ID, "publish-on-input")
 
     def get_server_certificate(self):
         self.click(self.GET_CERT_SUBMIT)
 
-    def run_aggregator_for_experiment(self, experiment_name_substring: str):
-        select_el = self.find(self.TRAINING_EXP_SELECT)
-        self.ensure_element_ready(select_el)
-        for opt in select_el.find_elements(By.TAG_NAME, "option"):
-            if experiment_name_substring in opt.text:
-                opt.click()
-                break
-        else:
-            raise AssertionError(
-                f"No training experiment option matching {experiment_name_substring!r}"
-            )
+    def run_aggregator_for_experiment(self, experiment_name: str, publish_on: str = ""):
+        self.select_searchable_entity(self.TRAINING_EXP_SELECT, experiment_name)
+        if publish_on:
+            el = self.find(self.PUBLISH_ON_INPUT)
+            self.ensure_element_ready(el)
+            el.clear()
+            el.send_keys(publish_on)
         self.click(self.RUN_BTN)

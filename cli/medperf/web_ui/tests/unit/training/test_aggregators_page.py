@@ -9,8 +9,10 @@ from medperf.web_ui.tests.unit.helpers import switch_to_ui_mode
 
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_AGGS = "medperf.entities.aggregator.Aggregator.all"
+PATCH_GET_AGGS_COUNT = "medperf.entities.aggregator.Aggregator.get_count"
 PATCH_GET_USER_ID = "medperf.web_ui.aggregators.routes.get_medperf_user_data"
 USER_ID = 1
+PAGINATION = {"limit": 9, "offset": 0, "ordering": "-created_at"}
 
 
 class _TestAggregator:
@@ -49,18 +51,19 @@ def page(driver):
 
 
 def test_empty_aggregators_ui_page_content(page, mocker):
-    filters = {"owner": USER_ID}
+    filters = {"owner": USER_ID, **PAGINATION}
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_AGGS_COUNT, return_value=0)
     spy_aggs = mocker.patch(PATCH_GET_AGGS, return_value=[])
 
     switch_to_ui_mode(page, "training")
     page.open(BASE_URL.format("/aggregators/ui"))
 
-    spy_aggs.assert_called_with(filters={})
+    spy_aggs.assert_called_with(filters=PAGINATION)
     assert page.get_text(page.REG_AGG_BTN) == "Register New Aggregator"
     assert page.get_text(page.HEADER) == "Aggregators"
-    assert page.get_text(page.MINE_LABEL) == "Show only my aggregators"
-    assert page.get_text(page.NO_AGGREGATORS) == "No aggregators yet"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
+    assert page.get_text(page.NO_AGGREGATORS) == "No aggregators found"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "aggregators"
 
     old_url = page.current_url
@@ -73,11 +76,12 @@ def test_empty_aggregators_ui_page_content(page, mocker):
     page.toggle_mine()
     page.wait_for_url_change(old_url)
     assert page.not_mine()
-    spy_aggs.assert_called_with(filters={})
+    spy_aggs.assert_called_with(filters=PAGINATION)
 
 
 def test_aggregators_ui_page_content(page, mocker):
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_AGGS_COUNT, return_value=len(TEST_AGGREGATORS))
     mocker.patch(PATCH_GET_AGGS, return_value=list(TEST_AGGREGATORS.values()))
 
     switch_to_ui_mode(page, "training")
@@ -113,5 +117,47 @@ def test_aggregators_ui_page_content(page, mocker):
 
     assert page.get_text(page.REG_AGG_BTN) == "Register New Aggregator"
     assert page.get_text(page.HEADER) == "Aggregators"
-    assert page.get_text(page.MINE_LABEL) == "Show only my aggregators"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
     assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "aggregators"
+
+
+def test_aggregators_ui_page_search_sort_pagination(page, mocker):
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_AGGS_COUNT, return_value=30)
+    spy_aggs = mocker.patch(
+        PATCH_GET_AGGS, return_value=list(TEST_AGGREGATORS.values())
+    )
+
+    switch_to_ui_mode(page, "training")
+    page.open(BASE_URL.format("/aggregators/ui"))
+
+    old_url = page.current_url
+    page.search("agg1")
+    page.wait_for_url_change(old_url)
+
+    assert "search=agg1" in page.current_url
+    spy_aggs.assert_called_with(filters={"search": "agg1", **PAGINATION})
+
+    old_url = page.current_url
+    page.set_ordering("Name A–Z")
+    page.wait_for_url_change(old_url)
+
+    spy_aggs.assert_called_with(
+        filters={"search": "agg1", "limit": 9, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.set_page_size(24)
+    page.wait_for_url_change(old_url)
+
+    spy_aggs.assert_called_with(
+        filters={"search": "agg1", "limit": 24, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.click(page.page_link(2))
+    page.wait_for_url_change(old_url)
+
+    spy_aggs.assert_called_with(
+        filters={"search": "agg1", "limit": 24, "offset": 24, "ordering": "name"}
+    )
