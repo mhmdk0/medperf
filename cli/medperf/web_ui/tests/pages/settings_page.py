@@ -48,8 +48,34 @@ class SettingsPage(BasePage):
         self.select_by_text(self.PROFILE, profile_name)
         self.click(self.ACTIVATE)
 
+    def view_profile(self):
+        self.click(self.VIEW_PROFILE)
+
+    def edit_profile(self, **fields):
+        for field_id, value in fields.items():
+            el = self.find((By.ID, field_id))
+            self.ensure_element_ready(el)
+            el.clear()
+            el.send_keys(value)
+        self.click(self.APPLY_CHANGES)
+
     def get_client_certificate(self):
         self.click(self.GET_CERTIFICATE)
 
     def submit_certificate(self):
         self.click(self.SUBMIT_CERTIFICATE)
+
+    def delete_certificate(self):
+        self.click(self.DELETE_CERTIFICATE)
+
+    def cc_operator_field(self, name):
+        return (By.ID, f"operator-{name}")
+
+    def configure_cc_operator(self, values: dict):
+        # sr-only peer checkbox (visually hidden toggle UI) - needs a JS
+        # click, a plain WebElement.click() isn't considered interactable.
+        checkbox = self.find(self.CC_CONFIGURE_TOGGLE)
+        self.driver.execute_script("arguments[0].click();", checkbox)
+        for field, value in values.items():
+            self.type(self.cc_operator_field(field), value)
+        self.click(self.CC_APPLY_BTN)
