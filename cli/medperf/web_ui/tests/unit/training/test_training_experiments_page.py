@@ -10,8 +10,10 @@ from medperf.web_ui.tests.unit.helpers import switch_to_ui_mode
 
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_TRAINING = "medperf.entities.training_exp.TrainingExp.all"
+PATCH_GET_TRAINING_COUNT = "medperf.entities.training_exp.TrainingExp.get_count"
 PATCH_GET_USER_ID = "medperf.web_ui.training.routes.get_medperf_user_data"
 USER_ID = 1
+PAGINATION = {"limit": 9, "offset": 0, "ordering": "-created_at"}
 
 TEST_TRAINING_EXPS = [
     TestTrainingExp(
@@ -33,66 +35,97 @@ TEST_TRAINING_EXPS = [
 ]
 
 
-def _patch_common(mocker):
-    data = {"id": USER_ID, "email": "training-ui-test@local"}
-    mocker.patch(
-        "medperf.web_ui.common.read_user_account", return_value={"email": data["email"]}
-    )
-    mocker.patch("medperf.web_ui.common.get_medperf_user_data", return_value=data)
-    mocker.patch(PATCH_GET_USER_ID, return_value=data)
-
-
 @pytest.fixture
-def ui_page(driver):
+def page(driver):
     return TrainingPage(driver)
 
 
-def test_empty_training_ui_page_content(ui_page, mocker):
-    filters = {"owner": USER_ID}
+def test_empty_training_ui_page_content(page, mocker):
+    filters = {"owner": USER_ID, **PAGINATION}
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_TRAINING_COUNT, return_value=0)
     spy_training = mocker.patch(PATCH_GET_TRAINING, return_value=[])
 
-    switch_to_ui_mode(ui_page, "training")
-    ui_page.open(BASE_URL.format("/training/ui"))
+    switch_to_ui_mode(page, "training")
+    page.open(BASE_URL.format("/training/ui"))
 
-    spy_training.assert_called_with(filters={})
-    assert ui_page.get_text(ui_page.HEADER) == "Training Experiments"
-    assert (
-        ui_page.get_text(ui_page.REG_TRAINING_BTN) == "Register New Training Experiment"
-    )
-    assert ui_page.get_text(ui_page.MINE_LABEL) == "Show only my experiments"
-    assert ui_page.get_attribute(ui_page.MINE_INPUT, "data-entity-name") == "training"
-    assert ui_page.get_text(ui_page.NO_EXPERIMENTS) == "No training experiments yet"
+    spy_training.assert_called_with(filters=PAGINATION)
+    assert page.get_text(page.HEADER) == "Training Experiments"
+    assert page.get_text(page.REG_TRAINING_BTN) == "Register New Training Experiment"
+    assert page.get_text(page.MINE_LABEL) == "Mine only"
+    assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "training experiments"
+    assert page.get_text(page.NO_EXPERIMENTS) == "No training experiments found"
 
-    old_url = ui_page.current_url
-    ui_page.toggle_mine()
-    ui_page.wait_for_url_change(old_url)
-    assert ui_page.is_mine()
+    old_url = page.current_url
+    page.toggle_mine()
+    page.wait_for_url_change(old_url)
+    assert page.is_mine()
     spy_training.assert_called_with(filters=filters)
 
-    old_url = ui_page.current_url
-    ui_page.toggle_mine()
-    ui_page.wait_for_url_change(old_url)
-    assert ui_page.not_mine()
-    spy_training.assert_called_with(filters={})
+    old_url = page.current_url
+    page.toggle_mine()
+    page.wait_for_url_change(old_url)
+    assert page.not_mine()
+    spy_training.assert_called_with(filters=PAGINATION)
 
 
-def test_training_ui_page_content(ui_page, mocker):
+def test_training_ui_page_content(page, mocker):
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_TRAINING_COUNT, return_value=len(TEST_TRAINING_EXPS))
     mocker.patch(PATCH_GET_TRAINING, return_value=TEST_TRAINING_EXPS)
 
-    switch_to_ui_mode(ui_page, "training")
-    ui_page.open(BASE_URL.format("/training/ui"))
+    switch_to_ui_mode(page, "training")
+    page.open(BASE_URL.format("/training/ui"))
 
     with pytest.raises(selenium_exceptions.NoSuchElementException):
-        ui_page.driver.find_element(*ui_page.NO_EXPERIMENTS)
+        page.driver.find_element(*page.NO_EXPERIMENTS)
 
-    cards = ui_page.find_elements(ui_page.CARDS_CONTAINER)
+    cards = page.find_elements(page.CARDS_CONTAINER)
     assert len(cards) == 2
     for card in cards:
-        exp_id_txt = card.find_element(*ui_page.CARD_ID).text
-        exp_state = card.find_element(*ui_page.CARD_STATE).text
-        exp_approval = card.find_element(*ui_page.CARD_APPROVAL).text
+        exp_id_txt = card.find_element(*page.CARD_ID).text
+        exp_state = card.find_element(*page.CARD_STATE).text
+        exp_approval = card.find_element(*page.CARD_APPROVAL).text
         assert exp_id_txt.startswith("ID:")
         assert exp_state in ("OPERATIONAL", "DEVELOPMENT")
         assert exp_approval.startswith("Approval:")
+
+
+def test_training_ui_page_search_sort_pagination(page, mocker):
+    mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
+    mocker.patch(PATCH_GET_TRAINING_COUNT, return_value=30)
+    spy_training = mocker.patch(PATCH_GET_TRAINING, return_value=TEST_TRAINING_EXPS)
+
+    switch_to_ui_mode(page, "training")
+    page.open(BASE_URL.format("/training/ui"))
+
+    old_url = page.current_url
+    page.search("tr1")
+    page.wait_for_url_change(old_url)
+
+    assert "search=tr1" in page.current_url
+    spy_training.assert_called_with(filters={"search": "tr1", **PAGINATION})
+
+    old_url = page.current_url
+    page.set_ordering("Name A–Z")
+    page.wait_for_url_change(old_url)
+
+    spy_training.assert_called_with(
+        filters={"search": "tr1", "limit": 9, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.set_page_size(24)
+    page.wait_for_url_change(old_url)
+
+    spy_training.assert_called_with(
+        filters={"search": "tr1", "limit": 24, "offset": 0, "ordering": "name"}
+    )
+
+    old_url = page.current_url
+    page.click(page.page_link(2))
+    page.wait_for_url_change(old_url)
+
+    spy_training.assert_called_with(
+        filters={"search": "tr1", "limit": 24, "offset": 24, "ordering": "name"}
+    )
