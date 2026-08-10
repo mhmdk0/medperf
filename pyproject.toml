@@ -84,6 +84,7 @@ medperf = [
     "web_ui/static/**/*",
     "templates/**/*",
     "dashboard/assets/**/*",
+    "logging/*.sh",
     "mock_tokens/tokens.json",
 ]
 
