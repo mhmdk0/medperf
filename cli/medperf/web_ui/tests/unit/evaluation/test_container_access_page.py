@@ -1,5 +1,5 @@
 from medperf.web_ui.tests import config as tests_config
-from medperf.web_ui.tests.pages.container.access_page import ContainerAccessPage
+from medperf.web_ui.tests.pages.container.details_page import ContainerDetailsPage
 from medperf.web_ui.tests.unit.helpers import patch_medperf_session, stub_event_generator
 
 import pytest
@@ -61,7 +61,7 @@ def access_mocks(mocker):
 
 @pytest.fixture
 def page(driver):
-    return ContainerAccessPage(driver)
+    return ContainerDetailsPage(driver)
 
 
 def _patch_user(mocker, user_id: int):
@@ -146,7 +146,7 @@ def test_container_access_content_loaded_for_owner(
 
     page.open(BASE_URL.format(f"/containers/ui/display/{CONTAINER_ID}/access"))
 
-    assert page.get_text(page.HEADER) == f"Manage Access | {CONTAINER_NAME}"
+    assert page.get_text(page.ACCESS_HEADER) == f"Manage Access | {CONTAINER_NAME}"
     assert page.get_text(page.NO_KEYS_MSG) == "No users currently have access."
     assert page.find(page.DELETE_KEYS_BTN).get_attribute("disabled") == "true"
 
