@@ -77,6 +77,8 @@ Documentation = "https://docs.medperf.org"
 [tool.setuptools.packages.find]
 where = ["cli"]
 include = ["medperf*"]
+exclude = ["medperf.tests*", "medperf.web_ui.tests*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 medperf = [
