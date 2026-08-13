@@ -1,6 +1,9 @@
 from medperf.web_ui.tests import config as tests_config
 from medperf.web_ui.tests.pages.container.details_page import ContainerDetailsPage
-from medperf.web_ui.tests.unit.helpers import patch_medperf_session, stub_event_generator
+from medperf.web_ui.tests.unit.helpers import (
+    patch_medperf_session,
+    stub_event_generator,
+)
 
 import pytest
 from unittest.mock import ANY, MagicMock
@@ -15,7 +18,9 @@ PATCH_ROUTE = "medperf.web_ui.containers.routes.{}"
 PATCH_CUBE_GET = "medperf.entities.cube.Cube.get"
 PATCH_MODEL_GET_BY_CONTAINER = "medperf.entities.model.Model.get_by_container"
 PATCH_MODEL_GET_BMK_ASSOCS = "medperf.entities.model.Model.get_benchmarks_associations"
-PATCH_GET_CONTAINER_KEYS = "medperf.entities.encrypted_key.EncryptedKey.get_container_keys"
+PATCH_GET_CONTAINER_KEYS = (
+    "medperf.entities.encrypted_key.EncryptedKey.get_container_keys"
+)
 
 CONTAINER_ID = 10
 CONTAINER_NAME = "test_container"
@@ -134,9 +139,7 @@ def test_container_access_redirect_when_not_encrypted(page, mocker, container_mo
 
     page.open(BASE_URL.format(f"/containers/ui/display/{CONTAINER_ID}/access"))
 
-    assert page.current_url == BASE_URL.format(
-        f"/containers/ui/display/{CONTAINER_ID}"
-    )
+    assert page.current_url == BASE_URL.format(f"/containers/ui/display/{CONTAINER_ID}")
 
 
 def test_container_access_content_loaded_for_owner(
@@ -178,9 +181,7 @@ def test_container_grant_access_succeed(
     benchmark = mocker.MagicMock()
     benchmark.id = 5
     benchmark.name = "test_benchmark"
-    mocker.patch(
-        "medperf.entities.benchmark.Benchmark.all", return_value=[benchmark]
-    )
+    mocker.patch("medperf.entities.benchmark.Benchmark.all", return_value=[benchmark])
 
     _patch_user(mocker, CONTAINER_OWNER)
 
@@ -226,9 +227,7 @@ def test_container_grant_access_fails(
     benchmark = mocker.MagicMock()
     benchmark.id = 5
     benchmark.name = "test_benchmark"
-    mocker.patch(
-        "medperf.entities.benchmark.Benchmark.all", return_value=[benchmark]
-    )
+    mocker.patch("medperf.entities.benchmark.Benchmark.all", return_value=[benchmark])
 
     _patch_user(mocker, CONTAINER_OWNER)
 
@@ -367,7 +366,9 @@ def test_container_delete_keys_succeed(
     page.delete_keys()
     page.wait_for_visibility_element(confirm_modal)
 
-    assert page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to delete all keys?"
+    assert (
+        page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to delete all keys?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
@@ -457,7 +458,9 @@ def test_container_start_auto_access_succeed(
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
 
-    assert page.get_text(page.PAGE_MODAL_TITLE) == "Successfully Started Auto Grant Access"
+    assert (
+        page.get_text(page.PAGE_MODAL_TITLE) == "Successfully Started Auto Grant Access"
+    )
 
     assert web_app.state.model_auto_give_access["running"] is True
     assert web_app.state.model_auto_give_access["model"] == CONTAINER_ID
@@ -498,6 +501,8 @@ def test_container_stop_auto_access_succeed(
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
 
-    assert page.get_text(page.PAGE_MODAL_TITLE) == "Successfully Stopped Auto Grant Access"
+    assert (
+        page.get_text(page.PAGE_MODAL_TITLE) == "Successfully Stopped Auto Grant Access"
+    )
 
     assert web_app.state.model_auto_give_access["running"] is False

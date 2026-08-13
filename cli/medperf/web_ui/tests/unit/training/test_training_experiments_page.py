@@ -53,7 +53,10 @@ def test_empty_training_ui_page_content(page, mocker):
     assert page.get_text(page.HEADER) == "Training Experiments"
     assert page.get_text(page.REG_TRAINING_BTN) == "Register New Training Experiment"
     assert page.get_text(page.MINE_LABEL) == "Mine only"
-    assert page.get_attribute(page.MINE_INPUT, "data-entity-name") == "training experiments"
+    assert (
+        page.get_attribute(page.MINE_INPUT, "data-entity-name")
+        == "training experiments"
+    )
     assert page.get_text(page.NO_EXPERIMENTS) == "No training experiments found"
 
     old_url = page.current_url

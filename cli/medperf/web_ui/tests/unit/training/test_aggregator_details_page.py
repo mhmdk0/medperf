@@ -161,7 +161,8 @@ def test_aggregator_details_get_server_certificate_succeed(
     page.wait_for_visibility_element(popup_modal)
 
     assert (
-        page.get_text(page.PAGE_MODAL_TITLE) == "Server Certificate Retrieved Successfully"
+        page.get_text(page.PAGE_MODAL_TITLE)
+        == "Server Certificate Retrieved Successfully"
     )
 
     page.wait_for_staleness_element(popup_modal)

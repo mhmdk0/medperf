@@ -55,7 +55,9 @@ def test_entity_search_benchmark_results_shape(sec_token, mocker):
         return_value=[_Entity(id=1, name="bmk1")],
     )
     resp = _search(sec_token, entity_type="benchmark", q="bmk")
-    assert resp.json() == {"results": [{"id": 1, "name": "bmk1", "label": "bmk1 (ID: 1)"}]}
+    assert resp.json() == {
+        "results": [{"id": 1, "name": "bmk1", "label": "bmk1 (ID: 1)"}]
+    }
 
 
 def test_entity_search_aggregator_label_includes_address_and_port(sec_token, mocker):
@@ -65,9 +67,7 @@ def test_entity_search_aggregator_label_includes_address_and_port(sec_token, moc
     )
     resp = _search(sec_token, entity_type="aggregator", q="agg")
     assert resp.json() == {
-        "results": [
-            {"id": 5, "name": "agg1", "label": "agg1 (ID: 5) (127.0.0.1:7000)"}
-        ]
+        "results": [{"id": 5, "name": "agg1", "label": "agg1 (ID: 5) (127.0.0.1:7000)"}]
     }
 
 
@@ -132,7 +132,8 @@ def test_entity_search_allowed_ids_filters_query_results(sec_token, mocker):
 
 def test_entity_search_container_type_data_prep_filter(sec_token, mocker):
     prep = _Entity(
-        id=1, name="prep",
+        id=1,
+        name="prep",
         container_config={"tasks": {"prepare": {}, "sanity_check": {}}},
     )
     metrics = _Entity(
@@ -150,7 +151,8 @@ def test_entity_search_container_type_non_data_prep_filter(sec_token, mocker):
     # "non-data-prep-container" means anything that ISN'T a data-prep container,
     # including containers whose type can't be determined at all.
     prep = _Entity(
-        id=1, name="prep",
+        id=1,
+        name="prep",
         container_config={"tasks": {"prepare": {}, "sanity_check": {}}},
     )
     metrics = _Entity(

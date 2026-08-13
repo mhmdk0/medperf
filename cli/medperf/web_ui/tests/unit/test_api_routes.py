@@ -45,9 +45,7 @@ def test_running_tasks_lists_names(sec_token, mocker):
 
 
 def test_stop_task_requires_auth():
-    resp = requests.post(
-        BASE_URL.format("/api/stop_task"), data={"task_name": "train"}
-    )
+    resp = requests.post(BASE_URL.format("/api/stop_task"), data={"task_name": "train"})
     assert resp.status_code == 401
 
 

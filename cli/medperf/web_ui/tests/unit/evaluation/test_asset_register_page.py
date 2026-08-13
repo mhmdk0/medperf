@@ -76,13 +76,17 @@ def test_asset_register_local_succeed(
     page.register_local_asset("test-asset", "/path/to/asset")
     page.wait_for_visibility_element(confirm_modal)
 
-    assert page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to register this asset?"
+    assert (
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to register this asset?"
+    )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
 
     assert (
-        page.get_text(page.PAGE_MODAL_TITLE) == "Registering asset completed successfully"
+        page.get_text(page.PAGE_MODAL_TITLE)
+        == "Registering asset completed successfully"
     )
 
     page.wait_for_staleness_element(popup_modal)
@@ -153,7 +157,8 @@ def test_asset_register_remote_succeed(
     page.wait_for_visibility_element(popup_modal)
 
     assert (
-        page.get_text(page.PAGE_MODAL_TITLE) == "Registering asset completed successfully"
+        page.get_text(page.PAGE_MODAL_TITLE)
+        == "Registering asset completed successfully"
     )
 
     page.wait_for_staleness_element(popup_modal)
@@ -175,7 +180,9 @@ def test_asset_detail_redirects_to_model(page, mocker):
         "medperf.entities.model.Model.get",
         return_value=TestModel(id=42, owner=1),
     )
-    mocker.patch("medperf.entities.model.Model.get_benchmarks_associations", return_value=[])
+    mocker.patch(
+        "medperf.entities.model.Model.get_benchmarks_associations", return_value=[]
+    )
     mocker.patch("medperf.entities.benchmark.Benchmark.all", return_value=[])
     mocker.patch("medperf.entities.cube.Cube.is_encrypted", return_value=False)
     mocker.patch(

@@ -182,7 +182,12 @@ def test_datasets_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     spy_datasets.assert_called_with(
-        filters={"search": "test_dataset1", "limit": 24, "offset": 0, "ordering": "name"}
+        filters={
+            "search": "test_dataset1",
+            "limit": 24,
+            "offset": 0,
+            "ordering": "name",
+        }
     )
 
     old_url = page.current_url
@@ -190,5 +195,10 @@ def test_datasets_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     spy_datasets.assert_called_with(
-        filters={"search": "test_dataset1", "limit": 24, "offset": 24, "ordering": "name"}
+        filters={
+            "search": "test_dataset1",
+            "limit": 24,
+            "offset": 24,
+            "ordering": "name",
+        }
     )

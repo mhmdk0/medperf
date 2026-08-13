@@ -10,7 +10,6 @@ from selenium.common.exceptions import NoSuchElementException
 
 from medperf.web_ui.tests.unit.helpers import stub_event_generator
 
-
 BASE_URL = tests_config.BASE_URL
 PATCH_GET_CONTAINERS = "medperf.entities.cube.Cube.all"
 PATCH_REGISTER = "medperf.commands.mlcube.submit.SubmitCube.run"

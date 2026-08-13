@@ -144,14 +144,21 @@ def test_containers_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     assert "search=test_container1" in page.current_url
-    spy_containers.assert_called_with(filters={"search": "test_container1", **PAGINATION})
+    spy_containers.assert_called_with(
+        filters={"search": "test_container1", **PAGINATION}
+    )
 
     old_url = page.current_url
     page.set_ordering("Name A–Z")
     page.wait_for_url_change(old_url)
 
     spy_containers.assert_called_with(
-        filters={"search": "test_container1", "limit": 9, "offset": 0, "ordering": "name"}
+        filters={
+            "search": "test_container1",
+            "limit": 9,
+            "offset": 0,
+            "ordering": "name",
+        }
     )
 
     old_url = page.current_url
@@ -159,7 +166,12 @@ def test_containers_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     spy_containers.assert_called_with(
-        filters={"search": "test_container1", "limit": 24, "offset": 0, "ordering": "name"}
+        filters={
+            "search": "test_container1",
+            "limit": 24,
+            "offset": 0,
+            "ordering": "name",
+        }
     )
 
     old_url = page.current_url
@@ -167,5 +179,10 @@ def test_containers_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     spy_containers.assert_called_with(
-        filters={"search": "test_container1", "limit": 24, "offset": 24, "ordering": "name"}
+        filters={
+            "search": "test_container1",
+            "limit": 24,
+            "offset": 24,
+            "ordering": "name",
+        }
     )

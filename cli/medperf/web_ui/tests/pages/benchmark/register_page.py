@@ -34,8 +34,14 @@ class RegBenchmarkPage(BasePage):
     NOT_PREPARED_LABEL = (By.XPATH, "//label[.//input[@id='noskip-dataprep']]")
 
     NAME_TOOLTIP = (By.CSS_SELECTOR, "[data-testid='benchmark-name-tooltip']")
-    DESCRIPTION_TOOLTIP = (By.CSS_SELECTOR, "[data-testid='benchmark-description-tooltip']")
-    REF_DATASET_TOOLTIP = (By.CSS_SELECTOR, "[data-testid='benchmark-ref-dataset-tooltip']")
+    DESCRIPTION_TOOLTIP = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-description-tooltip']",
+    )
+    REF_DATASET_TOOLTIP = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-ref-dataset-tooltip']",
+    )
 
     RESUME_SCRIPT = (
         By.XPATH,

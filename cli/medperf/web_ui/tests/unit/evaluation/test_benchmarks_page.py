@@ -178,7 +178,12 @@ def test_benchmarks_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     spy_benchmarks.assert_called_with(
-        filters={"search": "test_benchmark1", "limit": 9, "offset": 0, "ordering": "name"}
+        filters={
+            "search": "test_benchmark1",
+            "limit": 9,
+            "offset": 0,
+            "ordering": "name",
+        }
     )
 
     old_url = page.current_url
@@ -186,7 +191,12 @@ def test_benchmarks_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     spy_benchmarks.assert_called_with(
-        filters={"search": "test_benchmark1", "limit": 24, "offset": 0, "ordering": "name"}
+        filters={
+            "search": "test_benchmark1",
+            "limit": 24,
+            "offset": 0,
+            "ordering": "name",
+        }
     )
 
     old_url = page.current_url
@@ -194,5 +204,10 @@ def test_benchmarks_ui_page_search_sort_pagination(page, mocker):
     page.wait_for_url_change(old_url)
 
     spy_benchmarks.assert_called_with(
-        filters={"search": "test_benchmark1", "limit": 24, "offset": 24, "ordering": "name"}
+        filters={
+            "search": "test_benchmark1",
+            "limit": 24,
+            "offset": 24,
+            "ordering": "name",
+        }
     )

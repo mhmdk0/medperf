@@ -8,7 +8,10 @@ class RegAggregatorPage(BasePage):
     HEADER = (By.CSS_SELECTOR, "[data-testid='aggregator-register-header']")
 
     NAME_LABEL = (By.CSS_SELECTOR, "[data-testid='aggregator-register-name-label']")
-    ADDRESS_LABEL = (By.CSS_SELECTOR, "[data-testid='aggregator-register-address-label']")
+    ADDRESS_LABEL = (
+        By.CSS_SELECTOR,
+        "[data-testid='aggregator-register-address-label']",
+    )
     PORT_LABEL = (By.CSS_SELECTOR, "[data-testid='aggregator-register-port-label']")
     ADMIN_PORT_LABEL = (
         By.CSS_SELECTOR,

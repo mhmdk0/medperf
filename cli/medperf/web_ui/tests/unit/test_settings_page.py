@@ -258,7 +258,8 @@ def test_settings_view_profile_succeed(page, mocker, patch_settings_ui):
     page.wait_for_visibility_element(confirm_modal)
 
     assert (
-        page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to view this profile?"
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to view this profile?"
     )
 
     page.confirm_run_task()
@@ -294,13 +295,16 @@ def test_settings_edit_profile_succeed(
     page.wait_for_visibility_element(confirm_modal)
 
     assert (
-        page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to edit this profile?"
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to edit this profile?"
     )
 
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
 
-    assert page.get_text(page.PAGE_MODAL_TITLE) == "Profile Settings Edited Successfully"
+    assert (
+        page.get_text(page.PAGE_MODAL_TITLE) == "Profile Settings Edited Successfully"
+    )
 
     spy_set_args.assert_called_once()
     assert spy_set_args.call_args.args[0]["gpus"] == "1"
@@ -350,7 +354,8 @@ def test_settings_get_certificate_succeed(
     page.wait_for_visibility_element(confirm_modal)
 
     assert (
-        page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to get a new certificate?"
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to get a new certificate?"
     )
 
     page.confirm_run_task()
@@ -422,7 +427,8 @@ def test_settings_submit_certificate_succeed(
     page.wait_for_visibility_element(confirm_modal)
 
     assert (
-        page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to submit the certificate?"
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to submit the certificate?"
     )
 
     page.confirm_run_task()
@@ -494,7 +500,8 @@ def test_settings_delete_certificate_succeed(
     page.wait_for_visibility_element(confirm_modal)
 
     assert (
-        page.get_text(page.CONFIRM_TEXT) == "Are you sure you want to delete the certificate?"
+        page.get_text(page.CONFIRM_TEXT)
+        == "Are you sure you want to delete the certificate?"
     )
 
     page.confirm_run_task()
@@ -572,7 +579,9 @@ def test_settings_edit_cc_operator_succeed(
     page.confirm_run_task()
     page.wait_for_visibility_element(popup_modal)
 
-    assert page.get_text(page.PAGE_MODAL_TITLE) == "CC Configuration Edited Successfully"
+    assert (
+        page.get_text(page.PAGE_MODAL_TITLE) == "CC Configuration Edited Successfully"
+    )
 
     page.wait_for_staleness_element(popup_modal)
 

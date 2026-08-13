@@ -22,7 +22,8 @@ class ModelDetailsPage(BasePage):
     MANIFEST_YAML_BTN = (By.CSS_SELECTOR, "[data-testid='container-manifest-yaml-btn']")
     PARAMETERS_LABEL = (By.CSS_SELECTOR, "[data-testid='container-parameters-label']")
     PARAMETERS_YAML_BTN = (
-        By.CSS_SELECTOR, "[data-testid='container-parameters-yaml-btn']"
+        By.CSS_SELECTOR,
+        "[data-testid='container-parameters-yaml-btn']",
     )
     PARAMETERS_NA = (By.CSS_SELECTOR, "[data-testid='container-parameters-na']")
     ADDITIONAL_LABEL = (By.CSS_SELECTOR, "[data-testid='container-additional-label']")
@@ -38,10 +39,14 @@ class ModelDetailsPage(BasePage):
 
     ASSOCIATIONS = (By.CSS_SELECTOR, "[data-testid='benchmark-associations']")
     ASSOCIATIONS_BTN = (
-        By.CSS_SELECTOR, "button[data-testid='benchmark-associations-btn']"
+        By.CSS_SELECTOR,
+        "button[data-testid='benchmark-associations-btn']",
     )
     DROPDOWN_BTN = (By.ID, "associate-dropdown-btn")
-    REQUEST_ASSOCIATION_BTN = (By.CSS_SELECTOR, "[data-testid='request-bmk-association']")
+    REQUEST_ASSOCIATION_BTN = (
+        By.CSS_SELECTOR,
+        "[data-testid='request-bmk-association']",
+    )
 
     ACCESS_LABEL = (By.CSS_SELECTOR, "[data-testid='model-access-label']")
     ACCESS_GRANTED = (By.CSS_SELECTOR, "[data-testid='model-access-granted']")

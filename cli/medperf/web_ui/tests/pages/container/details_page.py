@@ -6,7 +6,10 @@ from ..base_page import BasePage
 class ContainerDetailsPage(BasePage):
     HEADER = (By.CSS_SELECTOR, "[data-testid='container-header']")
     DETAILS_HEADING = (By.CSS_SELECTOR, "[data-testid='container-details-heading']")
-    STATE_BADGES = (By.CSS_SELECTOR, "[data-testid='container-state'], [data-testid='container-validity']")
+    STATE_BADGES = (
+        By.CSS_SELECTOR,
+        "[data-testid='container-state'], [data-testid='container-validity']",
+    )
 
     CONTAINER_ID_LABEL = (By.CSS_SELECTOR, "[data-testid='container-id-label']")
     CONTAINER_ID_VALUE = (By.CSS_SELECTOR, "[data-testid='container-id']")
@@ -16,7 +19,10 @@ class ContainerDetailsPage(BasePage):
     MANIFEST_LABEL = (By.CSS_SELECTOR, "[data-testid='container-manifest-label']")
     MANIFEST_YAML_BTN = (By.CSS_SELECTOR, "[data-testid='container-manifest-yaml-btn']")
     PARAMETERS_LABEL = (By.CSS_SELECTOR, "[data-testid='container-parameters-label']")
-    PARAMETERS_YAML_BTN = (By.CSS_SELECTOR, "[data-testid='container-parameters-yaml-btn']")
+    PARAMETERS_YAML_BTN = (
+        By.CSS_SELECTOR,
+        "[data-testid='container-parameters-yaml-btn']",
+    )
     PARAMETERS_NA = (By.CSS_SELECTOR, "[data-testid='container-parameters-na']")
     ADDITIONAL_LABEL = (By.CSS_SELECTOR, "[data-testid='container-additional-label']")
     ADDITIONAL_LINK = (By.CSS_SELECTOR, "[data-testid='container-additional-link']")

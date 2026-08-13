@@ -18,26 +18,56 @@ class BenchmarkDetailsPage(BasePage):
 
     DESCRIPTION_LABEL = (By.CSS_SELECTOR, "[data-testid='benchmark-description-label']")
     DESCRIPTION = (By.CSS_SELECTOR, "[data-testid='benchmark-description']")
-    DOCUMENTATION_LABEL = (By.CSS_SELECTOR, "[data-testid='benchmark-documentation-label']")
+    DOCUMENTATION_LABEL = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-documentation-label']",
+    )
     DOCUMENTATION = (By.CSS_SELECTOR, "[data-testid='benchmark-documentation-link']")
     NO_DOCUMENTATION = (By.CSS_SELECTOR, "[data-testid='benchmark-documentation-na']")
     REF_DATASET_LABEL = (By.CSS_SELECTOR, "[data-testid='benchmark-ref-dataset-label']")
     REF_DATASET = (By.CSS_SELECTOR, "[data-testid='benchmark-ref-dataset-link']")
 
     DATA_PREP_LABEL = (By.CSS_SELECTOR, "[data-testid='benchmark-data-prep-label']")
-    DATA_PREP = (By.CSS_SELECTOR, "[data-testid='benchmark-data-prep-section'] [data-testid='container-link']")
-    DATA_PREP_DATE = (By.CSS_SELECTOR, "[data-testid='benchmark-data-prep-section'] [data-testid='container-link-date']")
-    DATA_PREP_STATE = (By.CSS_SELECTOR, "[data-testid='benchmark-data-prep-section'] [data-testid='container-link-state']")
+    DATA_PREP = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-data-prep-section'] [data-testid='container-link']",
+    )
+    DATA_PREP_DATE = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-data-prep-section'] [data-testid='container-link-date']",
+    )
+    DATA_PREP_STATE = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-data-prep-section'] [data-testid='container-link-state']",
+    )
 
     REF_MODEL_LABEL = (By.CSS_SELECTOR, "[data-testid='benchmark-ref-model-label']")
-    REF_MODEL = (By.CSS_SELECTOR, "[data-testid='benchmark-ref-model-section'] [data-testid='model-link']")
-    REF_MODEL_DATE = (By.CSS_SELECTOR, "[data-testid='benchmark-ref-model-section'] [data-testid='model-link-date']")
-    REF_MODEL_STATE = (By.CSS_SELECTOR, "[data-testid='benchmark-ref-model-section'] [data-testid='model-link-state']")
+    REF_MODEL = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-ref-model-section'] [data-testid='model-link']",
+    )
+    REF_MODEL_DATE = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-ref-model-section'] [data-testid='model-link-date']",
+    )
+    REF_MODEL_STATE = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-ref-model-section'] [data-testid='model-link-state']",
+    )
 
     METRICS_LABEL = (By.CSS_SELECTOR, "[data-testid='benchmark-metrics-label']")
-    METRICS = (By.CSS_SELECTOR, "[data-testid='benchmark-metrics-section'] [data-testid='container-link']")
-    METRICS_DATE = (By.CSS_SELECTOR, "[data-testid='benchmark-metrics-section'] [data-testid='container-link-date']")
-    METRICS_STATE = (By.CSS_SELECTOR, "[data-testid='benchmark-metrics-section'] [data-testid='container-link-state']")
+    METRICS = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-metrics-section'] [data-testid='container-link']",
+    )
+    METRICS_DATE = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-metrics-section'] [data-testid='container-link-date']",
+    )
+    METRICS_STATE = (
+        By.CSS_SELECTOR,
+        "[data-testid='benchmark-metrics-section'] [data-testid='container-link-state']",
+    )
 
     CREATED_LABEL = (By.CSS_SELECTOR, "[data-testid='benchmark-created-label']")
     CREATED = (By.CSS_SELECTOR, "[data-testid='benchmark-created']")
@@ -168,15 +198,24 @@ class BenchmarkDetailsPage(BasePage):
         By.XPATH,
         ".//p[strong[contains(normalize-space(.), 'Initiated By')]]",
     )
-    ASSOC_REJECT = (By.XPATH, ".//form[contains(@action, '/benchmarks/reject')]//button")
-    ASSOC_APPROVE = (By.XPATH, ".//form[contains(@action, '/benchmarks/approve')]//button")
+    ASSOC_REJECT = (
+        By.XPATH,
+        ".//form[contains(@action, '/benchmarks/reject')]//button",
+    )
+    ASSOC_APPROVE = (
+        By.XPATH,
+        ".//form[contains(@action, '/benchmarks/approve')]//button",
+    )
 
     RESULT_NAME = (By.CSS_SELECTOR, "h3")
     RESULT_OWNER_LABEL = (
         By.XPATH,
         ".//p[strong[contains(normalize-space(.), 'Data Owner')]]/strong",
     )
-    RESULT_OWNER = (By.XPATH, ".//p[strong[contains(normalize-space(.), 'Data Owner')]]")
+    RESULT_OWNER = (
+        By.XPATH,
+        ".//p[strong[contains(normalize-space(.), 'Data Owner')]]",
+    )
     RESULT_MODEL_LABEL = (
         By.XPATH,
         ".//p[strong[contains(normalize-space(.), 'Model')]]/strong",
@@ -186,7 +225,10 @@ class BenchmarkDetailsPage(BasePage):
         By.XPATH,
         ".//p[strong[contains(normalize-space(.), 'Dataset')]]/strong",
     )
-    RESULT_DATASET = (By.XPATH, ".//p[strong[contains(normalize-space(.), 'Dataset')]]/a")
+    RESULT_DATASET = (
+        By.XPATH,
+        ".//p[strong[contains(normalize-space(.), 'Dataset')]]/a",
+    )
     RESULT_INFERENCE_LABEL = (
         By.XPATH,
         ".//p[strong[contains(normalize-space(.), 'Inference Status')]]/strong",

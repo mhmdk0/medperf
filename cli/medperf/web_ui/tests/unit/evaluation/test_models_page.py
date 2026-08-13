@@ -134,9 +134,7 @@ def test_models_ui_page_content(page, mocker):
 def test_models_ui_page_search_sort_pagination(page, mocker):
     mocker.patch(PATCH_GET_USER_ID, return_value={"id": USER_ID})
     mocker.patch(PATCH_GET_MODELS_COUNT, return_value=30)
-    spy_models = mocker.patch(
-        PATCH_GET_MODELS, return_value=list(TEST_MODELS.values())
-    )
+    spy_models = mocker.patch(PATCH_GET_MODELS, return_value=list(TEST_MODELS.values()))
 
     page.open(BASE_URL.format("/models/ui"))
 
