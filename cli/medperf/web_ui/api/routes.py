@@ -16,6 +16,9 @@ router = APIRouter()
 
 @router.get("/update_status", response_class=JSONResponse, include_in_schema=False)
 def update_status(request: Request):
+    # This endpoint has to stay reachable across that restart for waitForRestart()
+    # (update_banner.js) to ever detect the new version is live. Only discloses
+    # installed version / update-in-progress / pip stderr on failure, not credentials.
     updater = UpdateManager()
     payload = {
         "status": "ok",
