@@ -190,7 +190,7 @@
                     failUpdate(payload.error || "The update failed. Check the terminal logs.");
                     return;
                 }
-                if (!payload.update_in_progress && payload.version === targetVersion) {
+                if (!payload.update_in_progress) {
                     clearUpdateSession();
                     window.location.reload();
                     return;
