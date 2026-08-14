@@ -1,4 +1,6 @@
 from importlib import resources
+import asyncio
+import contextlib
 import yaml
 from pathlib import Path
 import logging
@@ -48,17 +50,8 @@ class NavModeMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-class UpdateCheckMiddleware(BaseHTTPMiddleware):
-    """Attach cached PyPI update metadata for templates."""
-
-    async def dispatch(self, request, call_next):
-        request.app.state.update_check = UpdateManager().get_update_info()
-        return await call_next(request)
-
-
 web_app = FastAPI()
 
-web_app.add_middleware(UpdateCheckMiddleware)
 web_app.add_middleware(NavModeMiddleware)
 
 web_app.include_router(datasets_router, prefix="/datasets")
@@ -85,6 +78,24 @@ web_app.add_exception_handler(Exception, custom_exception_handler)
 web_app.openapi = wrap_openapi(web_app)
 
 
+async def _refresh_update_check_periodically():
+    """Refreshes cached PyPI update info off the request path.
+
+    Runs on its own schedule instead of a per-request middleware, which used
+    to block the ASGI event loop on every request (including every static
+    asset) with a synchronous cache-file read, and roughly every 4h with a
+    blocking network call to PyPI.
+    """
+    while True:
+        await asyncio.sleep(config.webui_update_check_interval_seconds)
+        try:
+            web_app.state.update_check = await asyncio.to_thread(
+                UpdateManager().get_update_info, force_refresh=True
+            )
+        except Exception:
+            logging.exception("Failed to refresh update check info")
+
+
 @web_app.on_event("startup")
 def startup_event():
     web_app.state.task = WebUITask()
@@ -94,11 +105,21 @@ def startup_event():
     web_app.state.update_error = None
     web_app.state.MAXLOGMESSAGES = config.webui_max_log_messages
 
+    # Computed once here (blocking is fine pre-startup) and kept fresh by a
+    # background task
+    web_app.state.update_check = UpdateManager().get_update_info()
+    web_app.state.update_check_task = asyncio.create_task(
+        _refresh_update_check_periodically()
+    )
+
     # {benchmark_id: dict} (checks if mounted and files changed)
     web_app.state.dashboards = {}
 
     # List of [schemas.Notification] will appear in the notifications tab
     web_app.state.notifications = []
+
+    # List of [schemas.Event]
+    web_app.state.global_events = []
 
     # Container auto grant access initial values
     web_app.state.model_auto_give_access = {
@@ -129,6 +150,13 @@ def startup_event():
     logging.getLogger().setLevel(loglevel)
     logging.getLogger("requests").setLevel(loglevel)
     log_machine_details()
+
+
+@web_app.on_event("shutdown")
+async def shutdown_event():
+    web_app.state.update_check_task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await web_app.state.update_check_task
 
 
 @web_app.exception_handler(NotAuthenticatedException)
