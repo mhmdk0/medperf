@@ -539,8 +539,11 @@ class UpdateManager:
 
     @staticmethod
     def _write_update_cache(cache_path: Path, info: dict) -> None:
-        with open(cache_path, "w") as cache_file:
-            json.dump(info, cache_file)
+        try:
+            with open(cache_path, "w") as cache_file:
+                json.dump(info, cache_file)
+        except (OSError, TypeError) as exc:
+            logging.debug("Could not write MedPerf update check cache: %s", exc)
 
     def _sync_cache_with_installed(self, cached: dict, installed_version: str) -> dict:
         """Update cached fields that depend on the currently installed version."""
