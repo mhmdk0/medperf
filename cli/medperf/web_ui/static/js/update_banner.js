@@ -267,6 +267,11 @@
         if (!banner || banner.dataset.bound === "true") return;
         banner.dataset.bound = "true";
 
+        var restartCommand = document.getElementById("client-update-restart-command");
+        if (restartCommand && window.location.port) {
+            restartCommand.textContent = "medperf_webui run --port " + window.location.port;
+        }
+
         var updateBtn = document.getElementById("client-update-now-btn");
         if (updateBtn) {
             updateBtn.addEventListener("click", function () {
