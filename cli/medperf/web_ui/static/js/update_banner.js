@@ -124,10 +124,17 @@
 
         var summary = document.getElementById("client-update-summary");
         if (summary) {
-            summary.innerHTML =
-                "A new MedPerf release is available: " +
-                "<strong class=\"font-semibold text-amber-800 dark:text-amber-200\">" + latest + "</strong> " +
-                "<span class=\"text-gray-600 dark:text-gray-300\">(you have " + current + ")</span>";
+            summary.textContent = "A new MedPerf release is available: ";
+
+            var latestEl = document.createElement("strong");
+            latestEl.className = "font-semibold text-amber-800 dark:text-amber-200";
+            latestEl.textContent = latest;
+            summary.appendChild(latestEl);
+
+            var currentEl = document.createElement("span");
+            currentEl.className = "text-gray-600 dark:text-gray-300";
+            currentEl.textContent = " (you have " + current + ")";
+            summary.appendChild(currentEl);
         }
 
         var command = document.getElementById("client-update-command");
