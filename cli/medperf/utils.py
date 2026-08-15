@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from colorama import Fore, Style
 from pexpect.exceptions import TIMEOUT
-import semver
+from packaging.version import Version
 import medperf.config as config
 from medperf.exceptions import (
     CleanExit,
@@ -507,8 +507,10 @@ class UpdateManager:
         if latest_version is None:
             return False
         try:
-            current = semver.VersionInfo.parse(current_version)
-            latest = semver.VersionInfo.parse(latest_version)
+            # PyPI versions follow PEP 440 (e.g. "0.3.0rc1", "0.3.0.post1"),
+            # which semver.VersionInfo.parse rejects outright.
+            current = Version(current_version)
+            latest = Version(latest_version)
         except ValueError as exc:
             logging.debug("Could not compare MedPerf versions: %s", exc)
             return False
