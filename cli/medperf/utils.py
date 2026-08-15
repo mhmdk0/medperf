@@ -678,26 +678,35 @@ class UpdateManager:
             raise ExecutionError(detail)
         logging.info("MedPerf package updated successfully")
 
-    def _update_and_restart_webui(self, port: int) -> None:
-        self._run_pip_update()
-        restart_argv = self.build_webui_restart_argv(port)
-        logging.info("Restarting Web UI: %s", shlex.join(restart_argv))
-        os.execv(restart_argv[0], restart_argv)
-
-    def schedule_webui_update(self, port: int, app_state=None) -> None:
-        """Run pip update + execv restart shortly after the caller returns."""
+    def schedule_webui_update(self, port: int, app_state) -> None:
+        """Run pip update in the background, then trigger a graceful restart."""
 
         def _run_update() -> None:
-            import time
-
-            time.sleep(0.5)
             try:
-                self._update_and_restart_webui(port)
+                self._run_pip_update()
+                restart_argv = self.build_webui_restart_argv(port)
             except Exception as exc:
                 logging.exception("MedPerf Web UI update failed: %s", exc)
-                if app_state is not None:
-                    app_state.update_in_progress = False
-                    app_state.update_error = str(exc)
+                app_state.update_in_progress = False
+                app_state.update_error = str(exc)
+                return
+
+            if app_state.task_running or config.running_containers:
+                logging.error(
+                    "A task or container started while updating MedPerf; "
+                    "aborting the restart to avoid killing it."
+                )
+                app_state.update_in_progress = False
+                app_state.update_error = (
+                    "A task or container started before the restart could "
+                    "proceed. MedPerf was updated but not restarted; please "
+                    "restart it manually."
+                )
+                return
+
+            logging.info("Restarting Web UI: %s", shlex.join(restart_argv))
+            app_state.pending_restart_argv = restart_argv
+            os.kill(os.getpid(), signal.SIGTERM)
 
         threading.Thread(target=_run_update, daemon=True, name="medperf-update").start()
 

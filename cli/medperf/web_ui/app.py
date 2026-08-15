@@ -1,6 +1,7 @@
 from importlib import resources
 import asyncio
 import contextlib
+import os
 import yaml
 from pathlib import Path
 import logging
@@ -103,6 +104,10 @@ def startup_event():
     web_app.state.task_running = False
     web_app.state.update_in_progress = False
     web_app.state.update_error = None
+    # Set by UpdateManager.schedule_webui_update right before it sends this
+    # process SIGTERM; shutdown_event() execs it once uvicorn has drained
+    # in-flight requests and finished its own shutdown.
+    web_app.state.pending_restart_argv = None
     web_app.state.MAXLOGMESSAGES = config.webui_max_log_messages
 
     # Computed once here (blocking is fine pre-startup) and kept fresh by a
@@ -157,6 +162,10 @@ async def shutdown_event():
     web_app.state.update_check_task.cancel()
     with contextlib.suppress(asyncio.CancelledError):
         await web_app.state.update_check_task
+
+    restart_argv = web_app.state.pending_restart_argv
+    if restart_argv:
+        os.execv(restart_argv[0], restart_argv)
 
 
 @web_app.exception_handler(NotAuthenticatedException)
