@@ -479,14 +479,10 @@ class UpdateManager:
     UPDATE_COMMAND = f"pip install -U {PYPI_PACKAGE_NAME}"
 
     def get_installed_version(self) -> str:
-        """Return the installed package version from environment metadata."""
-        import importlib.metadata
+        """Return the version of the MedPerf code currently running."""
+        from medperf import __version__
 
-        try:
-            return importlib.metadata.version(self.PYPI_PACKAGE_NAME)
-        except importlib.metadata.PackageNotFoundError:
-            logging.debug("medperf is not installed as a package in this environment")
-            return "unknown"
+        return __version__
 
     def get_latest_version(self) -> Optional[str]:
         """Return the latest MedPerf version published on PyPI, if available."""
