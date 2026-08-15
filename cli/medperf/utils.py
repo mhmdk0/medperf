@@ -523,9 +523,14 @@ class UpdateManager:
         checked_at = cached.get("checked_at")
         if not checked_at:
             return False
-        age_seconds = (
-            datetime.now(timezone.utc) - datetime.fromisoformat(checked_at)
-        ).total_seconds()
+        try:
+            parsed_checked_at = datetime.fromisoformat(checked_at)
+            age_seconds = (
+                datetime.now(timezone.utc) - parsed_checked_at
+            ).total_seconds()
+        except (ValueError, TypeError) as exc:
+            logging.debug("Could not parse MedPerf update check cache age: %s", exc)
+            return False
         return age_seconds < config.webui_update_check_interval_seconds
 
     @staticmethod
