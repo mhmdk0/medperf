@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import mock_open, call, ANY
 
 from medperf import utils
+from medperf.utils import UpdateManager
 import medperf.config as config
 from medperf.tests.mocks import MockTar
 
@@ -396,3 +397,41 @@ def test_failing_validate_and_normalize_emails(emails):
     # Act & Assert
     with pytest.raises(InvalidArgumentError):
         utils.validate_and_normalize_emails(emails)
+
+
+def test_check_for_updates_warns_when_update_available(mocker, ui):
+    # Arrange
+    mocker.patch.object(
+        UpdateManager,
+        "get_update_info",
+        return_value={
+            "update_available": True,
+            "current_version": "0.3.0",
+            "latest_version": "0.4.0",
+            "update_command": "pip install -U medperf",
+        },
+    )
+
+    # Act
+    UpdateManager().check_for_updates()
+
+    # Assert
+    ui.print_warning.assert_called_once_with(
+        "MedPerf 0.4.0 is available (you have 0.3.0). "
+        "Update with: pip install -U medperf"
+    )
+
+
+def test_check_for_updates_is_silent_when_up_to_date(mocker, ui):
+    # Arrange
+    mocker.patch.object(
+        UpdateManager,
+        "get_update_info",
+        return_value={"update_available": False, "current_version": "0.3.0"},
+    )
+
+    # Act
+    UpdateManager().check_for_updates()
+
+    # Assert
+    ui.print_warning.assert_not_called()
