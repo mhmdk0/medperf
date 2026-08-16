@@ -10,6 +10,7 @@ import threading
 import yaml
 import random
 import hashlib
+import importlib.metadata as importlib_metadata
 import logging
 import tarfile
 import requests
@@ -26,6 +27,7 @@ from packaging.version import Version
 import medperf.config as config
 from medperf.exceptions import (
     CleanExit,
+    EditableInstallUpdateError,
     ExecutionError,
     InvalidArgumentError,
     UpdateNotNeededError,
@@ -477,12 +479,33 @@ class UpdateManager:
     PYPI_JSON_URL = f"https://pypi.org/pypi/{PYPI_PACKAGE_NAME}/json"
     PYPI_REQUEST_TIMEOUT = 5
     UPDATE_COMMAND = f"pip install -U {PYPI_PACKAGE_NAME}"
+    EDITABLE_UPDATE_COMMAND = "git pull"
 
     def get_installed_version(self) -> str:
         """Return the version of the MedPerf code currently running."""
         from medperf import __version__
 
         return __version__
+
+    def is_editable_install(self) -> bool:
+        """Return True if the running `medperf` package is an editable/dev install
+        (e.g. `pip install -e .`), where `pip install -U` would silently replace
+        the dev checkout with a regular PyPI install instead of updating it."""
+        try:
+            dist = importlib_metadata.distribution(self.PYPI_PACKAGE_NAME)
+            direct_url_text = dist.read_text("direct_url.json")
+        except importlib_metadata.PackageNotFoundError:
+            return False
+        if not direct_url_text:
+            return False
+        try:
+            direct_url = json.loads(direct_url_text)
+        except json.JSONDecodeError:
+            return False
+        return bool(direct_url.get("dir_info", {}).get("editable", False))
+
+    def update_command_for(self, editable: bool) -> str:
+        return self.EDITABLE_UPDATE_COMMAND if editable else self.UPDATE_COMMAND
 
     def get_latest_version(self) -> Optional[str]:
         """Return the latest MedPerf version published on PyPI, if available."""
@@ -556,18 +579,23 @@ class UpdateManager:
         info["update_available"] = self.is_update_available(
             installed_version, latest_version
         )
+        editable = self.is_editable_install()
+        info["is_editable_install"] = editable
+        info["update_command"] = self.update_command_for(editable)
         return info
 
     def _make_update_info(
         self, current_version: str, latest_version: Optional[str]
     ) -> dict:
+        editable = self.is_editable_install()
         return {
             "update_available": self.is_update_available(
                 current_version, latest_version
             ),
             "current_version": current_version,
             "latest_version": latest_version,
-            "update_command": self.UPDATE_COMMAND,
+            "update_command": self.update_command_for(editable),
+            "is_editable_install": editable,
             "checked_at": datetime.now(timezone.utc).isoformat(),
             "check_ok": latest_version is not None,
         }
@@ -595,11 +623,17 @@ class UpdateManager:
     def format_update_check_message(self, info: dict) -> str:
         installed_version = info.get("current_version") or "unknown"
         latest_version = info.get("latest_version")
+        editable_note = (
+            " This is an editable (development) install - update it with "
+            f"`{self.EDITABLE_UPDATE_COMMAND}`."
+            if info.get("is_editable_install")
+            else ""
+        )
 
         if info.get("update_available") and latest_version:
             return (
                 f"Update available: MedPerf {latest_version} "
-                f"(you have {installed_version})"
+                f"(you have {installed_version}).{editable_note}"
             )
 
         if latest_version:
@@ -617,6 +651,13 @@ class UpdateManager:
     ) -> str:
         """Return installed version if updating to latest_version is allowed."""
         installed_version = self.get_installed_version()
+        if self.is_editable_install():
+            raise EditableInstallUpdateError(
+                "This is an editable (development) install of MedPerf; "
+                f"`pip install -U` would replace it. Run `{self.EDITABLE_UPDATE_COMMAND}` "
+                "in your MedPerf checkout instead."
+            )
+
         target_version = (latest_version or "").strip() or None
         if not target_version:
             raise UpdateNotNeededError(

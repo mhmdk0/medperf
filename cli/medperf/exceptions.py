@@ -68,3 +68,7 @@ class InvalidCertificateAuthorityError(MedperfException):
 
 class UpdateNotNeededError(MedperfException):
     """Raised when the Web UI should not run pip for an update request."""
+
+
+class EditableInstallUpdateError(MedperfException):
+    """Raised when an update is requested on an editable (development) install."""

@@ -122,6 +122,8 @@
             return;
         }
 
+        var isEditable = Boolean(info.is_editable_install);
+
         var summary = document.getElementById("client-update-summary");
         if (summary) {
             summary.textContent = "A new MedPerf release is available: ";
@@ -135,13 +137,25 @@
             currentEl.className = "text-gray-600 dark:text-gray-300";
             currentEl.textContent = " (you have " + current + ")";
             summary.appendChild(currentEl);
+
+            if (isEditable) {
+                var editableEl = document.createElement("span");
+                editableEl.className = "block text-xs text-gray-600 dark:text-gray-300 mt-0.5";
+                editableEl.textContent =
+                    "This is an editable (development) install - update it with git pull, not the button below.";
+                summary.appendChild(editableEl);
+            }
         }
 
         var command = document.getElementById("client-update-command");
         if (command) command.textContent = info.update_command || "pip install -U medperf";
 
+        var updateBtn = document.getElementById("client-update-now-btn");
+        if (updateBtn) updateBtn.classList.toggle("hidden", isEditable);
+
         banner.dataset.latestVersion = latest;
         banner.dataset.currentVersion = current;
+        banner.dataset.isEditableInstall = isEditable ? "true" : "false";
         banner.classList.remove("hidden");
     }
 
@@ -275,6 +289,7 @@
         var updateBtn = document.getElementById("client-update-now-btn");
         if (updateBtn) {
             updateBtn.addEventListener("click", function () {
+                if (banner.dataset.isEditableInstall === "true") return;
                 var latest = banner.dataset.latestVersion;
                 if (!latest) return;
                 startUpdate(latest, banner.dataset.currentVersion || "");

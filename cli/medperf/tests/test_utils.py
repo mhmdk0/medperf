@@ -1,5 +1,6 @@
+import json
 import os
-from medperf.exceptions import InvalidArgumentError
+from medperf.exceptions import EditableInstallUpdateError, InvalidArgumentError
 import pytest
 import logging
 from pathlib import Path
@@ -435,3 +436,61 @@ def test_check_for_updates_is_silent_when_up_to_date(mocker, ui):
 
     # Assert
     ui.print_warning.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "direct_url,expected",
+    [
+        ({"dir_info": {"editable": True}, "url": "file:///repo/cli"}, True),
+        ({"dir_info": {}, "url": "file:///repo/cli"}, False),
+        ({"url": "https://pypi.org/simple/medperf"}, False),
+        (None, False),
+    ],
+)
+def test_is_editable_install(mocker, direct_url, expected):
+    # Arrange
+    dist = mocker.MagicMock()
+    dist.read_text.return_value = json.dumps(direct_url) if direct_url else None
+    mocker.patch.object(utils.importlib_metadata, "distribution", return_value=dist)
+
+    # Act & Assert
+    assert UpdateManager().is_editable_install() == expected
+
+
+def test_is_editable_install_false_when_package_not_found(mocker):
+    # Arrange
+    mocker.patch.object(
+        utils.importlib_metadata,
+        "distribution",
+        side_effect=utils.importlib_metadata.PackageNotFoundError,
+    )
+
+    # Act & Assert
+    assert UpdateManager().is_editable_install() is False
+
+
+@pytest.mark.parametrize(
+    "editable,expected_command",
+    [(True, "git pull"), (False, "pip install -U medperf")],
+)
+def test_update_info_selects_command_by_install_type(
+    mocker, editable, expected_command
+):
+    # Arrange
+    mocker.patch.object(UpdateManager, "is_editable_install", return_value=editable)
+
+    # Act
+    info = UpdateManager()._make_update_info("0.3.0", "0.4.0")
+
+    # Assert
+    assert info["is_editable_install"] == editable
+    assert info["update_command"] == expected_command
+
+
+def test_validate_update_rejects_editable_install(mocker):
+    # Arrange
+    mocker.patch.object(UpdateManager, "is_editable_install", return_value=True)
+
+    # Act & Assert
+    with pytest.raises(EditableInstallUpdateError):
+        UpdateManager().validate_update(latest_version="0.4.0")

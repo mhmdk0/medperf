@@ -6,7 +6,11 @@ from fastapi import APIRouter, HTTPException, Form, Depends, Request, Query, Bod
 from fastapi.responses import JSONResponse
 
 import medperf.config as config
-from medperf.exceptions import InvalidArgumentError, UpdateNotNeededError
+from medperf.exceptions import (
+    EditableInstallUpdateError,
+    InvalidArgumentError,
+    UpdateNotNeededError,
+)
 from medperf.web_ui.common import check_user_api
 from medperf.utils import UpdateManager, sanitize_path
 
@@ -74,7 +78,7 @@ def update_medperf(
             latest_version=body.get("latest_version"),
             current_version=body.get("current_version"),
         )
-    except UpdateNotNeededError as exc:
+    except (UpdateNotNeededError, EditableInstallUpdateError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     host_props = getattr(request.app.state, "host_props", None) or {}
