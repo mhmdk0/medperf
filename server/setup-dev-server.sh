@@ -41,6 +41,11 @@ then
 else
     echo "Certs are generated"
     openssl req -x509 -nodes -days 365 -newkey rsa:3072 -keyout $KEY_FILE -out $CERT_FILE -subj "/C=US/ST=Any/L=Any/O=MedPerf/CN=127.0.0.1" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+
+    # Also place a copy where the medperf CLI's local/testauth test profiles
+    # look for a cert to trust
+    mkdir -p "$HOME/.medperf_dev"
+    cp "$CERT_FILE" "$HOME/.medperf_dev/cert.crt"
 fi
 
 if [ "$RESET_DB" -eq 1 ]
