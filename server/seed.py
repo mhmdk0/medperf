@@ -1,8 +1,8 @@
 """Seed the server database with demo entries for integration tests or tutorials.
-Tokens to access the local server are either from the local JWT factory provided
-in the repository root, or from the auth provider. The later case is to do
-integration tests with the auth provider. For simplicity, the auth provider
-tokens used for mock users are retrieved by password-grant authorization flow.
+Tokens to access the local server are either mock tokens generated Medperf CLI's
+local test profile, or from the auth provider. The later case is to do integration
+tests with the auth provider. For simplicity, the auth provider tokens used for
+mock users are retrieved by password-grant authorization flow.
 
 This script can only be invoked from its parent folder, that's because it
 executes Django code to set admin permissions for a test user."""
@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 
 REPO_BASE_DIR = Path(__file__).resolve().parent.parent
+MOCK_TOKENS_DIR = Path.home().resolve() / ".medperf_dev" / "mock_tokens"
 
 
 def populate_mock_benchmarks(api_server, admin_token):
@@ -108,9 +109,7 @@ def seed(args):
 
 if __name__ == "__main__":
     default_cert_file = str(REPO_BASE_DIR / "server" / "cert.crt")
-    default_tokens_file = str(
-        REPO_BASE_DIR / "cli" / "medperf" / "mock_tokens" / "tokens.json"
-    )
+    default_tokens_file = str(MOCK_TOKENS_DIR / "tokens.json")
     default_containers_assets_path = str(
         REPO_BASE_DIR / "examples" / "chestxray_tutorial"
     )

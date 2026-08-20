@@ -288,8 +288,13 @@ USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Validating public key config
+verifying_key_file = env("AUTH_VERIFYING_KEY_FILE", default=None)
 verifying_key = env("AUTH_VERIFYING_KEY", default=None)
 jwk_url = env("AUTH_JWK_URL", default=None)
+
+if verifying_key_file and os.path.exists(verifying_key_file):
+    with open(verifying_key_file) as f:
+        verifying_key = f.read()
 
 if verifying_key and jwk_url:
     raise ValueError(
