@@ -2,8 +2,6 @@ from ._version import __version__
 from pathlib import Path
 from os import getenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
 major_version, minor_version, patch_version = __version__.split(".")
 
 # MedPerf server
@@ -11,7 +9,6 @@ server = "https://api.medperf.org"
 certificate = None
 
 local_server = "https://localhost:8000"
-local_certificate = str(BASE_DIR / "server" / "cert.crt")
 
 comms = "REST"
 
@@ -44,8 +41,6 @@ token_absolute_expiry = 2592000  # Refresh token absolute expiration time (secon
 access_token_storage_id = "medperf_access_token"
 refresh_token_storage_id = "medperf_refresh_token"
 
-local_tokens_path = Path(__file__).resolve().parent / "mock_tokens" / "tokens.json"
-
 # Certificate Authority
 certificate_authority_id = 1
 certificate_authority_fingerprint = (
@@ -72,6 +67,21 @@ container_keys_dir = str(config_storage / ".container_keys")
 cc_artifacts_dir = str(config_storage / ".cc_artifacts")
 webui_host_props = str(config_storage / ".webui_host_props")
 update_check_cache_file = str(config_storage / ".update_check_cache.json")
+
+# Local/testauth dev-profile artifacts (keypair, tokens, dev server cert). Not
+# config_storage-relative on purpose: MEDPERF_CONFIG_STORAGE profiles must all
+# share one local-dev identity to be trusted by the same local server.
+local_dev_dir = Path.home().resolve() / ".medperf_dev"
+local_keys_dir = str(local_dev_dir / "keys")
+local_private_key_path = str(local_dev_dir / "keys" / "private_key.pem")
+local_public_key_path = str(local_dev_dir / "keys" / "public_key.pem")
+local_tokens_path = str(local_dev_dir / "mock_tokens" / "tokens.json")
+# None if setup-dev-server.sh hasn't placed a cert here; comms/rest.py treats
+# None as "use normal certificate verification".
+_local_certificate_path = local_dev_dir / "cert.crt"
+local_certificate = (
+    str(_local_certificate_path) if _local_certificate_path.is_file() else None
+)
 
 # TODO: should we change this?
 safe_root = ""  # Base path to accept input paths from user.
