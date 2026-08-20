@@ -42,6 +42,12 @@ jobs:
         pip install -r server/test-requirements.txt
         pip install -e ".[dev]"
 
+    - name: Generate local mock login credentials
+      working-directory: .
+      run: |
+        python cli/generate_mock_credentials.py
+        echo "AUTH_VERIFYING_KEY_FILE=$HOME/.medperf_dev/keys/public_key.pem" >> "$GITHUB_ENV"
+
     - name: Set server environment vars
       working-directory: ./server
       run: cp .env.local.local-auth .env
