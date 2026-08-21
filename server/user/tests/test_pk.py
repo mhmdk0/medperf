@@ -1,7 +1,7 @@
 from rest_framework import status
 
-from medperf.tests import MedPerfTest
-from medperf.testing_utils import mock_mlcube, mock_dataset
+from medperf_server.tests import MedPerfTest
+from medperf_server.testing_utils import mock_mlcube, mock_dataset
 
 from parameterized import parameterized
 
