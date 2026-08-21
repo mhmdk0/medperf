@@ -97,7 +97,7 @@ def set_user_as_admin(api_server, access_token):
 
     cwd = os.getcwd()
     os.chdir(Path(__file__).parent)
-    os.environ["DJANGO_SETTINGS_MODULE"] = "medperf.settings"
+    os.environ["DJANGO_SETTINGS_MODULE"] = "medperf_server.settings"
     django.setup()
     User = get_user_model()
     user = User.objects.get(id=user_id)
