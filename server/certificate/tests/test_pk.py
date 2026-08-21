@@ -1,6 +1,6 @@
 from rest_framework import status
 
-from medperf.tests import MedPerfTest
+from medperf_server.tests import MedPerfTest
 
 from parameterized import parameterized, parameterized_class
 
