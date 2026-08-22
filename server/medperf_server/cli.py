@@ -1,0 +1,126 @@
+from pathlib import Path
+from typing import Optional
+
+import typer
+
+app = typer.Typer()
+
+
+@app.command("start")
+def start(
+    cert_file: str = typer.Option(
+        "cert.crt", help="Path to write/read the SSL certificate"
+    ),
+    key_file: str = typer.Option(
+        "cert.key", help="Path to write/read the SSL private key"
+    ),
+    generate_cert: bool = typer.Option(
+        True, help="Generate a fresh self-signed SSL certificate"
+    ),
+    reset_db: bool = typer.Option(False, help="Reset the database before starting"),
+    postgres: bool = typer.Option(
+        False, help="Use the dev postgres container instead of sqlite"
+    ),
+    container_name: str = typer.Option(
+        "postgreserver", help="Dev postgres container name"
+    ),
+):
+    """Run migrations, collect static files, and start the local HTTPS dev server."""
+    from medperf_server.cli_dev_server import start_server
+
+    try:
+        start_server(
+            cert_file, key_file, generate_cert, reset_db, postgres, container_name
+        )
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command("reset-db")
+def reset_db_command(
+    postgres: bool = typer.Option(
+        False, help="Reset the dev postgres container instead of sqlite"
+    ),
+    container_name: str = typer.Option(
+        "postgreserver", help="Dev postgres container name"
+    ),
+):
+    """Delete and recreate the database, then run migrations."""
+    from medperf_server.cli_db import reset_database
+
+    try:
+        reset_database(postgres, container_name)
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command("seed")
+def seed_command(
+    server: str = typer.Option(
+        "https://127.0.0.1:8000", help="Server host address to connect"
+    ),
+    cert: Optional[str] = typer.Option(
+        None,
+        help="Server certificate (defaults to ./cert.crt if present, else unverified)",
+    ),
+    version: Optional[str] = typer.Option(
+        None, help="Server version to validate against"
+    ),
+    auth: str = typer.Option("local", help="Authentication mode: local or online"),
+    demo: str = typer.Option(
+        "data", help="Demo scope: benchmark, model, data, or tutorial"
+    ),
+    tokens: str = typer.Option(
+        str(Path.home() / ".medperf_dev" / "mock_tokens" / "tokens.json"),
+        help="Path to local tokens file",
+    ),
+    containers_assets_path: Optional[str] = typer.Option(
+        None,
+        help="Path to folder containing container asset files (required for --demo model/data)",
+    ),
+):
+    """Seed the database with demo entries for integration tests or tutorials."""
+    from seed import seed as run_seed
+
+    if auth not in ("local", "online"):
+        raise typer.BadParameter("--auth must be 'local' or 'online'")
+    if demo not in ("benchmark", "model", "data", "tutorial"):
+        raise typer.BadParameter(
+            "--demo must be one of: benchmark, model, data, tutorial"
+        )
+
+    if cert is None:
+        default_cert = Path("cert.crt")
+        if default_cert.exists():
+            cert = str(default_cert)
+        else:
+            typer.echo(
+                "warning: no --cert given and ./cert.crt not found; "
+                "proceeding without server certificate verification"
+            )
+
+    if containers_assets_path is None and demo in ("model", "data"):
+        default_path = Path("examples") / "chestxray_tutorial"
+        if default_path.exists():
+            containers_assets_path = str(default_path)
+        else:
+            raise typer.BadParameter(
+                "--containers-assets-path is required (no ./examples/chestxray_tutorial "
+                "found relative to the current directory)"
+            )
+
+    try:
+        run_seed(
+            server=server,
+            cert=cert,
+            version=version,
+            auth=auth,
+            demo=demo,
+            tokens=tokens,
+            containers_assets_path=containers_assets_path,
+        )
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
