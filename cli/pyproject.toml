@@ -100,7 +100,7 @@ Issues = "https://github.com/mlcommons/medperf/issues"
 Documentation = "https://docs.medperf.org"
 
 [tool.setuptools.packages.find]
-where = ["cli"]
+where = ["."]
 include = ["medperf*"]
 exclude = ["medperf.tests*", "medperf.web_ui.tests*"]
 namespaces = false
