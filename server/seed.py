@@ -63,16 +63,19 @@ def populate_mock_benchmarks(api_server, admin_token):
         )
 
 
-def seed(args):
-    api_server = Server(host=args.server, cert=args.cert)
-    if args.version:
-        api_server.validate(True, args.version)
+def seed(server, cert, version, auth, demo, tokens, containers_assets_path):
+    if cert and cert.lower() == "none":
+        cert = None
+
+    api_server = Server(host=server, cert=cert)
+    if version:
+        api_server.validate(True, version)
     else:
         api_server.validate(False)
 
     # setup tokens source
-    if args.auth == "local":
-        tokens = json.load(open(args.tokens))
+    if auth == "local":
+        tokens = json.load(open(tokens))
         get_token = lambda email: tokens[email]  # noqa
     else:
         get_token = auth_provider_token
@@ -81,20 +84,20 @@ def seed(args):
     admin_token = get_token("testadmin@example.com")
     set_user_as_admin(api_server, admin_token)
 
-    if args.demo == "tutorial":
+    if demo == "tutorial":
         populate_mock_benchmarks(api_server, admin_token)
         return
 
-    if args.demo == "benchmark":
+    if demo == "benchmark":
         return
     # create benchmark
     benchmark_owner_token = get_token("testbo@example.com")
     benchmark = create_benchmark(
         api_server,
         benchmark_owner_token,
-        args.containers_assets_path,
+        containers_assets_path,
     )
-    if args.demo == "model":
+    if demo == "model":
         return
     # create model
     model_owner_token = get_token("testmo@example.com")
@@ -103,7 +106,7 @@ def seed(args):
         model_owner_token,
         benchmark_owner_token,
         benchmark,
-        args.containers_assets_path,
+        containers_assets_path,
     )
 
 
@@ -152,6 +155,12 @@ if __name__ == "__main__":
         default=default_containers_assets_path,
     )
     args = parser.parse_args()
-    if args.cert.lower() == "none":
-        args.cert = None
-    seed(args)
+    seed(
+        server=args.server,
+        cert=args.cert,
+        version=args.version,
+        auth=args.auth,
+        demo=args.demo,
+        tokens=args.tokens,
+        containers_assets_path=args.containers_assets_path,
+    )

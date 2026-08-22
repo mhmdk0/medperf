@@ -35,7 +35,7 @@ classifiers = [
 dynamic = ["version", "dependencies", "optional-dependencies"]
 
 [project.scripts]
-medperf-server = "manage:main"
+medperf-server = "medperf_server.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/mlcommons/medperf"
@@ -44,7 +44,7 @@ Issues = "https://github.com/mlcommons/medperf/issues"
 Documentation = "https://docs.medperf.org"
 
 [tool.setuptools]
-py-modules = ["manage"]
+py-modules = ["manage", "seed", "seed_utils", "auth_provider_token"]
 
 [tool.setuptools.packages.find]
 where = ["."]
