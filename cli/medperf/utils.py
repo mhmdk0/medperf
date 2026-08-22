@@ -698,7 +698,7 @@ class UpdateManager:
         bin_dir = Path(sys.executable).resolve().parent
         executable = bin_dir / "medperf_webui"
         if executable.is_file():
-            return [str(executable), "run", "--port", str(port)]
+            return [str(executable), "--port", str(port)]
         raise ExecutionError(
             f"Could not find medperf_webui next to Python executable ({sys.executable})"
         )

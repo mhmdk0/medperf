@@ -283,7 +283,7 @@
 
         var restartCommand = document.getElementById("client-update-restart-command");
         if (restartCommand && window.location.port) {
-            restartCommand.textContent = "medperf_webui run --port " + window.location.port;
+            restartCommand.textContent = "medperf_webui --port " + window.location.port;
         }
 
         var updateBtn = document.getElementById("client-update-now-btn");
