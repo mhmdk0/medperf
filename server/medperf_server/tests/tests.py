@@ -3,7 +3,7 @@ from django.test import override_settings
 from django.conf import settings
 from rest_framework.test import APIClient
 from rest_framework import status
-from .testing_utils import (
+from ..testing_utils.testing_utils import (
     PUBLIC_KEY,
     setup_api_admin,
     create_user,

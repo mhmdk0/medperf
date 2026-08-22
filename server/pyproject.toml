@@ -72,6 +72,7 @@ include = [
 ]
 exclude = [
     "benchmark.tests*",
+    "benchmarkmodel.tests*",
     "certificate.tests*",
     "dataset.tests*",
     "encrypted_key.tests*",
@@ -79,6 +80,9 @@ exclude = [
     "model.tests*",
     "result.tests*",
     "user.tests*",
+    "utils.tests*",
+    "medperf_server.tests*",
+    "medperf_server.testing_utils*",
 ]
 namespaces = false
 
