@@ -21,7 +21,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r server/requirements.txt
         pip install -r server/test-requirements.txt
-        pip install -e ".[dev]"
+        pip install -e "./cli[dev]"
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
