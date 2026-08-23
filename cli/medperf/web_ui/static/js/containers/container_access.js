@@ -77,6 +77,7 @@ function updateAutoAccessUI() {
     var actionsEl = document.getElementById("auto-access-actions");
     var startBtn = document.getElementById("start-auto-access-btn");
     var stopBtn = document.getElementById("stop-auto-access-btn");
+    var viewLogsBtn = document.getElementById("view-auto-access-logs-btn");
     var runningBadge = document.getElementById("running-badge");
     var intervalEl = document.getElementById("interval-auto");
     var emailContainer = document.getElementById("allowed-email-list-auto");
@@ -88,6 +89,7 @@ function updateAutoAccessUI() {
 
     setElementVisible(startBtn, false);
     setElementVisible(stopBtn, false);
+    setElementVisible(viewLogsBtn, false);
     setElementVisible(runningBadge, false);
 
     if (!benchmarkId) {
@@ -111,6 +113,7 @@ function updateAutoAccessUI() {
         if (emailInput) emailInput.disabled = true;
         setEmailChips(emailContainer, parseStoredEmails(runningState.emails));
         setElementVisible(stopBtn, true);
+        setElementVisible(viewLogsBtn, true);
         setElementVisible(runningBadge, true);
     } else {
         if (intervalEl) {
@@ -147,8 +150,8 @@ function checkAutoAccessForm() {
 
 function emptyAllowListWarning(allowListArr, message) {
     if (allowListArr.length) return message;
-    return message + " Note: no emails were added - this will grant access to ALL " +
-        "eligible data owners, with no email filtering.";
+    return message + " <strong>Note: no emails were added - this will grant access to ALL " +
+        "eligible data owners, with no email filtering.</strong>";
 }
 
 function startAutoGrant(startBtn) {
@@ -176,6 +179,23 @@ function stopAutoGrant(stopBtn) {
         if (response && response.status === "success") showReloadModal({ title: "Successfully Stopped Auto Grant Access", seconds: 2 });
         else showErrorModal("Failed to Stop Auto Grant Access", response);
     }, "Failed to stop auto grant access");
+}
+
+function viewAutoAccessLogs() {
+    var panel = document.getElementById("auto-access-panel");
+    var modelId = panel ? panel.getAttribute("data-model-id") : "";
+    var benchmarkId = getSelectedBenchmarkId();
+    var url = "/containers/auto_access_logs?model_id=" + encodeURIComponent(modelId) +
+        "&benchmark_id=" + encodeURIComponent(benchmarkId);
+    ajaxRequest(url, "GET", null, function (response) {
+        var logs = (response && response.logs) || [];
+        var body = logs.length
+            ? "<pre class=\"text-sm overflow-x-auto whitespace-pre-wrap font-mono bg-muted text-ink p-4 rounded-lg max-h-[60vh] overflow-y-auto\">" +
+                logs.map(function (line) { return escapeHtml(cleanMsg(line)); }).join("\n") + "</pre>"
+            : "<p class=\"text-muted-fg\">No logs recorded yet.</p>";
+        var footer = "<button type=\"button\" class=\"btn btn-sm btn-secondary close-modal-btn\">Close</button>";
+        showModal({ title: "Automatic Grant Access Logs", body: body, footer: footer, modalClasses: "max-w-2xl" });
+    }, "Failed to fetch automatic grant access logs");
 }
 
 function showErrorToast(message) {
@@ -236,6 +256,8 @@ function init() {
     if (stopBtn) stopBtn.addEventListener("click", function (e) {
         showConfirmModal(e.currentTarget, stopAutoGrant, "stop automatic grant access?");
     });
+    var viewLogsBtn = document.getElementById("view-auto-access-logs-btn");
+    if (viewLogsBtn) viewLogsBtn.addEventListener("click", viewAutoAccessLogs);
 
     updateAutoAccessUI();
 }

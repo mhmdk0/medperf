@@ -39,8 +39,12 @@
     <div id="auto-access-panel" class="bg-card dark:bg-card rounded-2xl p-6 shadow-lg border-2 border-border-brand dark:border-border mb-6" data-model-id="{{ entity.id }}" data-running-auto-access='{{ running_auto_access | tojson }}'>
         <h3 class="text-lg font-bold text-ink mb-2">Automatic Access</h3>
         <p class="text-muted-fg mb-4">Automatically grant access to new data owners associated to a benchmark.</p>
-        {% if running_benchmark_names %}
-        <p class="text-sm text-muted-fg mb-4">Currently running for: {{ running_benchmark_names | join(", ") }}</p>
+        {% if running_benchmarks %}
+        <p class="text-sm text-muted-fg mb-4">Currently running for:
+            {% for benchmark in running_benchmarks %}
+            <a href="/benchmarks/ui/display/{{ benchmark.id }}" class="font-bold text-brand-accent hover:underline">{{ benchmark.name }}</a>{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </p>
         {% endif %}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -69,6 +73,7 @@
         <div id="auto-access-actions" class="text-center hidden">
             <button type="button" class="btn btn-info step-btn hidden" id="start-auto-access-btn" {% if task_running %}disabled{% endif %}>Start Automatic Access</button>
             <button type="button" class="btn btn-danger step-btn hidden" id="stop-auto-access-btn" {% if task_running %}disabled{% endif %}>Stop Automatic Access</button>
+            <button type="button" class="btn btn-secondary step-btn hidden" id="view-auto-access-logs-btn">View Logs</button>
             <span id="running-badge" class="hidden px-3 py-1 rounded-full text-sm font-bold bg-success-muted text-success ml-3 align-middle inline-block">Running</span>
         </div>
     </div>
