@@ -3,6 +3,10 @@ from typing import Optional
 
 import typer
 
+from medperf_server.cli_db import reset_database
+from medperf_server.cli_dev_server import start_server
+from seed import seed as run_seed
+
 app = typer.Typer()
 
 
@@ -26,8 +30,6 @@ def start(
     ),
 ):
     """Run migrations, collect static files, and start the local HTTPS dev server."""
-    from medperf_server.cli_dev_server import start_server
-
     try:
         start_server(
             cert_file, key_file, generate_cert, reset_db, postgres, container_name
@@ -47,8 +49,6 @@ def reset_db_command(
     ),
 ):
     """Delete and recreate the database, then run migrations."""
-    from medperf_server.cli_db import reset_database
-
     try:
         reset_database(postgres, container_name)
     except Exception as e:
@@ -63,7 +63,7 @@ def seed_command(
     ),
     cert: Optional[str] = typer.Option(
         None,
-        help="Server certificate (defaults to ./cert.crt if present, else unverified)",
+        help="Server certificate (defaults to ~/.medperf_dev/cert.crt if present, else unverified)",
     ),
     version: Optional[str] = typer.Option(
         None, help="Server version to validate against"
@@ -82,8 +82,6 @@ def seed_command(
     ),
 ):
     """Seed the database with demo entries for integration tests or tutorials."""
-    from seed import seed as run_seed
-
     if auth not in ("local", "online"):
         raise typer.BadParameter("--auth must be 'local' or 'online'")
     if demo not in ("benchmark", "model", "data", "tutorial"):
@@ -92,12 +90,12 @@ def seed_command(
         )
 
     if cert is None:
-        default_cert = Path("cert.crt")
+        default_cert = Path.home() / ".medperf_dev" / "cert.crt"
         if default_cert.exists():
             cert = str(default_cert)
         else:
             typer.echo(
-                "warning: no --cert given and ./cert.crt not found; "
+                "warning: no --cert given and ~/.medperf_dev/cert.crt not found; "
                 "proceeding without server certificate verification"
             )
 

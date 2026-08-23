@@ -21,11 +21,16 @@ from google.cloud import secretmanager
 BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 env = environ.Env()
+
 env_file = os.path.join(BASE_DIR, ".env")
+# Fallback for pip installs, where BASE_DIR is inside site-packages/
+medperf_dev_env_file = os.path.expanduser("~/.medperf_dev/.env")
+if not os.path.isfile(env_file) and os.path.isfile(medperf_dev_env_file):
+    env_file = medperf_dev_env_file
 
 if os.path.isfile(env_file):
     # Use a local secret file, if provided
-    print("Loading env from .env file")
+    print(f"Loading env from {env_file}")
     env.read_env(env_file)
 else:
     # Attempt to load the Project ID into the environment, safely failing on error.
@@ -190,6 +195,10 @@ if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
     DATABASES["default"]["HOST"] = "127.0.0.1"
     DATABASES["default"]["PORT"] = 5432
 
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    # ~ isn't expanded in .env values (see AUTH_VERIFYING_KEY_FILE below)
+    DATABASES["default"]["NAME"] = os.path.expanduser(DATABASES["default"]["NAME"])
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -291,6 +300,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 verifying_key_file = env("AUTH_VERIFYING_KEY_FILE", default=None)
 verifying_key = env("AUTH_VERIFYING_KEY", default=None)
 jwk_url = env("AUTH_JWK_URL", default=None)
+
+if verifying_key_file:
+    # django-environ doesn't expand ~ in .env values
+    verifying_key_file = os.path.expanduser(verifying_key_file)
 
 if verifying_key_file and os.path.exists(verifying_key_file):
     with open(verifying_key_file) as f:
