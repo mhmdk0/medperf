@@ -62,9 +62,9 @@ function buildAssociationsPolicyConfirmMessage(message) {
     }
     if (!warnings.length) return message;
     var listWord = warnings.length > 1 ? "allow lists are" : "allow list is";
-    return message + " Note: the " + warnings.join(" and ") + " " + listWord + " empty " +
+    return message + " <strong>Note: the " + warnings.join(" and ") + " " + listWord + " empty " +
         "- no " + warnings.join("/") + " associations will be auto-approved until " +
-        "you add emails.";
+        "you add emails.</strong>";
 }
 
 function onUpdateAssociationsPolicySuccess(response) {
