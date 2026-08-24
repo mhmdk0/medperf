@@ -45,6 +45,7 @@
             <a href="/benchmarks/ui/display/{{ benchmark.id }}" class="font-bold text-brand-accent hover:underline">{{ benchmark.name }}</a>{% if not loop.last %}, {% endif %}
             {% endfor %}
         </p>
+        <p class="text-sm text-muted-fg mb-4">Note: select the benchmark below to stop it or view its logs.</p>
         {% endif %}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
