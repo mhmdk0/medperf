@@ -151,7 +151,10 @@
         if (command) command.textContent = info.update_command || "pip install -U medperf";
 
         var updateBtn = document.getElementById("client-update-now-btn");
-        if (updateBtn) updateBtn.classList.toggle("hidden", isEditable);
+        if (updateBtn) {
+            updateBtn.classList.toggle("hidden", isEditable);
+            updateBtn.disabled = Boolean(window.taskRunning);
+        }
 
         banner.dataset.latestVersion = latest;
         banner.dataset.currentVersion = current;
@@ -288,11 +291,14 @@
 
         var updateBtn = document.getElementById("client-update-now-btn");
         if (updateBtn) {
-            updateBtn.addEventListener("click", function () {
-                if (banner.dataset.isEditableInstall === "true") return;
+            updateBtn.addEventListener("click", function (e) {
+                if (updateBtn.disabled || banner.dataset.isEditableInstall === "true") return;
                 var latest = banner.dataset.latestVersion;
                 if (!latest) return;
-                startUpdate(latest, banner.dataset.currentVersion || "");
+                var currentVersion = banner.dataset.currentVersion || "";
+                showConfirmModal(e.currentTarget, function () {
+                    startUpdate(latest, currentVersion);
+                }, "update MedPerf to " + latest + " now?");
             });
         }
 

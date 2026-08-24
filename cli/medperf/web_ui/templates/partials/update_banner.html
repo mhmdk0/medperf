@@ -27,7 +27,8 @@
             <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                 <button type="button"
                         id="client-update-now-btn"
-                        class="px-4 py-2 rounded-xl medperf-bg dark:bg-green-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer">
+                        class="px-4 py-2 rounded-xl medperf-bg dark:bg-green-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        {% if task_running %}disabled{% endif %}>
                     Update now
                 </button>
                 <button type="button"
