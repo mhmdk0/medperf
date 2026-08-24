@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Form, Depends, Request, Query, Body, Query
+from fastapi import APIRouter, HTTPException, Form, Depends, Request, Query, Body
 from fastapi.responses import JSONResponse
 
 import medperf.config as config
