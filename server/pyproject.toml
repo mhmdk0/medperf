@@ -35,7 +35,7 @@ classifiers = [
 dynamic = ["version", "dependencies", "optional-dependencies"]
 
 [project.scripts]
-medperf-server = "medperf_server.cli:app"
+medperf_server = "medperf_server.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/mlcommons/medperf"
@@ -85,6 +85,13 @@ exclude = [
     "medperf_server.testing_utils*",
 ]
 namespaces = false
+
+[tool.setuptools.package-data]
+medperf_server = [
+    "env_templates/.env.local.local-auth",
+    "env_templates/.env.local.local-auth.sqlite",
+    "env_templates/.env.local.online-auth",
+]
 
 [tool.setuptools.dynamic]
 version = { attr = "medperf_server._version.__version__" }
