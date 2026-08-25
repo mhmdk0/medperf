@@ -8,7 +8,7 @@ medperf profile activate local
 
 bash tutorials_scripts/setup_webui_tutorial.sh
 cd server
-cp .env.local.local-auth.sqlite .env
+cp medperf_server/env_templates/.env.local.local-auth.sqlite .env
 
 # patch to deal with how codespaces handle port forwarding
 sed -i "1i import jinja2" /workspaces/medperf/cli/medperf/web_ui/common.py

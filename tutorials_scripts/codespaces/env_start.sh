@@ -7,7 +7,7 @@ pip install -e ./cli
 medperf profile activate local
 
 cd server
-cp .env.local.local-auth.sqlite .env
+cp medperf_server/env_templates/.env.local.local-auth.sqlite .env
 medperf auth login -e testmo@example.com
 echo "Medperf is ready for local usage"
 cd ..

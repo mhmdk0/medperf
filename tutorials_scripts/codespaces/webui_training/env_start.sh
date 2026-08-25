@@ -7,7 +7,7 @@ pip install -e ./cli
 medperf profile activate local
 bash tutorials_scripts/setup_webui_training_tutorial.sh
 cd server
-cp .env.local.local-auth.sqlite .env
+cp medperf_server/env_templates/.env.local.local-auth.sqlite .env
 
 # prepare three different config storages for three webui instances
 mkdir -p /workspaces/.medperf_config1
