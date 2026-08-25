@@ -31,7 +31,7 @@ jobs:
 
     - name: Set server environment vars
       working-directory: ./server
-      run: cp .env.local.local-auth .env
+      run: cp medperf_server/env_templates/.env.local.local-auth .env
 
     - name: Run postgresql server in background
       working-directory: ./server
