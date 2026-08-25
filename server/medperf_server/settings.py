@@ -38,7 +38,10 @@ else:
         _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default()
     except google.auth.exceptions.DefaultCredentialsError:
         raise Exception(
-            "No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found."
+            "No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found. "
+            "For local development, run `medperf_server set_config "
+            "<postgresql|sqlite|online-auth>` to create ~/.medperf_dev/.env. "
+            "For GCP deployments, ensure Application Default Credentials are configured."
         )
 
     # Pull secrets from Secret Manager
