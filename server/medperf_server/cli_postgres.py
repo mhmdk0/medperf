@@ -1,12 +1,5 @@
-import os
 import subprocess
 import time
-
-POSTGRES_DATABASE_URL = "postgres://devuser:devpassword@127.0.0.1:5432/devdb"
-
-
-def set_postgres_database_url() -> None:
-    os.environ["DATABASE_URL"] = POSTGRES_DATABASE_URL
 
 
 def _container_state(name: str) -> str:

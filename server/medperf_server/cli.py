@@ -3,6 +3,7 @@ from typing import Optional
 
 import typer
 
+from medperf_server.cli_config import set_config
 from medperf_server.cli_db import reset_database
 from medperf_server.cli_dev_server import start_server
 from seed import seed as run_seed
@@ -22,35 +23,47 @@ def start(
         True, help="Generate a fresh self-signed SSL certificate"
     ),
     reset_db: bool = typer.Option(False, help="Reset the database before starting"),
-    postgres: bool = typer.Option(
-        False, help="Use the dev postgres container instead of sqlite"
-    ),
     container_name: str = typer.Option(
-        "postgreserver", help="Dev postgres container name"
+        "postgreserver", help="Dev postgres container name (only used if the active config is postgres-backed)"
     ),
 ):
     """Run migrations, collect static files, and start the local HTTPS dev server."""
     try:
-        start_server(
-            cert_file, key_file, generate_cert, reset_db, postgres, container_name
-        )
+        start_server(cert_file, key_file, generate_cert, reset_db, container_name)
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
 
 
-@app.command("reset-db")
+@app.command("reset_db")
 def reset_db_command(
-    postgres: bool = typer.Option(
-        False, help="Reset the dev postgres container instead of sqlite"
-    ),
     container_name: str = typer.Option(
-        "postgreserver", help="Dev postgres container name"
+        "postgreserver", help="Dev postgres container name (only used if the active config is postgres-backed)"
     ),
 ):
     """Delete and recreate the database, then run migrations."""
     try:
-        reset_database(postgres, container_name)
+        reset_database(container_name)
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command("set_config")
+def set_config_command(
+    config: str = typer.Argument(
+        ..., help="Configuration to switch to: postgresql, sqlite, or online-auth"
+    ),
+    container_name: str = typer.Option(
+        "postgreserver", help="Dev postgres container name (only used for postgres-backed configs)"
+    ),
+):
+    """Switch the active local configuration by copying a bundled .env template to ~/.medperf_dev/.env."""
+    if config not in ("postgresql", "sqlite", "online-auth"):
+        raise typer.BadParameter("config must be one of: postgresql, sqlite, online-auth")
+
+    try:
+        set_config(config, container_name)
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
