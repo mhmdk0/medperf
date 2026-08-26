@@ -36,6 +36,8 @@ jobs:
       working-directory: ./cli/medperf/tests
       run: |
         pytest
+    - name: Generate local mock login credentials
+      run: python cli/generate_mock_credentials.py
     - name: Set server config and start postgresql
       run: medperf_server set_config postgresql
     - name: Run server unit tests
