@@ -114,7 +114,7 @@ def driver(sec_token):
     from selenium.webdriver.chrome.options import Options
 
     opts = Options()
-    # opts.add_argument("--headless=true")
+    opts.add_argument("--headless=true")
     opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--no-sandbox")
     opts.add_argument("--disable-gpu")
