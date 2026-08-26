@@ -113,13 +113,19 @@ def seed_command(
             )
 
     if containers_assets_path is None and demo in ("model", "data"):
-        default_path = Path("examples") / "chestxray_tutorial"
-        if default_path.exists():
-            containers_assets_path = str(default_path)
+        # Check both cwd itself (e.g. run from the repo root) and one level
+        # up (e.g. run from server/, where the assets live at ../examples).
+        for candidate in (
+            Path("examples") / "chestxray_tutorial",
+            Path("..") / "examples" / "chestxray_tutorial",
+        ):
+            if candidate.exists():
+                containers_assets_path = str(candidate)
+                break
         else:
             raise typer.BadParameter(
-                "--containers-assets-path is required (no ./examples/chestxray_tutorial "
-                "found relative to the current directory)"
+                "--containers-assets-path is required (no examples/chestxray_tutorial "
+                "found relative to the current directory or its parent)"
             )
 
     try:
