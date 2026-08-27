@@ -198,7 +198,46 @@ def test_training_register_fl_admin_container(driver):
 
 
 @pytest.mark.dependency(
-    name="training_register_experiment", depends=["training_register_fl_admin"]
+    name="training_register_prep", depends=["training_register_fl_admin"]
+)
+def test_training_register_prep_container(driver):
+    page = RegContainerPage(driver)
+    page.open(BASE_URL.format("/containers/ui"))
+
+    old_url = page.current_url
+    page.click(page.REG_CONTAINER_BTN)
+    page.wait_for_url_change(old_url)
+    page.wait_for_presence_selector(page.NAVBAR)
+
+    page_modal = page.find(page.PAGE_MODAL)
+    panel = page.find(page.PANEL)
+
+    page.register_container(container=tests_config.TRAINING_PREP, mode="training")
+
+    old_url = page.current_url
+    page.wait_for_visibility_element(page_modal)
+
+    assert page.is_confirmation_modal() is True
+
+    page.confirm_run_task()
+    page.wait_for_visibility_element(panel)
+
+    while not page_modal.is_displayed():
+        time.sleep(0.2)
+
+    assert (
+        page.get_text(page.PAGE_MODAL_TITLE)
+        == "Registering container completed successfully"
+    )
+
+    page.wait_for_staleness_element(page_modal)
+    page.wait_for_url_change(old_url)
+
+    assert "/containers/ui/display/" in page.current_url
+
+
+@pytest.mark.dependency(
+    name="training_register_experiment", depends=["training_register_prep"]
 )
 def test_training_register_experiment(driver):
     listing = TrainingPage(driver)
@@ -360,11 +399,7 @@ def test_training_set_aggregator(driver):
     assert panel.is_displayed() is False
     assert prompt_container.is_displayed() is False
 
-    page.set_aggregator(
-        tests_config.TRAINING_AGG_NAME,
-        tests_config.HOST,
-        tests_config.TRAINING_AGG_PORT,
-    )
+    page.set_aggregator(tests_config.TRAINING_AGG_NAME)
 
     page.wait_for_visibility_element(page_modal)
     assert page.is_confirmation_modal() is True

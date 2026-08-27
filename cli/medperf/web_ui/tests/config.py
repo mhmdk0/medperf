@@ -91,7 +91,7 @@ DATASET_LOCATION = "My machine"
 DATASET_DATA_PATH = "medperf_tutorial/sample_raw_data/images"
 DATASET_LABELS_PATH = "medperf_tutorial/sample_raw_data/labels"
 
-TRAINING_PREP_NAME = "chestxray_prep"
+TRAINING_PREP_NAME = "chestxray_prep_training"
 TRAINING_FL_NAME = "traincube"
 TRAINING_FL_ADMIN_NAME = "fladmincube"
 TRAINING_EXP_NAME = "trainexp"
@@ -113,6 +113,11 @@ TRAINING_DATASET2_LOCATION = "col2location"
 TRAINING_DATASET2_DATA_PATH = "examples/chestxray_train_sample_data/col2/images"
 TRAINING_DATASET2_LABELS_PATH = "examples/chestxray_train_sample_data/col2/labels"
 
+TRAINING_PREP = ContainerInput(
+    name=TRAINING_PREP_NAME,
+    config=BMK_DATA_PREP_BASE.format("container_config.yaml"),
+    parameters=BMK_DATA_PREP_BASE.format("workspace/parameters.yaml"),
+)
 TRAINING_FL = ContainerInput(
     name=TRAINING_FL_NAME,
     config="examples/flower/fl/container_config.yaml",
