@@ -76,12 +76,10 @@ local_keys_dir = str(local_dev_dir / "keys")
 local_private_key_path = str(local_dev_dir / "keys" / "private_key.pem")
 local_public_key_path = str(local_dev_dir / "keys" / "public_key.pem")
 local_tokens_path = str(local_dev_dir / "mock_tokens" / "tokens.json")
-# None if setup-dev-server.sh hasn't placed a cert here; comms/rest.py treats
-# None as "use normal certificate verification".
-_local_certificate_path = local_dev_dir / "cert.crt"
-local_certificate = (
-    str(_local_certificate_path) if _local_certificate_path.is_file() else None
-)
+# Recorded unconditionally: profiles are written once, on first run, which may
+# be before the dev server has generated its cert. comms/rest.py falls back to
+# normal verification while the file is absent.
+local_certificate = str(local_dev_dir / "cert.crt")
 
 # TODO: should we change this?
 safe_root = ""  # Base path to accept input paths from user.

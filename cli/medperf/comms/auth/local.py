@@ -24,10 +24,16 @@ class Local(Auth):
         is missing yet. Called on Local() first use, and directly by CI/dev
         tooling (see cli/generate_mock_credentials.py) to bootstrap
         ~/.medperf_dev before a local dev server starts.
+
+        `medperf_server set_config` generates the same keypair, so whichever
+        runs first wins and the other reuses it.
         """
+        generated_keypair = False
         if not os.path.exists(config.local_private_key_path):
             Local._generate_keypair()
-        if not os.path.exists(config.local_tokens_path):
+            generated_keypair = True
+        # Tokens signed with a superseded key would be rejected by the server
+        if generated_keypair or not os.path.exists(config.local_tokens_path):
             Local._generate_tokens_file()
 
     @staticmethod
@@ -41,6 +47,7 @@ class Local(Auth):
         os.makedirs(config.local_keys_dir, exist_ok=True)
         with open(config.local_private_key_path, "wb") as f:
             f.write(private_key_pem)
+        os.chmod(config.local_private_key_path, 0o600)
         with open(config.local_public_key_path, "wb") as f:
             f.write(public_key_pem)
 

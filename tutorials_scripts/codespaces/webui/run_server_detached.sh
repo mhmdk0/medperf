@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 cd /workspaces/medperf/server
-export AUTH_VERIFYING_KEY_FILE="$HOME/.medperf_dev/keys/public_key.pem"
-bash ./setup-dev-server.sh < /dev/null &>server.log &
+medperf_server start < /dev/null &>server.log &
 
 docker pull mlcommons/chestxray-tutorial-prep:0.0.1
 docker pull mlcommons/chestxray-tutorial-metrics:0.0.1
@@ -9,5 +8,5 @@ docker pull mlcommons/chestxray-tutorial-cnn:0.0.1
 docker pull mlcommons/chestxray-tutorial-mobilenetv2:0.0.1
 
 sleep 10
-python seed.py --demo tutorial
+medperf_server seed --demo tutorial
 echo "Medperf is ready for local usage"

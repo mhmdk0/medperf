@@ -22,10 +22,9 @@ router = APIRouter()
 
 
 @router.get("/update_status", response_class=JSONResponse, include_in_schema=False)
-def update_status(request: Request):
-    # This endpoint has to stay reachable across that restart for waitForRestart()
-    # (update_banner.js) to ever detect the new version is live. Only discloses
-    # installed version / update-in-progress / pip stderr on failure, not credentials.
+def update_status(request: Request, current_user: bool = Depends(check_user_api)):
+    # Polled by waitForRestart() (update_banner.js) across the restart; the
+    # session token is carried over, so the cookie stays valid throughout.
     updater = UpdateManager()
     payload = {
         "status": "ok",
@@ -34,10 +33,13 @@ def update_status(request: Request):
 
     if getattr(request.app.state, "update_in_progress", False):
         payload["update_in_progress"] = True
+
     update_error = getattr(request.app.state, "update_error", None)
     if update_error:
         payload["status"] = "update_failed"
         payload["error"] = update_error
+        # Reported once, so a past failure doesn't mask later healthy polls
+        request.app.state.update_error = None
     return payload
 
 

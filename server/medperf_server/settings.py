@@ -314,9 +314,7 @@ if verifying_key_file and os.path.exists(verifying_key_file):
         verifying_key = f.read()
 
 if verifying_key and jwk_url:
-    raise ValueError(
-        "Only one of ['AUTH_VERIFYING_KEY', 'AUTH_JWK_URL'] must be specified"
-    )
+    raise ValueError("Only one of ['AUTH_VERIFYING_KEY', 'AUTH_JWK_URL'] must be specified")
 if not verifying_key and not jwk_url:
     raise ValueError("One of ['AUTH_VERIFYING_KEY', 'AUTH_JWK_URL'] must be specified")
 
@@ -340,8 +338,6 @@ SIMPLE_JWT = {
 TOKEN_USER_EMAIL_CLAIM = "https://medperf.org/email"
 
 # Comma-separated list of emails
-AUTO_APPROVE_BENCHMARKS_FROM = env("AUTO_APPROVE_BENCHMARKS_FROM", default="").split(
-    ","
-)
+AUTO_APPROVE_BENCHMARKS_FROM = env("AUTO_APPROVE_BENCHMARKS_FROM", default="").split(",")
 
 AUTO_APPROVE_TRAINING_FROM = env("AUTO_APPROVE_TRAINING_FROM", default="").split(",")

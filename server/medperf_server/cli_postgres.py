@@ -62,5 +62,15 @@ def recreate_container(name: str) -> None:
     start_new_container(name)
 
 
-def wait_for_postgres(seconds: int = 6) -> None:
-    time.sleep(seconds)
+def wait_for_postgres(name: str, timeout: int = 60) -> None:
+    """Blocks until the container accepts connections, or raises on timeout."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        result = subprocess.run(
+            ["docker", "exec", name, "pg_isready", "-U", "devuser", "-d", "devdb"],
+            capture_output=True,
+        )
+        if result.returncode == 0:
+            return
+        time.sleep(1)
+    raise RuntimeError(f"Postgres container '{name}' was not ready after {timeout}s")

@@ -31,7 +31,9 @@ jobs:
 
     - name: Run django server in background with generated certs
       working-directory: ./server
-      run: medperf_server start & sleep 6
+      run: |
+        medperf_server start &
+        timeout 120 bash -c 'until curl -ksf https://127.0.0.1:8000/version >/dev/null; do sleep 2; done'
 
     - name: Seed database with tutorial data
       working-directory: ./server
@@ -43,7 +45,9 @@ jobs:
 
     - name: Run fastapi server in background
       working-directory: .
-      run: medperf_webui & sleep 6
+      run: |
+        medperf_webui &
+        timeout 120 bash -c 'until curl -s -o /dev/null http://127.0.0.1:8100/; do sleep 2; done'
 
     - name: Run webUI tutorial E2E tests with pytest
       working-directory: ./cli/medperf/web_ui/tests/e2e/

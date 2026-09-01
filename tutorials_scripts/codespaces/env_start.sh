@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 echo "Preparing local medperf server..."
 # we are located at /workspaces/medperf/ where repo is cloned to
-pip install -r server/requirements.txt
-pip install -r server/test-requirements.txt
+pip install -e "./server[dev]"
 pip install -e ./cli
 medperf profile activate local
 
 cd server
-cp medperf_server/env_templates/.env.local.local-auth.sqlite .env
+medperf_server set_config sqlite
 medperf auth login -e testmo@example.com
 echo "Medperf is ready for local usage"
 cd ..

@@ -43,7 +43,7 @@ VERSION_PREFIX="/api/v0"
 LOGIN_SCRIPT="$MEDPERF_ROOT_REPO/cli/auto_login.sh"
 ADMIN_LOGIN_SCRIPT="$MEDPERF_ROOT_REPO/server/auth_provider_token.py"
 MOCK_TOKENS_FILE="$HOME/.medperf_dev/mock_tokens/tokens.json"
-SQLITE3_FILE="$MEDPERF_ROOT_REPO/server/db.sqlite3"
+SQLITE3_FILE="$HOME/.medperf_dev/db.sqlite3"
 echo "Server URL: $SERVER_URL"
 
 print_eval() {

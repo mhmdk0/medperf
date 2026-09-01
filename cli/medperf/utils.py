@@ -585,7 +585,10 @@ class UpdateManager:
         return info
 
     def _make_update_info(
-        self, current_version: str, latest_version: Optional[str]
+        self,
+        current_version: str,
+        latest_version: Optional[str],
+        check_ok: Optional[bool] = None,
     ) -> dict:
         editable = self.is_editable_install()
         return {
@@ -597,7 +600,7 @@ class UpdateManager:
             "update_command": self.update_command_for(editable),
             "is_editable_install": editable,
             "checked_at": datetime.now(timezone.utc).isoformat(),
-            "check_ok": latest_version is not None,
+            "check_ok": latest_version is not None if check_ok is None else check_ok,
         }
 
     def get_update_info(self, force_refresh: bool = False) -> dict:
@@ -610,15 +613,16 @@ class UpdateManager:
             return self._sync_cache_with_installed(cached, installed_version)
 
         latest_version = self.get_latest_version()
-        if latest_version is not None:
-            info = self._make_update_info(installed_version, latest_version)
-            self._write_update_cache(cache_path, info)
-            return info
+        check_ok = latest_version is not None
+        if not check_ok and cached is not None:
+            # Keep the last known release rather than reporting "unknown"
+            latest_version = cached.get("latest_version")
 
-        if cached is not None:
-            return self._sync_cache_with_installed(cached, installed_version)
-
-        return self._make_update_info(installed_version, None)
+        info = self._make_update_info(installed_version, latest_version, check_ok)
+        # Cached even on failure, so an unreachable PyPI costs one request per
+        # interval instead of one per command
+        self._write_update_cache(cache_path, info)
+        return info
 
     def format_update_check_message(self, info: dict) -> str:
         installed_version = info.get("current_version") or "unknown"
@@ -636,13 +640,13 @@ class UpdateManager:
                 f"(you have {installed_version}).{editable_note}"
             )
 
-        if latest_version:
-            return f"MedPerf is up to date (version {installed_version})"
+        if not info.get("check_ok", True):
+            return (
+                f"Could not check for updates (PyPI unavailable). "
+                f"Installed version: {installed_version}"
+            )
 
-        return (
-            f"Could not check for updates (PyPI unavailable). "
-            f"Installed version: {installed_version}"
-        )
+        return f"MedPerf is up to date (version {installed_version})"
 
     def validate_update(
         self,
@@ -751,7 +755,12 @@ class UpdateManager:
                 )
                 return
 
+            from medperf.web_ui.auth import RESTART_TOKEN_ENV, security_token
+
             logging.info("Restarting Web UI: %s", shlex.join(restart_argv))
+            # Hands the session token to the replacement process so the user's
+            # browser stays logged in across the restart
+            os.environ[RESTART_TOKEN_ENV] = security_token
             app_state.pending_restart_argv = restart_argv
             os.kill(os.getpid(), signal.SIGTERM)
 

@@ -20,6 +20,6 @@ def reset_database(container_name: str) -> None:
             print(f"warning: {db_file} does not exist, nothing to delete")
     else:
         cli_postgres.recreate_container(container_name)
-        cli_postgres.wait_for_postgres()
+        cli_postgres.wait_for_postgres(container_name)
 
     execute_from_command_line(["medperf_server", "migrate"])

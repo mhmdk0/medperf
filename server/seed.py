@@ -2,10 +2,7 @@
 Tokens to access the local server are either mock tokens generated Medperf CLI's
 local test profile, or from the auth provider. The later case is to do integration
 tests with the auth provider. For simplicity, the auth provider tokens used for
-mock users are retrieved by password-grant authorization flow.
-
-This script can only be invoked from its parent folder, that's because it
-executes Django code to set admin permissions for a test user."""
+mock users are retrieved by password-grant authorization flow."""
 
 import argparse
 from seed_utils import Server, set_user_as_admin, create_benchmark, create_model

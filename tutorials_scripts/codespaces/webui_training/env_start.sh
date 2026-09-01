@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 echo "Preparing local medperf server..."
 # we are located at /workspaces/medperf/ where repo is cloned to
-pip install -r server/requirements.txt
-pip install -r server/test-requirements.txt
+pip install -e "./server[dev]"
 pip install -e ./cli
 medperf profile activate local
 bash tutorials_scripts/setup_webui_training_tutorial.sh
 cd server
-cp medperf_server/env_templates/.env.local.local-auth.sqlite .env
+medperf_server set_config sqlite
 
 # prepare three different config storages for three webui instances
 mkdir -p /workspaces/.medperf_config1

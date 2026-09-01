@@ -3,6 +3,7 @@ from typing import Optional
 
 import typer
 
+from medperf_server.cli_certs import ensure_cert
 from medperf_server.cli_config import set_config
 from medperf_server.cli_db import reset_database
 from medperf_server.cli_dev_server import start_server
@@ -19,17 +20,39 @@ def start(
     key_file: str = typer.Option(
         "cert.key", help="Path to write/read the SSL private key"
     ),
-    generate_cert: bool = typer.Option(
-        True, help="Generate a fresh self-signed SSL certificate"
+    regenerate_cert: bool = typer.Option(
+        False,
+        help="Replace the SSL certificate even if one exists (clients must re-trust it)",
     ),
     reset_db: bool = typer.Option(False, help="Reset the database before starting"),
     container_name: str = typer.Option(
-        "postgreserver", help="Dev postgres container name (only used if the active config is postgres-backed)"
+        "postgreserver",
+        help="Dev postgres container name (only used if the active config is postgres-backed)",
     ),
 ):
     """Run migrations, collect static files, and start the local HTTPS dev server."""
     try:
-        start_server(cert_file, key_file, generate_cert, reset_db, container_name)
+        start_server(cert_file, key_file, regenerate_cert, reset_db, container_name)
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command("gen_cert")
+def gen_cert_command(
+    cert_file: str = typer.Option(
+        "cert.crt", help="Path to write/read the SSL certificate"
+    ),
+    key_file: str = typer.Option(
+        "cert.key", help="Path to write/read the SSL private key"
+    ),
+    regenerate: bool = typer.Option(
+        False, help="Replace the certificate even if one exists"
+    ),
+):
+    """Generate the self-signed dev SSL certificate, if it isn't there yet."""
+    try:
+        ensure_cert(cert_file, key_file, regenerate)
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)

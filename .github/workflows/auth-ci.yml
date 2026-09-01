@@ -38,7 +38,9 @@ jobs:
 
     - name: Run django server in background with generated certs
       working-directory: ./server
-      run: medperf_server start & sleep 6
+      run: |
+        medperf_server start &
+        timeout 120 bash -c 'until curl -ksf https://127.0.0.1:8000/version >/dev/null; do sleep 2; done'
 
     - name: Run server integration tests
       working-directory: ./server
