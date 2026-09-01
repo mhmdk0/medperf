@@ -13,7 +13,9 @@ rm -fr medperf_tutorial
 - To cleanup the local MedPerf server database: (make sure you are in the MedPerf's root directory)
 
 ```bash
-medperf_server reset_db
+cd server
+python -m medperf_server reset_db
+cd ..
 ```
 
 - To cleanup the test storage:

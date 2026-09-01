@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 cd /workspaces/medperf/server
-medperf_server start < /dev/null &>server.log &
+python -m medperf_server start < /dev/null &>server.log &
 
 docker pull mlcommons/chestxray-tutorial-prep:0.0.1
 docker pull mlcommons/chestxray-tutorial-metrics:0.0.1
@@ -8,5 +8,5 @@ docker pull mlcommons/chestxray-tutorial-cnn:0.0.1
 docker pull mlcommons/chestxray-tutorial-mobilenetv2:0.0.1
 
 sleep 10
-medperf_server seed --demo tutorial
+python -m medperf_server seed --demo tutorial
 echo "Medperf is ready for local usage"

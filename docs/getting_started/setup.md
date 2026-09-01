@@ -10,24 +10,24 @@ If this is your first time using MedPerf, install the MedPerf client library as 
 
 For this tutorial, you should spawn a local MedPerf server for the MedPerf client to communicate with. Note that this server will be hosted on your `localhost` and not on the internet.
 
-1. Install the server ensuring you are in MedPerf's root folder:
+1. Install the server requirements ensuring you are in MedPerf's root folder:
 
     ```bash
-    pip install -e "./server[dev]"
+    pip install -r server/requirements.txt -r server/test-requirements.txt
     ```
 
 2. Select the local configuration. This writes `~/.medperf_dev/.env` and generates
    the mock login keypair the server verifies tokens against:
 
     ```bash
-    medperf_server set_config sqlite
+    cd server
+    python -m medperf_server set_config sqlite
     ```
 
 3. Run the local MedPerf server:
 
     ```bash
-    cd server
-    medperf_server start
+    python -m medperf_server start
     ```
 
 The local MedPerf server now is ready to recieve requests. You can always stop the server by pressing `CTRL`+`C` in the terminal where you ran the server.

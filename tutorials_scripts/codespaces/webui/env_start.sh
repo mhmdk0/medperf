@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 echo "Preparing local medperf server..."
 # we are located at /workspaces/medperf/ where repo is cloned to
-pip install -e "./server[dev]"
+pip install -r server/requirements.txt -r server/test-requirements.txt
 pip install -e ./cli
 medperf profile activate local
 
 bash tutorials_scripts/setup_webui_tutorial.sh
 cd server
-medperf_server set_config sqlite
+python -m medperf_server set_config sqlite
 
 # patch to deal with how codespaces handle port forwarding
 sed -i "1i import jinja2" /workspaces/medperf/cli/medperf/web_ui/common.py

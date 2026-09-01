@@ -58,8 +58,10 @@ To start experimenting with MedPerf through this tutorial on your local machine,
 For the purpose of the tutorial, you have to initialize a local MedPerf server with a fresh database and then create the necessary entities that you will be interacting with. To do so, run the following: (make sure you are in MedPerf's root folder)
 
 ```bash
-medperf_server reset_db
-medperf_server seed --demo benchmark
+cd server
+python -m medperf_server reset_db
+python -m medperf_server seed --demo benchmark
+cd ..
 ```
 
 ### Download the Necessary files
