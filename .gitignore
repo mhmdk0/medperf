@@ -167,3 +167,5 @@ cli/tmp_test.sh
 # generate_tokens.py __main__ blocks); the real ones live in ~/.medperf_dev
 cli/medperf/mock_tokens/*.pem.test
 cli/medperf/mock_tokens/tokens.json
+
+ruff.toml
