@@ -4,6 +4,7 @@ from typing import Optional
 import typer
 
 from medperf_server.cli_certs import ensure_cert
+from medperf_server.cli_credentials import ensure_mock_credentials
 from medperf_server.cli_config import set_config
 from medperf_server.cli_db import reset_database
 from medperf_server.cli_dev_server import start_server
@@ -53,6 +54,16 @@ def gen_cert_command(
     """Generate the self-signed dev SSL certificate, if it isn't there yet."""
     try:
         ensure_cert(cert_file, key_file, regenerate)
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command("gen_credentials")
+def gen_credentials_command():
+    """Generate the mock login keypair and tokens the local-auth configs use."""
+    try:
+        ensure_mock_credentials()
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)

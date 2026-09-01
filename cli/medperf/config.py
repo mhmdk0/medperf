@@ -68,13 +68,10 @@ cc_artifacts_dir = str(config_storage / ".cc_artifacts")
 webui_host_props = str(config_storage / ".webui_host_props")
 update_check_cache_file = str(config_storage / ".update_check_cache.json")
 
-# Local/testauth dev-profile artifacts (keypair, tokens, dev server cert). Not
-# config_storage-relative on purpose: MEDPERF_CONFIG_STORAGE profiles must all
-# share one local-dev identity to be trusted by the same local server.
+# Local/testauth dev-profile artifacts, issued by the dev server (see
+# medperf_server gen_credentials). Not config_storage-relative on purpose:
+# MEDPERF_CONFIG_STORAGE profiles must all share one local-dev identity.
 local_dev_dir = Path.home().resolve() / ".medperf_dev"
-local_keys_dir = str(local_dev_dir / "keys")
-local_private_key_path = str(local_dev_dir / "keys" / "private_key.pem")
-local_public_key_path = str(local_dev_dir / "keys" / "public_key.pem")
 local_tokens_path = str(local_dev_dir / "mock_tokens" / "tokens.json")
 # Recorded unconditionally: profiles are written once, on first run, which may
 # be before the dev server has generated its cert. comms/rest.py falls back to

@@ -25,7 +25,8 @@ import medperf.commands.model.model as model_cmds
 import medperf.commands.cc.cc as cc_cmds
 import medperf.commands.storage as storage
 import medperf.web_ui.app as web_ui
-from medperf.utils import UpdateManager, get_webui_properties
+from medperf.update_manager import UpdateManager
+from medperf.utils import get_webui_properties
 from medperf.logging.utils import log_machine_details
 
 app = typer.Typer()

@@ -2,7 +2,7 @@ import shutil
 from importlib import resources
 from pathlib import Path
 
-from medperf_server import cli_keys, cli_postgres
+from medperf_server import cli_credentials, cli_postgres
 
 TEMPLATE_NAMES = {
     "postgresql": ".env.local.local-auth",
@@ -23,7 +23,7 @@ def set_config(config: str, container_name: str) -> None:
         shutil.copy(template_path, dest)
 
     if config in LOCAL_AUTH_CONFIGS:
-        cli_keys.ensure_mock_keypair()
+        cli_credentials.ensure_mock_credentials()
 
     if config != "sqlite":
         just_started = cli_postgres.ensure_running(container_name)

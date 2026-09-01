@@ -6,59 +6,26 @@ from medperf.account_management import (
     read_credentials,
     delete_credentials,
 )
-from medperf.mock_tokens.generate_keypair import generate_keypair
-from medperf.mock_tokens.generate_tokens import generate_tokens
 import json
 import os
 
 
 class Local(Auth):
+    """Logs in with mock tokens minted by the local dev server.
+
+    The server owns the mock signing keypair and issues these tokens, mirroring
+    how the real auth provider does it; the client only ever reads them.
+    """
+
     def __init__(self):
-        self.ensure_mock_credentials()
+        if not os.path.exists(config.local_tokens_path):
+            raise InvalidArgumentError(
+                f"No local mock tokens found at {config.local_tokens_path}. "
+                "Generate them from your MedPerf checkout with: "
+                "cd server && python -m medperf_server gen_credentials"
+            )
         with open(config.local_tokens_path) as f:
             self.tokens = json.load(f)
-
-    @staticmethod
-    def ensure_mock_credentials():
-        """Generates the local mock login keypair and tokens.json, if either
-        is missing yet. Called on Local() first use, and directly by CI/dev
-        tooling (see cli/generate_mock_credentials.py) to bootstrap
-        ~/.medperf_dev before a local dev server starts.
-
-        `medperf_server set_config` generates the same keypair, so whichever
-        runs first wins and the other reuses it.
-        """
-        generated_keypair = False
-        if not os.path.exists(config.local_private_key_path):
-            Local._generate_keypair()
-            generated_keypair = True
-        # Tokens signed with a superseded key would be rejected by the server
-        if generated_keypair or not os.path.exists(config.local_tokens_path):
-            Local._generate_tokens_file()
-
-    @staticmethod
-    def _generate_keypair():
-        """Generates a fresh keypair for signing local login tokens.
-
-        A local dev server must be pointed at config.local_public_key_path
-        (e.g. via AUTH_VERIFYING_KEY_FILE) to trust tokens signed with it.
-        """
-        private_key_pem, public_key_pem = generate_keypair()
-        os.makedirs(config.local_keys_dir, exist_ok=True)
-        with open(config.local_private_key_path, "wb") as f:
-            f.write(private_key_pem)
-        os.chmod(config.local_private_key_path, 0o600)
-        with open(config.local_public_key_path, "wb") as f:
-            f.write(public_key_pem)
-
-    @staticmethod
-    def _generate_tokens_file():
-        with open(config.local_private_key_path, "rb") as f:
-            private_key_pem = f.read()
-        tokens = generate_tokens(private_key_pem)
-        os.makedirs(os.path.dirname(config.local_tokens_path), exist_ok=True)
-        with open(config.local_tokens_path, "w") as f:
-            json.dump(tokens, f)
 
     def login(self, email):
         """Retrieves and stores an access token from a local store json file.

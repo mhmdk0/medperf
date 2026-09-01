@@ -41,10 +41,6 @@ jobs:
           pip install -r server/requirements.txt -r server/test-requirements.txt
           pip install -e "./cli[dev]"
 
-      - name: Generate local mock login credentials
-        working-directory: .
-        run: python cli/generate_mock_credentials.py
-
       - name: Set server config and start postgresql
         working-directory: ./server
         run: python -m medperf_server set_config postgresql

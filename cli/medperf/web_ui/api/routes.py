@@ -15,7 +15,8 @@ from medperf.exceptions import (
 )
 from medperf.web_ui.common import check_user_api
 from medperf.web_ui.entity_search import search_entities
-from medperf.utils import UpdateManager, sanitize_path
+from medperf.update_manager import UpdateManager
+from medperf.utils import sanitize_path
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

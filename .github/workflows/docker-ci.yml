@@ -42,8 +42,8 @@ jobs:
         pip install -e "./cli[dev]"
 
     - name: Generate local mock login credentials
-      working-directory: .
-      run: python cli/generate_mock_credentials.py
+      working-directory: ./server
+      run: python -m medperf_server gen_credentials
 
     - name: Set server environment vars
       working-directory: ./server
