@@ -20,11 +20,11 @@ def start_server(
 
         cli_certs.ensure_cert(cert_file, key_file, regenerate_cert)
 
-        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medperf_server.settings")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medperf.settings")
         execute_from_command_line(["medperf_server", "migrate"])
         execute_from_command_line(["medperf_server", "collectstatic", "--noinput"])
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medperf_server.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medperf.settings")
     execute_from_command_line(
         [
             "medperf_server",

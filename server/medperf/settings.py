@@ -144,7 +144,7 @@ MIDDLEWARE = [
 # NOTE: Django's default authentication backend (ModelBackend) as well as the session middleware
 #       will only be functional/usable for the built-in admin user
 
-ROOT_URLCONF = "medperf_server.urls"
+ROOT_URLCONF = "medperf.urls"
 
 TEMPLATES = [
     {
@@ -165,7 +165,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "medperf_server.wsgi.application"
+WSGI_APPLICATION = "medperf.wsgi.application"
 
 
 # Database

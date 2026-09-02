@@ -94,7 +94,7 @@ class Server:
 def set_user_as_admin(api_server, access_token):
     user_id = api_server.request("/me/", "GET", access_token, {}, out_field="id")
 
-    os.environ["DJANGO_SETTINGS_MODULE"] = "medperf_server.settings"
+    os.environ["DJANGO_SETTINGS_MODULE"] = "medperf.settings"
     django.setup()
     User = get_user_model()
     user = User.objects.get(id=user_id)

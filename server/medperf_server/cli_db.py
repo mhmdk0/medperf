@@ -9,7 +9,7 @@ from medperf_server import cli_postgres
 
 
 def reset_database(container_name: str) -> None:
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medperf_server.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medperf.settings")
     django.setup()
 
     if settings.DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
