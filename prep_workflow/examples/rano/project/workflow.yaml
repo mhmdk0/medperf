@@ -14,6 +14,7 @@ steps:
     step: MakeCsv
     per_subject: true
     next: convert_nifti
+    on_error: ignore
 
   - id: convert_nifti
     step: ConvertNifti
