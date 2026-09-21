@@ -308,6 +308,42 @@ def test_on_error_ignore_skips_subject(tmp_path):
     assert data["status"]["s2"] < 0  # recorded as an error
 
 
+def test_resume_does_not_requeue_invalidated_subject(tmp_path):
+    """A subject skipped via on_error: ignore must stay skipped across a fresh
+    resume (e.g. a new process after a crash) — it must not get re-queued at its
+    failing node and re-run (and re-fail) a second time."""
+    from ._helpers import Recorder
+
+    recorder = Recorder()
+    steps = {
+        "seed": SeedStep(["s1", "s2", "s3"]),
+        "work": RecordStep("work", recorder, fail_for=["s2"]),
+        "barrier": RecordStep("barrier", recorder, per_subject=False),
+        "fin": RecordStep("fin", recorder),
+    }
+    spec = {
+        "steps": [
+            {"id": "seed", "per_subject": False, "next": "work"},
+            {"id": "work", "on_error": "ignore", "next": "barrier"},
+            {"id": "barrier", "per_subject": False, "next": "fin"},
+            {"id": "fin", "next": None},
+        ]
+    }
+    engine, report = build_engine(tmp_path, spec, steps)
+    engine.run()
+    assert recorder.runs("work").count("s2") == 1
+
+    # Simulate a fresh process resuming against the same on-disk report (exactly
+    # what happens on every re-invocation of `medperf dataset prepare`, e.g.
+    # after a crash): a new Engine/Report pair pointed at the same report file.
+    engine2, report2 = build_engine(tmp_path, spec, steps)
+    engine2.run()
+
+    assert recorder.runs("work").count("s2") == 1  # not re-run
+    assert report2.is_resolved("s2")
+    assert not report2.is_done("s2")  # still distinguishable as failed, not succeeded
+
+
 def test_prepare_entrypoint_stops_before_sanity_check(tmp_path):
     from ._helpers import Recorder
 

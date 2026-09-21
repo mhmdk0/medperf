@@ -106,7 +106,7 @@ class Engine:
             raise EngineError(
                 f"start step '{start.id}' registered no subjects; nothing to prepare"
             )
-        self._live = {s for s in self._all_subjects if not self.report.is_done(s)}
+        self._live = {s for s in self._all_subjects if not self.report.is_resolved(s)}
 
         if fresh:
             for subject in self._all_subjects:
@@ -210,6 +210,13 @@ class Engine:
         if node.on_error == "ignore":
             self.log.warning("Subject '%s' failed at '%s'; skipping.", subject, node.id)
             self._invalidate(subject)
+            if self._touch_report:
+                # Mark resolved (status stays negative from set_error above) so a
+                # future resume doesn't re-queue and re-fail this subject at the
+                # same node, re-running side effects (e.g. re-creating staging
+                # directories) that only get cleaned up once, the first time a
+                # downstream barrier fires.
+                self.report.mark_invalid(subject)
         else:
             self.log.error("Subject '%s' failed at '%s':\n%s", subject, node.id, tb)
             self._failed = exc

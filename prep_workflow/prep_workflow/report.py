@@ -12,12 +12,15 @@ It is written in the column-oriented shape MedPerf already understands
 from __future__ import annotations
 
 import os
+import shutil
+import tempfile
 import threading
 from typing import Dict, List, Optional
 
 import yaml
 
 DONE = "DONE"
+INVALID = "INVALID"
 _COLUMNS = ["status", "status_name", "comment", "node", "data_path", "labels_path"]
 
 
@@ -53,10 +56,21 @@ class Report:
                 for col in _COLUMNS
             }
         os.makedirs(os.path.dirname(self._path) or ".", exist_ok=True)
-        tmp = self._path + ".tmp"
-        with open(tmp, "w") as f:
-            yaml.safe_dump(columns, f)
-        os.replace(tmp, self._path)
+        # MedPerf may bind-mount self._path as a single file, in which case its
+        # parent directory is auto-created by Docker as root-owned and isn't
+        # writable by the container user. Stage the write in the system temp dir
+        # (always writable) instead of a sibling tmp file, then move into place;
+        # shutil.move falls back to overwriting the existing file in-place (no
+        # new directory entry needed) when the two paths are on different
+        # filesystems.
+        fd, tmp = tempfile.mkstemp(prefix="report_", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as f:
+                yaml.safe_dump(columns, f)
+            shutil.move(tmp, self._path)
+        finally:
+            if os.path.exists(tmp):
+                os.remove(tmp)
 
     # ---- mutation --------------------------------------------------------------
     def add_subject(
@@ -102,6 +116,16 @@ class Report:
     def mark_done(self, subject: str) -> None:
         self.set_node(subject, DONE)
 
+    def mark_invalid(self, subject: str) -> None:
+        """Terminally resolve a subject that was skipped via ``on_error: ignore``.
+
+        Distinct from :meth:`mark_done`: ``status`` stays negative (set by
+        ``set_error``) so a report reader can still tell it failed, but the node
+        is resolved so a future resume doesn't re-queue and re-fail it at the
+        same step.
+        """
+        self.set_node(subject, INVALID)
+
     # ---- queries ---------------------------------------------------------------
     def has_subjects(self) -> bool:
         with self._lock:
@@ -117,3 +141,9 @@ class Report:
 
     def is_done(self, subject: str) -> bool:
         return self.get_node(subject) == DONE
+
+    def is_resolved(self, subject: str) -> bool:
+        """True once the engine will never touch this subject again (done or
+        permanently invalidated) — what resume should use to decide whether to
+        re-queue a subject, as opposed to ``is_done`` (success only)."""
+        return self.get_node(subject) in (DONE, INVALID)
