@@ -8,9 +8,9 @@
 # this prebuilt image is based on code from alejandro's branch.
 FROM mlcommons/rano-data-prep-mlcube:1.0.10
 
-RUN /bin/sh -c sed -i '36s|.*|    temp_path = Path("/tmp") / ".report.yaml"|' /project/stages/pipeline.py # buildkit
-RUN /bin/sh -c sed -i '39s|.*|    shutil.move(temp_path, filepath)|' /project/stages/pipeline.py # buildkit
-RUN /bin/sh -c sed -i '1i import shutil' /project/stages/pipeline.py # buildkit
+RUN sed -i '36s|.*|    temp_path = Path("/tmp") / ".report.yaml"|' /project/stages/pipeline.py
+RUN sed -i '39s|.*|    shutil.move(temp_path, filepath)|' /project/stages/pipeline.py
+RUN sed -i '1i import shutil' /project/stages/pipeline.py
 
 # The workflow orchestrator (provided; authors don't edit it).
 COPY pyproject.toml /orchestrator/pyproject.toml
