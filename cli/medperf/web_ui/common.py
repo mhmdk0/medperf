@@ -27,9 +27,11 @@ from medperf.account_management.account_management import (
 )
 from medperf.web_ui.schemas import WebUITask
 from medperf.web_ui.utils import generate_uuid
+import medperf.help_texts as help_texts
 
 templates_folder_path = Path(resources.files("medperf.web_ui")) / "templates"
 templates = Jinja2Templates(directory=templates_folder_path)
+templates.env.globals["help_texts"] = help_texts
 
 logger = logging.getLogger(__name__)
 

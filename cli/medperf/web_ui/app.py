@@ -30,6 +30,7 @@ from medperf.web_ui.events import router as events_router
 from medperf.web_ui.medperf_login import router as medperf_login
 from medperf.web_ui.settings import router as settings_router
 from medperf.web_ui.auth import wrap_openapi, NotAuthenticatedException, security_token
+import medperf.help_texts as help_texts
 
 JS_VERSION = "1.0.1"
 
@@ -168,7 +169,7 @@ app = typer.Typer()
 @app.command("run")
 @clean_except
 def run(
-    port: int = typer.Option(8100, "--port", help="port to use"),
+    port: int = typer.Option(8100, "--port", help=help_texts.web_ui.port),
 ):
     """Runs a local web UI"""
     import uvicorn

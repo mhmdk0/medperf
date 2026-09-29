@@ -136,7 +136,7 @@
                     {% include "partials/searchable_select.html" %}
                     <div>
                         <label for="publish-on-input" class="block text-sm font-medium text-secondary mb-1.5">Publish on</label>
-                        <input type="text" id="publish-on-input" name="publish_on" autocomplete="off" placeholder="127.0.0.1"
+                        <input type="text" id="publish-on-input" name="publish_on" autocomplete="off" placeholder="{{ help_texts.webui_placeholders.aggregator_publish_on }}"
                             class="w-full px-3 py-2.5 rounded-lg border border-border-strong dark:border-border dark:bg-card-muted dark:text-ink font-mono text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
                             value="{% if aggregator_running %}{{ form_data.get('publish_on', '127.0.0.1') }}{% else %}127.0.0.1{% endif %}"
                             {% if not experiments_using_aggregator or not certificate_exists or task_running %}disabled{% endif %}>
