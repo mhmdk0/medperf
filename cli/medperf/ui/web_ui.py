@@ -5,6 +5,7 @@ from yaspin import yaspin
 import typer
 
 from medperf.ui.cli import CLI
+from medperf.web_ui.history import TaskRecorder
 from medperf.web_ui.schemas import Event, EventsManager, GlobalEventsManager
 
 
@@ -17,7 +18,19 @@ class WebUI(CLI):
         self.task_id = None
         self.events_manager = EventsManager()
         self.global_events_manager = GlobalEventsManager()
+        self.task_recorder = TaskRecorder()
         self._silenced = threading.local()
+
+    def attach_history_store(self, store):
+        """Persist notifications and finished tasks in the given store
+        (web_ui.history.WebUIHistoryStore), loading what was saved before.
+        """
+        self.global_events_manager.attach_store(store)
+        self.task_recorder.attach_store(store)
+
+    def get_finished_tasks(self):
+        """Return the most recent finished tasks with their logs, most recent first."""
+        return self.task_recorder.get_finished_tasks()
 
     @property
     def _is_silenced(self) -> bool:
@@ -229,6 +242,7 @@ class WebUI(CLI):
         )
 
     def set_event(self, event: Event):
+        self.task_recorder.record(event.task_id, event.message)
         self.events_manager.process_event(event)
 
     def get_event(self, timeout=None):
@@ -242,6 +256,7 @@ class WebUI(CLI):
 
     def end_task(self, response=None):
         self.events_manager.stop_buffering()
+        self.task_recorder.finish(response)
 
         self.events_manager.enqueue_event(
             Event(
@@ -255,8 +270,9 @@ class WebUI(CLI):
         )
         self.unset_task_id()
 
-    def start_task(self, task_id: str):
+    def start_task(self, task_id: str, task_name: str = ""):
         self.set_task_id(task_id)
+        self.task_recorder.start(task_id, task_name)
         self.events_manager.start_buffering()
 
     def set_task_id(self, task_id):

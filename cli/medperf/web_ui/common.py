@@ -40,6 +40,7 @@ ALLOWED_PATHS = [
     "/notifications",
     "/current_task",
     "/api/running_tasks",
+    "/api/task_history",
     "/api/stop_task",
     "/containers/auto_access_logs",
 ]
@@ -48,7 +49,7 @@ ALLOWED_PATHS = [
 def initialize_state_task(request: Request, task_name: str) -> str:
     form_data = dict(anyio.from_thread.run(lambda: request.form()))
     new_task_id = generate_uuid()
-    config.ui.start_task(new_task_id)
+    config.ui.start_task(new_task_id, task_name)
     request.app.state.task = WebUITask(
         id=new_task_id, name=task_name, running=True, formData=form_data
     )

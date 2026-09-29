@@ -21,6 +21,7 @@ from medperf.web_ui.containers.routes import router as containers_router
 from medperf.web_ui.models.routes import router as models_router
 from medperf.web_ui.assets.routes import router as assets_router
 from medperf.web_ui.schemas import WebUITask
+from medperf.web_ui.history import WebUIHistoryStore
 from medperf.web_ui.training.routes import router as training_router
 from medperf.web_ui.aggregators.routes import router as aggregators_router
 from medperf.web_ui.yaml_fetch.routes import router as yaml_fetch_router
@@ -95,6 +96,13 @@ def startup_event():
 
     # Dictionary for tracking auto give access status for each model and benchmark combination
     web_app.state.model_auto_give_access = {}
+
+    # Restore saved notifications and finished tasks. A storage problem must not
+    # prevent the web UI from starting, so it only disables the history.
+    try:
+        config.ui.attach_history_store(WebUIHistoryStore(config.webui_db))
+    except Exception as e:
+        logging.exception(f"Failed to load the web UI history: {e}")
 
     # Set default UI mode to evaluation on startup, will be updated by NavModeMiddleware on each request based on cookie
     web_app.state.ui_mode = UI_MODE_EVALUATION

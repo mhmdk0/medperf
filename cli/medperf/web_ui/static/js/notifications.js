@@ -184,3 +184,79 @@ if (document.readyState === "loading") {
 } else {
     bindNotificationsList();
 }
+
+// ---------------------------------------------------------------------------
+// Recent tasks: logs of the most recent finished tasks, saved by the server
+// ---------------------------------------------------------------------------
+
+/**
+ * Turn a task name such as "benchmark_registration" into "Benchmark registration".
+ */
+function formatTaskName(name) {
+    if (!name) return "Task";
+    var text = name.replace(/_/g, " ");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Build the HTML of one finished task (status, timing, error and collapsible logs).
+ */
+function buildTaskHistoryItem(task) {
+    var statusClasses = {
+        success: "bg-success-muted text-success border-success",
+        failed: "bg-danger-muted text-danger-fg border-danger",
+    };
+    var badgeClass = statusClasses[task.status] || "bg-muted text-ink border-border";
+    var duration = Math.max(0, Math.round(task.finished_at - task.started_at));
+    var logs = task.logs || [];
+
+    var html = "<li class=\"rounded-xl border-2 border-border p-3\">";
+    html += "<div class=\"flex items-center justify-between gap-2\">";
+    html += "<strong class=\"text-ink\">" + escapeHtml(formatTaskName(task.name)) + "</strong>";
+    html += "<span class=\"px-2 py-0.5 rounded-full text-xs font-bold border " + badgeClass + "\">" + escapeHtml((task.status || "").toUpperCase()) + "</span>";
+    html += "</div>";
+    html += "<div class=\"text-xs text-muted-fg mt-1\">Finished " + timeAgo(task.finished_at) + " &middot; took " + duration + "s</div>";
+    if (task.error) {
+        html += "<p class=\"text-sm text-danger-fg mt-2 whitespace-pre-wrap break-words\">" + escapeHtml(task.error) + "</p>";
+    }
+    if (logs.length) {
+        html += "<details class=\"mt-2\"><summary class=\"cursor-pointer text-sm text-brand-accent\">View logs (" + logs.length + " lines)</summary>";
+        html += "<pre class=\"mt-2 max-h-80 overflow-auto p-3 rounded-lg bg-muted text-xs whitespace-pre-wrap break-words\">" + escapeHtml(logs.join("\n")) + "</pre>";
+        html += "</details>";
+    } else {
+        html += "<p class=\"text-xs text-muted-fg mt-2\">No logs were recorded for this task.</p>";
+    }
+    html += "</li>";
+    return html;
+}
+
+/**
+ * Fetch the recent finished tasks and show them in the page modal.
+ */
+function showTaskHistory() {
+    fetch("/api/task_history")
+        .then(function (res) {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+        })
+        .then(function (data) {
+            var tasks = (data && data.tasks) || [];
+            var body = tasks.length
+                ? "<ul class=\"space-y-3 list-none\">" + tasks.map(buildTaskHistoryItem).join("") + "</ul>"
+                : "<p class=\"text-muted-fg\">No finished tasks yet.</p>";
+            var footer = "<button type=\"button\" class=\"btn btn-sm btn-primary close-modal-btn\">Close</button>";
+            showModal({ title: "Recent tasks", body: body, footer: footer, modalClasses: "max-w-3xl w-full" });
+        })
+        .catch(function (err) {
+            displayAlert("danger", "Could not load the recent tasks: " + err.message);
+        });
+}
+
+(function bindTaskHistoryButton() {
+    function bind() {
+        var btn = document.getElementById("task-history-btn");
+        if (btn) btn.addEventListener("click", showTaskHistory);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
+    else bind();
+})();
