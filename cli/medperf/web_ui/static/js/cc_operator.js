@@ -2,7 +2,7 @@
  * Confidential computing (CC) operator settings of the user, on the settings
  * page (see macros/cc_operator_macro.html). The Apply button is enabled when
  * the settings changed and, if CC is enabled, all of its fields are filled
- * (checkFormValidity).
+ * (getFormProblems, see form_validation.js).
  */
 
 var CC_OPERATOR_FIELD_IDS = [
@@ -53,22 +53,22 @@ function checkForCCOperatorChanges() {
     return false;
 }
 
-function checkFormValidity() {
+/**
+ * Return the problems preventing the configuration from being applied:
+ * when CC is enabled, all of its fields are required.
+ */
+function getFormProblems() {
+    var problems = [];
     var configureEl = document.getElementById("configure-cc-operator");
-    var configureChecked = configureEl ? configureEl.checked : false;
-    if (!configureChecked) {
-        return true; // If CC is not configured, no need to validate fields
+    if (!configureEl || !configureEl.checked) {
+        return problems; // If CC is not configured, no need to validate fields
     }
     for (var i = 0; i < CC_OPERATOR_FIELD_IDS.length; i++) {
         var el = document.getElementById(CC_OPERATOR_FIELD_IDS[i]);
-        if (el) {
-            var currentValue = el.value.trim() || "";
-            if (currentValue.length === 0) {
-                return false; // If any configured field is empty, form is not valid
-            }
-        }
+        var label = document.querySelector("label[for='" + CC_OPERATOR_FIELD_IDS[i] + "']");
+        requireValue(problems, el, "Fill in " + (label ? label.textContent.trim() : "all the fields"));
     }
-    return true;
+    return problems;
 }
 
 /** Enable the Apply button when the settings can be saved. */
@@ -81,10 +81,11 @@ function checkCanApplyChanges() {
     var applyBtn = document.getElementById("apply-cc-operator-btn");
     if (applyBtn) {
         if (!hasChanges) {
+            showFormProblems(applyBtn, []);
             applyBtn.disabled = !canApplyWithoutChanges;
         }
         else {
-            applyBtn.disabled = !checkFormValidity();
+            applyBtn.disabled = !showFormProblems(applyBtn, getFormProblems());
         }
     }
 }

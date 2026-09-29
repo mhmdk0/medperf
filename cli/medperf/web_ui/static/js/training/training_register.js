@@ -14,7 +14,7 @@ function onTrainingRegisterSuccess(response) {
     }
 }
 
-/** Enable the Register button only when the form is valid. */
+/** Enable the Register button only when the form is valid, and show the user what is missing (see form_validation.js). */
 function checkTrainingFormValidity() {
     var nameEl = document.getElementById("name");
     var dataPrepEl = document.getElementById("data-preparation-container");
@@ -22,9 +22,14 @@ function checkTrainingFormValidity() {
     var nameValue = nameEl ? nameEl.value.trim() : "";
     var dataPrepValue = dataPrepEl && dataPrepEl.value ? Number(dataPrepEl.value) : 0;
     var flValue = flEl && flEl.value ? Number(flEl.value) : 0;
-    var isValid = nameValue.length > 0 && dataPrepValue > 0 && flValue > 0;
+
+    var problems = [];
+    if (!nameValue) problems.push({ field: nameEl, message: "Enter the training experiment name" });
+    if (!(dataPrepValue > 0)) problems.push({ field: dataPrepEl, message: "Select the data preparation container" });
+    if (!(flValue > 0)) problems.push({ field: flEl, message: "Select the FL container" });
+
     var btn = document.getElementById("register-training-btn");
-    if (btn) btn.disabled = !isValid;
+    if (btn) btn.disabled = !showFormProblems(btn, problems);
 }
 
 /** Bind the registration form. */
