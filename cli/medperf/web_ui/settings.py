@@ -75,8 +75,18 @@ def settings_ui(request: Request, current_user: bool = Depends(check_user_ui)):
 
 @router.post("/activate_profile", response_class=JSONResponse)
 def activate_profile(
-    profile: str = Form(...), current_user: bool = Depends(check_user_api)
+    request: Request,
+    profile: str = Form(...),
+    current_user: bool = Depends(check_user_api),
 ):
+    # The automatic grant access workers act as the current user; switching the
+    # profile (and thus possibly the user or server) under them is not allowed.
+    if request.app.state.model_auto_give_access:
+        return {
+            "status": "failed",
+            "error": "Automatic grant access is currently running. Stop it before switching profiles.",
+        }
+
     config_p = read_config()
 
     if profile not in config_p:
