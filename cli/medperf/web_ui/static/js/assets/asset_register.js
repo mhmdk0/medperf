@@ -1,5 +1,10 @@
+/*
+ * Asset registration page (local or remote asset).
+ */
+
 var REDIRECT_BASE = "/assets/ui/display/";
 
+/** Enable the Register button only when the form is valid. */
 function checkAssetFormValidity() {
     var nameVal = document.getElementById("name") ? document.getElementById("name").value.trim() : "";
     var isRemote = document.querySelector("input[name='asset_is_remote']:checked");
@@ -11,6 +16,7 @@ function checkAssetFormValidity() {
     if (btn) btn.disabled = !isValid;
 }
 
+/** Bind the registration form, and switch between local and remote asset inputs. */
 function initAssetRegister() {
     var form = document.getElementById("asset-register-form");
     if (form) {

@@ -1,5 +1,10 @@
+/*
+ * Container registration page.
+ */
+
 var REDIRECT_BASE = "/containers/ui/display/";
 
+/** Enable the Register button only when the form is valid. */
 function checkContainerFormValidity() {
     var containerFileEl = document.getElementById("container-file");
     var containerPath = containerFileEl ? containerFileEl.value.trim() : "";
@@ -19,6 +24,7 @@ function checkContainerFormValidity() {
     if (btn) btn.disabled = !isValid;
 }
 
+/** Bind the registration form and its path pickers. */
 function init() {
     var form = document.getElementById("register-container-form");
     if (form) {

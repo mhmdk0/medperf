@@ -1,4 +1,9 @@
-/* CC asset (model/dataset) configuration: uses our form design with submitActionForm and data-success-handler. */
+/*
+ * Confidential computing (CC) configuration of a model or dataset
+ * (see macros/cc_asset_macro.html): enabling CC, its GCP settings and syncing
+ * the CC policy. The Apply button is enabled when the settings changed and,
+ * if CC is enabled, all of its fields are filled (checkFormValidity).
+ */
 
 var CC_ASSET_FIELD_IDS = [
     "cc-project_id",
@@ -11,6 +16,7 @@ var CC_ASSET_FIELD_IDS = [
     "cc-wip_provider",
 ];
 
+/** Handle the response of saving the CC configuration. */
 function onCCEditRequestSuccess(response) {
     markAllStagesAsComplete();
     if (response && response.status === "success") {
@@ -23,6 +29,7 @@ function onCCEditRequestSuccess(response) {
     }
 }
 
+/** Handle the response of syncing the CC policy. */
 function onCCPolicyRequestSuccess(response) {
     markAllStagesAsComplete();
     if (response && response.status === "success") {
@@ -35,6 +42,7 @@ function onCCPolicyRequestSuccess(response) {
     }
 }
 
+/** Whether the CC configuration differs from the saved one. */
 function checkForCCAssetChanges() {
     var preferences = window.ccPreferences || {};
     var defaultConfigureChecked = preferences.configured;
@@ -78,6 +86,7 @@ function checkFormValidity() {
     return true;
 }
 
+/** Enable the Apply button when the configuration can be saved. */
 function checkCanApplyChanges() {
     var preferences = window.ccPreferences || {};
 
@@ -95,6 +104,7 @@ function checkCanApplyChanges() {
     }
 }
 
+/** Bind the CC configuration and policy forms. */
 function initCCAsset() {
     var form = document.getElementById("edit-cc-asset-form");
     if (form) {
@@ -102,6 +112,7 @@ function initCCAsset() {
         var configureEl = document.getElementById("configure-cc");
         var fieldsContainer = document.getElementById("edit-cc-asset-fields");
         if (configureEl && fieldsContainer) {
+            /** Show the CC fields only when CC is enabled. */
             function toggleFields() {
                 fieldsContainer.style.display = configureEl.checked ? "" : "none";
                 if (!configureEl.checked) fieldsContainer.classList.add("hidden");

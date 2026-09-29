@@ -1,3 +1,4 @@
+{# Navigation bar: pages, evaluation/training mode switch, notifications, account menu and dark mode toggle. #}
 {% set path = request.url.path %}
 {% set ui_mode = request.app.state.ui_mode %}
 {% set is_training_mode = (ui_mode == request.app.state.TRAINING_MODE) %}

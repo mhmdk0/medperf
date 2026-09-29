@@ -1,3 +1,10 @@
+/*
+ * Confidential computing (CC) operator settings of the user, on the settings
+ * page (see macros/cc_operator_macro.html). The Apply button is enabled when
+ * the settings changed and, if CC is enabled, all of its fields are filled
+ * (checkFormValidity).
+ */
+
 var CC_OPERATOR_FIELD_IDS = [
     "operator-project_id",
     "operator-service_account_name",
@@ -7,6 +14,7 @@ var CC_OPERATOR_FIELD_IDS = [
 ];
 var CC_OPERATOR_DEFAULT_KEYS = ["project_id", "service_account_name", "bucket", "vm_zone", "vm_name"];
 
+/** Handle the response of saving the CC operator settings. */
 function onCCOperatorEditRequestSuccess(response) {
     markAllStagesAsComplete();
     if (response && response.status === "success") {
@@ -19,6 +27,7 @@ function onCCOperatorEditRequestSuccess(response) {
     }
 }
 
+/** Whether the CC operator settings differ from the saved ones. */
 function checkForCCOperatorChanges() {
     var preferences = window.ccOperatorPreferences || window.ccPreferences || {};
     var defaultConfigureChecked = preferences.configured;
@@ -62,6 +71,7 @@ function checkFormValidity() {
     return true;
 }
 
+/** Enable the Apply button when the settings can be saved. */
 function checkCanApplyChanges() {
     var preferences = window.ccOperatorPreferences || window.ccPreferences || {};
 
@@ -79,6 +89,7 @@ function checkCanApplyChanges() {
     }
 }
 
+/** Bind the CC operator settings form. */
 function initCCOperator() {
     var form = document.getElementById("edit-cc-operator-form");
     if (!form) return;
@@ -86,6 +97,7 @@ function initCCOperator() {
     var configureEl = document.getElementById("configure-cc-operator");
     var fieldsContainer = document.getElementById("edit-cc-operator-fields");
     if (configureEl && fieldsContainer) {
+        /** Show the CC fields only when CC is enabled. */
         function toggleFields() {
             fieldsContainer.style.display = configureEl.checked ? "" : "none";
             if (!configureEl.checked) fieldsContainer.classList.add("hidden");

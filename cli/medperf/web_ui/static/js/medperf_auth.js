@@ -1,4 +1,8 @@
+/*
+ * MedPerf login page.
+ */
 
+/** Handle the login response. */
 function onLoginSuccess(response) {
     if (response.status === "success") {
         showReloadModal({ title: "Logged in successfully", seconds: 3, url: "/" });
@@ -7,6 +11,7 @@ function onLoginSuccess(response) {
     }
 }
 
+/** Enable the Sign In button only for a valid email. */
 function checkLoginFormValidity() {
     var emailInput = document.getElementById("email");
     var btn = document.getElementById("medperf-login-btn");
@@ -15,6 +20,7 @@ function checkLoginFormValidity() {
     btn.disabled = !emailRegex.test(emailInput.value.trim());
 }
 
+/** Bind the login form. */
 function init() {
     var form = document.getElementById("medperf-login-form");
     if (form) {

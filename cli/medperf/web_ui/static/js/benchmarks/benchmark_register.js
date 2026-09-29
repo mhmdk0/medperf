@@ -1,5 +1,10 @@
+/*
+ * Benchmark registration page.
+ */
+
 var REDIRECT_BASE = "/benchmarks/ui/display/";
 
+/** Enable the Register button only when the form is valid. */
 function checkBenchmarkFormValidity() {
     var nameEl = document.getElementById("name");
     var descEl = document.getElementById("description");
@@ -22,6 +27,10 @@ function checkBenchmarkFormValidity() {
     if (btn) btn.disabled = !isValid;
 }
 
+/**
+ * Bind the registration form, and show the demo dataset URL input only when
+ * the compatibility tests are required.
+ */
 function init() {
     var form = document.getElementById("benchmark-register-form");
     if (form) {

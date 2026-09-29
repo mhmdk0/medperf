@@ -1,5 +1,10 @@
+/*
+ * Dataset registration page.
+ */
+
 var REDIRECT_BASE = "/datasets/ui/display/";
 
+/** Enable the Register button only when the form is valid. */
 function checkDatasetFormValidity() {
     var benchmarkEl = document.getElementById("benchmark");
     var nameEl = document.getElementById("name");
@@ -15,6 +20,7 @@ function checkDatasetFormValidity() {
     if (btn) btn.disabled = !isValid;
 }
 
+/** Bind the registration form and its path pickers. */
 function init() {
     var form = document.getElementById("register-dataset-form");
     if (form){

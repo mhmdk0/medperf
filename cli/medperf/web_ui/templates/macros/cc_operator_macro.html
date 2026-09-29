@@ -1,5 +1,6 @@
 {% import "constants/tooltips.html" as tooltips %}
 {% macro cc_operator(defaults, configured, initialized, task_running=false) %}
+{# Confidential computing operator settings form of the user, on the settings page (see js/cc_operator.js). #}
 {% set fields = [
 ("project_id", "GCP Project ID"),
 ("service_account_name", "GCP Service Account Name"),

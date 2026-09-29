@@ -1,5 +1,10 @@
+/*
+ * Training experiment registration page.
+ */
+
 var REDIRECT_BASE = "/training/ui/display/";
 
+/** Handle the registration response. */
 function onTrainingRegisterSuccess(response) {
     markAllStagesAsComplete();
     if (response && response.status === "success") {
@@ -9,6 +14,7 @@ function onTrainingRegisterSuccess(response) {
     }
 }
 
+/** Enable the Register button only when the form is valid. */
 function checkTrainingFormValidity() {
     var nameEl = document.getElementById("name");
     var dataPrepEl = document.getElementById("data-preparation-container");
@@ -21,6 +27,7 @@ function checkTrainingFormValidity() {
     if (btn) btn.disabled = !isValid;
 }
 
+/** Bind the registration form. */
 function init() {
     var form = document.getElementById("register-training-form");
     if (form) {
