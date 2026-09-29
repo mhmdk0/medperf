@@ -18,9 +18,8 @@ from medperf.enums import CryptoKeyType
 from medperf.web_ui.common import (
     check_user_api,
     check_user_ui,
-    initialize_state_task,
+    UITask,
     is_logged_in,
-    reset_state_task,
     templates,
 )
 import logging
@@ -154,26 +153,13 @@ def get_certificate(
     key_type: CryptoKeyType = Form(...),
     current_user: bool = Depends(check_user_api),
 ):
-    initialize_state_task(request, task_name="get_client_certificate")
-    return_response = {"status": "", "error": ""}
-
-    try:
+    with UITask(request, "get_client_certificate") as task:
         GetUserCertificate.run(key_type=key_type)
-        return_response["status"] = "success"
-        notification_message = "Certificate retrieved"
-    except Exception as exp:
-        return_response["status"] = "failed"
-        return_response["error"] = str(exp)
-        notification_message = "Failed to get certificate"
-        logger.exception(exp)
-
-    config.ui.end_task(return_response)
-    reset_state_task(request)
-    config.ui.add_notification(
-        message=notification_message,
-        return_response=return_response,
+    task.notify(
+        success_message="Certificate retrieved",
+        failure_message="Failed to get certificate",
     )
-    return return_response
+    return task.response
 
 
 @router.post("/delete_certificate", response_class=JSONResponse)
@@ -182,26 +168,13 @@ def delete_certificate(
     key_type: CryptoKeyType = Form(...),
     current_user: bool = Depends(check_user_api),
 ):
-    initialize_state_task(request, task_name="delete_client_certificate")
-    return_response = {"status": "", "error": ""}
-
-    try:
+    with UITask(request, "delete_client_certificate") as task:
         DeleteCertificate.run(key_type=key_type)
-        return_response["status"] = "success"
-        notification_message = "Certificate deleted"
-    except Exception as exp:
-        return_response["status"] = "failed"
-        return_response["error"] = str(exp)
-        notification_message = "Failed to delete certificate"
-        logger.exception(exp)
-
-    config.ui.end_task(return_response)
-    reset_state_task(request)
-    config.ui.add_notification(
-        message=notification_message,
-        return_response=return_response,
+    task.notify(
+        success_message="Certificate deleted",
+        failure_message="Failed to delete certificate",
     )
-    return return_response
+    return task.response
 
 
 @router.post("/submit_certificate", response_class=JSONResponse)
@@ -210,26 +183,13 @@ def submit_certificate(
     key_type: CryptoKeyType = Form(...),
     current_user: bool = Depends(check_user_api),
 ):
-    initialize_state_task(request, task_name="submit_client_certificate")
-    return_response = {"status": "", "error": ""}
-
-    try:
+    with UITask(request, "submit_client_certificate") as task:
         SubmitCertificate.run(key_type=key_type)
-        return_response["status"] = "success"
-        notification_message = "Certificate submitted"
-    except Exception as exp:
-        return_response["status"] = "failed"
-        return_response["error"] = str(exp)
-        notification_message = "Failed to submit certificate"
-        logger.exception(exp)
-
-    config.ui.end_task(return_response)
-    reset_state_task(request)
-    config.ui.add_notification(
-        message=notification_message,
-        return_response=return_response,
+    task.notify(
+        success_message="Certificate submitted",
+        failure_message="Failed to submit certificate",
     )
-    return return_response
+    return task.response
 
 
 @router.post("/edit_cc_operator", response_class=JSONResponse)

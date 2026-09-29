@@ -65,6 +65,78 @@ def reset_state_task(request: Request):
     request.app.state.task_running = False
 
 
+class UITask:
+    """Run the body of a `with` block as a web UI task.
+
+    Replaces the boilerplate shared by the routes that run a MedPerf command:
+    it starts the task (so its logs are streamed to the page), catches and logs
+    any exception raised by the block, marks the task as successful or failed,
+    and ends it. The exception is not propagated: the route then sends the
+    notification and returns the task response, whatever the outcome.
+
+    Example:
+        with UITask(request, "register_container", response={"entity_id": None}) as task:
+            container_id = SubmitCube.run(...)
+            task.response["entity_id"] = container_id
+        task.notify(
+            success_message="Container successfully registered",
+            failure_message="Failed to register container",
+        )
+        return task.response
+
+    Attributes:
+        response (dict): the task response ("status", "error" and any extra field),
+            returned to the page and passed to the notification.
+    """
+
+    def __init__(self, request: Request, task_name: str, response: dict = None):
+        self.request = request
+        self.task_name = task_name
+        self.response = {"status": "", "error": "", **(response or {})}
+
+    @property
+    def succeeded(self) -> bool:
+        return self.response["status"] == "success"
+
+    def __enter__(self):
+        initialize_state_task(self.request, task_name=self.task_name)
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        if exc is not None and not isinstance(exc, Exception):
+            # e.g. KeyboardInterrupt/SystemExit: end the task but don't swallow it
+            self.response["status"] = "failed"
+            self.response["error"] = str(exc)
+            self._end()
+            return False
+
+        if exc is None:
+            self.response["status"] = "success"
+        else:
+            self.response["status"] = "failed"
+            self.response["error"] = str(exc)
+            logger.exception(exc, exc_info=(exc_type, exc, traceback))
+        self._end()
+        return True  # the failure is reported in the response instead
+
+    def _end(self):
+        config.ui.end_task(self.response)
+        reset_state_task(self.request)
+
+    def notify(self, success_message: str, failure_message: str, url: str = ""):
+        """Notify the user of the task outcome (a failure also shows its error).
+
+        Args:
+            success_message (str): message shown if the task succeeded.
+            failure_message (str): message shown if the task failed.
+            url (str, optional): page opened from the notification.
+        """
+        message = success_message if self.succeeded else failure_message
+        config.ui.add_notification(
+            message=message, return_response=self.response, url=url
+        )
+
+
 def custom_exception_handler(request: Request, exc: Exception):
     # Log the exception details
     logger.error(f"Unhandled exception: {exc}", exc_info=True)

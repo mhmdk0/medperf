@@ -21,8 +21,7 @@ import medperf.config as config
 from medperf.entities.encrypted_key import EncryptedKey
 from medperf.web_ui.common import (
     check_user_api,
-    initialize_state_task,
-    reset_state_task,
+    UITask,
     templates,
     check_user_ui,
     sanitize_redirect_url,
@@ -152,9 +151,6 @@ def register_container(
     decryption_file: str = Form(None),
     current_user: bool = Depends(check_user_api),
 ):
-    initialize_state_task(request, task_name="register_container")
-
-    return_response = {"status": "", "error": "", "entity_id": None}
     container_info = {
         "name": name,
         "additional_files_tarball_url": additional_file,
@@ -162,30 +158,55 @@ def register_container(
         "state": "OPERATION",
     }
     container_id = None
-    try:
+    with UITask(request, "register_container", response={"entity_id": None}) as task:
         container_id = SubmitCube.run(
             container_info,
             container_config=container_file,
             parameters_config=parameters_file,
             decryption_key=decryption_file,
         )
-        return_response["status"] = "success"
-        return_response["entity_id"] = container_id
-        notification_message = "Container successfully registered"
-    except Exception as exp:
-        return_response["status"] = "failed"
-        return_response["error"] = str(exp)
-        notification_message = "Failed to register container"
-        logger.exception(exp)
-
-    config.ui.end_task(return_response)
-    reset_state_task(request)
-    config.ui.add_notification(
-        message=notification_message,
-        return_response=return_response,
+        task.response["entity_id"] = container_id
+    task.notify(
+        success_message="Container successfully registered",
+        failure_message="Failed to register container",
         url=f"/containers/ui/display/{container_id}" if container_id else "",
     )
-    return return_response
+    return task.response
+
+
+def _approved_benchmark_ids(model_id: int) -> list:
+    """IDs of the benchmarks the model is associated with (approved associations)."""
+    benchmark_associations = {
+        assoc["benchmark"]: assoc
+        for assoc in Model.get_benchmarks_associations(model_uid=model_id)
+    }
+    return [
+        int(benchmark_id)
+        for benchmark_id, assoc in benchmark_associations.items()
+        if assoc["approval_status"] == "APPROVED"
+    ]
+
+
+def _container_keys_owners(container_id: int, benchmark_ids: list) -> dict:
+    """Map each encrypted key of the container to whom it was given: the owner
+    info of its certificate when it belongs to a data owner of one of the given
+    benchmarks, or the certificate ID otherwise."""
+    keys = {
+        key.id: key.certificate for key in EncryptedKey.get_container_keys(container_id)
+    }
+    if not keys:
+        return keys
+
+    certs_owners = {}
+    for benchmark_id in benchmark_ids:
+        _, cert_user_info = Certificate.get_benchmark_datasets_certificates(
+            benchmark_id
+        )
+        certs_owners.update(cert_user_info)
+
+    return {
+        key_id: certs_owners.get(cert_id, cert_id) for key_id, cert_id in keys.items()
+    }
 
 
 @router.get("/ui/display/{container_id}/access", response_class=HTMLResponse)
@@ -212,42 +233,7 @@ def container_access_ui(
         return RedirectResponse(url=redirect_url)
 
     container_model = Model.get_by_container(container_id)
-    benchmark_assocs = Model.get_benchmarks_associations(model_uid=container_model.id)
-
-    benchmark_associations = {}
-    for assoc in benchmark_assocs:
-        benchmark_associations[assoc["benchmark"]] = assoc
-
-    benchmark_allowed_ids = ",".join(
-        str(benchmark_id)
-        for benchmark_id, assoc in benchmark_associations.items()
-        if assoc["approval_status"] == "APPROVED"
-    )
-
-    existing_keys = {
-        i.id: i.certificate for i in EncryptedKey.get_container_keys(container_id)
-    }
-
-    approved_benchmark_ids = [
-        int(benchmark_id)
-        for benchmark_id, assoc in benchmark_associations.items()
-        if assoc["approval_status"] == "APPROVED"
-    ]
-
-    if existing_keys:
-        certs_mapping = {}
-        for benchmark_id in approved_benchmark_ids:
-            _, cert_user_info = Certificate.get_benchmark_datasets_certificates(
-                benchmark_id
-            )
-            for cert_id in cert_user_info:
-                certs_mapping[cert_id] = cert_user_info[cert_id]
-
-        for key_id in existing_keys:
-            cert_id = existing_keys[key_id]
-            if cert_id in certs_mapping:
-                existing_keys[key_id] = certs_mapping[cert_id]
-
+    approved_benchmark_ids = _approved_benchmark_ids(container_model.id)
     running_auto_access = _running_auto_access_for_container(
         request.app.state.model_auto_give_access, container_id
     )
@@ -263,8 +249,8 @@ def container_access_ui(
             "entity": container,
             "entity_name": container.name,
             "is_owner": is_owner,
-            "benchmark_allowed_ids": benchmark_allowed_ids,
-            "keys": existing_keys,
+            "benchmark_allowed_ids": ",".join(map(str, approved_benchmark_ids)),
+            "keys": _container_keys_owners(container_id, approved_benchmark_ids),
             "running_auto_access": running_auto_access,
             "running_benchmarks": running_benchmarks,
         },
@@ -280,28 +266,16 @@ def grant_access(
     current_user: bool = Depends(check_user_api),
 ):
 
-    initialize_state_task(request, task_name="container_grant_access")
-    return_response = {"status": "", "error": ""}
-    try:
+    with UITask(request, "container_grant_access") as task:
         GrantAccess.run(
             benchmark_id=benchmark_id, model_id=model_id, allowed_emails=emails
         )
-        return_response["status"] = "success"
-        notification_message = "Successfully granted access to the selected users."
-    except Exception as exp:
-        return_response["status"] = "failed"
-        return_response["error"] = str(exp)
-        notification_message = "Failed to grant access"
-        logger.exception(exp)
-
-    config.ui.end_task(return_response)
-    reset_state_task(request)
-    config.ui.add_notification(
-        message=notification_message,
-        return_response=return_response,
+    task.notify(
+        success_message="Successfully granted access to the selected users.",
+        failure_message="Failed to grant access",
         url=f"/containers/ui/display/{model_id}/access",
     )
-    return return_response
+    return task.response
 
 
 def grant_access_worker(
@@ -430,7 +404,11 @@ def auto_access_logs(
             "logs": [],
         }
 
-    return {"status": "success", "error": "", "logs": list(model_auto_give_access[key]["logs"])}
+    return {
+        "status": "success",
+        "error": "",
+        "logs": list(model_auto_give_access[key]["logs"]),
+    }
 
 
 @router.post("/revoke_user_access", response_class=JSONResponse)
@@ -441,26 +419,14 @@ def revoke_user_access(
     current_user: bool = Depends(check_user_api),
 ):
 
-    initialize_state_task(request, task_name="container_revoke_key")
-    return_response = {"status": "", "error": ""}
-    try:
+    with UITask(request, "container_revoke_key") as task:
         RevokeUserAccess.run(key_id)
-        return_response["status"] = "success"
-        notification_message = "Successfully revoked key"
-    except Exception as exp:
-        return_response["status"] = "failed"
-        return_response["error"] = str(exp)
-        notification_message = "Failed to revoke key"
-        logger.exception(exp)
-
-    config.ui.end_task(return_response)
-    reset_state_task(request)
-    config.ui.add_notification(
-        message=notification_message,
-        return_response=return_response,
+    task.notify(
+        success_message="Successfully revoked key",
+        failure_message="Failed to revoke key",
         url=f"/containers/ui/display/{model_id}/access",
     )
-    return return_response
+    return task.response
 
 
 @router.post("/delete_keys", response_class=JSONResponse)
@@ -470,23 +436,11 @@ def delete_keys(
     current_user: bool = Depends(check_user_api),
 ):
 
-    initialize_state_task(request, task_name="container_delete_keys")
-    return_response = {"status": "", "error": ""}
-    try:
+    with UITask(request, "container_delete_keys") as task:
         DeleteKeys.run(model_id)
-        return_response["status"] = "success"
-        notification_message = "Successfully deleted keys."
-    except Exception as exp:
-        return_response["status"] = "failed"
-        return_response["error"] = str(exp)
-        notification_message = "Failed to delete keys"
-        logger.exception(exp)
-
-    config.ui.end_task(return_response)
-    reset_state_task(request)
-    config.ui.add_notification(
-        message=notification_message,
-        return_response=return_response,
+    task.notify(
+        success_message="Successfully deleted keys.",
+        failure_message="Failed to delete keys",
         url=f"/containers/ui/display/{model_id}/access",
     )
-    return return_response
+    return task.response
