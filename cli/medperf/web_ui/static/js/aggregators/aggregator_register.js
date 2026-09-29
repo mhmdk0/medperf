@@ -1,5 +1,10 @@
-REDIRECT_BASE = "/aggregators/ui/display/";
+/*
+ * Aggregator registration page.
+ */
 
+var REDIRECT_BASE = "/aggregators/ui/display/";
+
+/** Enable the Register button only when the form is valid. */
 function checkAggregatorFormValidity() {
     var nameEl = document.getElementById("name");
     var addressEl = document.getElementById("address");
@@ -16,6 +21,7 @@ function checkAggregatorFormValidity() {
     if (btn) btn.disabled = !isValid;
 }
 
+/** Bind the registration form. */
 function init() {
     var form = document.getElementById("aggregator-register-form");
     if (form) {

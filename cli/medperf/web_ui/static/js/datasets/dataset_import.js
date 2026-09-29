@@ -1,5 +1,10 @@
+/*
+ * Dataset import page.
+ */
+
 var REDIRECT_BASE = "/datasets/ui/display/";
 
+/** Enable the Import button only when the form is valid. */
 function checkImportFormValidity() {
     var datasetIdEl = document.getElementById("dataset-id");
     var datasetIdValue = datasetIdEl && datasetIdEl.value ? Number(datasetIdEl.value) : 0;
@@ -18,13 +23,19 @@ function checkImportFormValidity() {
     if (btn) btn.disabled = !isValid;
 }
 
+/**
+ * Bind the import form, its path pickers, and show the raw data path input
+ * only for development datasets.
+ */
 function init() {
     var form = document.getElementById("dataset-import-form");
-    if (form) form.querySelectorAll("input").forEach(function (el) {
+    if (form) {
         form.addEventListener("submit", submitActionForm);
-        el.addEventListener("change", checkImportFormValidity);
-        el.addEventListener("keyup", checkImportFormValidity);
-    });
+        form.querySelectorAll("input").forEach(function (el) {
+            el.addEventListener("change", checkImportFormValidity);
+            el.addEventListener("keyup", checkImportFormValidity);
+        });
+    }
     var browseInput = document.getElementById("browse-input-btn");
     var browseRaw = document.getElementById("browse-raw-btn");
     if (browseInput) browseInput.addEventListener("click", function () { browseWithFiles = true; browseFolderHandler("input-path"); });

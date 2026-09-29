@@ -1,3 +1,4 @@
+{# Dataset details page: preparation, associations, benchmark executions and results (evaluation mode), or training associations and runs (training mode), and CC configuration. #}
 
 {% extends "detail_base.html" %}
 
@@ -410,7 +411,7 @@
                     <span class="px-3 py-1 rounded-full text-xs font-bold ml-2 {% if assoc.approval_status == 'APPROVED' %}bg-success-muted text-brand-accent{% elif assoc.approval_status == 'REJECTED' %}bg-danger-muted text-danger-fg{% else %}bg-warning-muted text-warning-fg{% endif %}">{{ assoc.approval_status }}</span>
                 </div>
                 {% if assoc.approval_status == 'APPROVED' and dataset_is_operational %}
-                <form id="start-training-form-{{ exp_id }}" action="/datasets/start_training" method="post" class="inline dataset-training-action-form dataset-action-form" data-panel-title="Running training" data-confirm-message="start training for this experiment with this dataset?">
+                <form id="start-training-form-{{ exp_id }}" data-success-handler="onRunTrainingSuccess" data-after-submit="startPollingTrainingRunningTasks" action="/datasets/start_training" method="post" class="inline dataset-training-action-form dataset-action-form" data-panel-title="Running training" data-confirm-message="start training for this experiment with this dataset?">
                     <input type="hidden" name="entity_id" value="{{ dataset.id }}">
                     <input type="hidden" name="training_exp_id" value="{{ exp_id }}">
                     <button type="submit" class="btn btn-sm btn-primary cursor-pointer start-training-btn">
