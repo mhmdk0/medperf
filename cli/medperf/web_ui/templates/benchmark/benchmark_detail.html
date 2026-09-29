@@ -1,3 +1,4 @@
+{# Benchmark details page: containers, associations (with approval), associations policy, committee members, results and the preparation dashboard form. #}
 {% extends "detail_base.html" %}
 {% import 'macros/modal_macros.html' as modal_macros %}
 {% import 'macros/association_card_macros.html' as association_card_macros %}
@@ -258,5 +259,6 @@
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
 <script src="{{ url_for('static', path='js/results/results_utils.js') }}"></script>
 <script src="{{ url_for('static', path='js/folder_browsing.js') }}"></script>
+<script src="{{ url_for('static', path='js/email_chips.js') }}"></script>
 <script src="{{ url_for('static', path='js/benchmarks/benchmark_detail.js') }}"></script>
 {% endblock extra_js %}

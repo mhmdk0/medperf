@@ -1,3 +1,4 @@
+{# Access management of an encrypted model's container: grant access to a benchmark's data owners (once or automatically) and revoke keys. #}
 {% extends "detail_base.html" %}
 
 {% block title %}Manage Container Access{% endblock %}
@@ -136,6 +137,7 @@
 {% block extra_js %}
 <script src="{{ url_for('static', path='js/searchable_select.js') }}"></script>
 <script src="{{ url_for('static', path='js/event_handler.js') }}"></script>
+<script src="{{ url_for('static', path='js/email_chips.js') }}"></script>
 <script src="{{ url_for('static', path='js/containers/container_access.js') }}"></script>
 {% if task_running %}
 {% if request.app.state.task.formData.get("model_id", "") == entity.id|string %}

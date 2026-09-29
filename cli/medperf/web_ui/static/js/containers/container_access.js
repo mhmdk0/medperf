@@ -1,47 +1,7 @@
-function getEmailsList(element) {
-    var emailsArr = [];
-    if (!element) return emailsArr;
-    element.querySelectorAll(".email-chip").forEach(function (chip) {
-        emailsArr.push((chip.textContent || "").replace(/\s*×\s*$/, "").trim());
-    });
-    return emailsArr;
-}
-
-function createEmailChip(email, inputElement) {
-    var chip = document.createElement("div");
-    chip.className = "email-chip inline-block bg-muted-strong rounded-full py-1 px-3 mr-2 mb-2 text-sm";
-    chip.textContent = email;
-    var remove = document.createElement("span");
-    remove.className = "remove-btn ml-2 cursor-pointer font-bold";
-    remove.textContent = "×";
-    remove.addEventListener("click", function () { chip.remove(); });
-    chip.appendChild(remove);
-    if (inputElement && inputElement.parentNode) inputElement.parentNode.insertBefore(chip, inputElement);
-}
-
-function clearEmailChips(container) {
-    if (!container) return;
-    container.querySelectorAll(".email-chip").forEach(function (chip) { chip.remove(); });
-}
-
-function setEmailChips(container, emails) {
-    clearEmailChips(container);
-    var inputEl = container ? container.querySelector("input") : null;
-    (emails || []).forEach(function (email) {
-        email = (email || "").trim();
-        if (email) createEmailChip(email, inputEl);
-    });
-}
-
-function parseEmails(element) {
-    if (!element || !element.getAttribute) return;
-    var raw = element.getAttribute("data-allowed-list") || "[]";
-    try {
-        var jsonList = JSON.parse(raw);
-        setEmailChips(element, jsonList);
-    } catch (_) {}
-}
-
+/**
+ * Automatic grant access workers running for this container, by benchmark ID
+ * (rendered by the server in the panel's `data-running-auto-access`).
+ */
 function parseRunningAutoAccess(panel) {
     if (!panel) return {};
     try {
@@ -51,27 +11,35 @@ function parseRunningAutoAccess(panel) {
     }
 }
 
+/** ID of the benchmark selected for automatic grant access. */
 function getSelectedBenchmarkId() {
     var benchmarkEl = document.getElementById("benchmark-auto");
     return benchmarkEl && benchmarkEl.value ? benchmarkEl.value : "";
 }
 
+/** The running automatic grant access of a benchmark, if any. */
 function getRunningStateForBenchmark(runningAutoAccess, benchmarkId) {
     if (!benchmarkId) return null;
     return runningAutoAccess[benchmarkId] || null;
 }
 
+/** Split a space-separated emails string. */
 function parseStoredEmails(emails) {
     if (!emails) return [];
     return String(emails).trim().split(/\s+/).filter(Boolean);
 }
 
+/** Show or hide an element. */
 function setElementVisible(element, visible) {
     if (!element) return;
     element.style.display = visible ? "" : "none";
     element.classList.toggle("hidden", !visible);
 }
 
+/**
+ * Update the automatic grant access panel for the selected benchmark:
+ * its settings and Start/Stop/Logs buttons depend on whether it runs.
+ */
 function updateAutoAccessUI() {
     var panel = document.getElementById("auto-access-panel");
     var actionsEl = document.getElementById("auto-access-actions");
@@ -126,6 +94,7 @@ function updateAutoAccessUI() {
     }
 }
 
+/** Check the grant access form before submitting it. */
 function checkAccessForm() {
     if (!document.getElementById("benchmark") || !document.getElementById("benchmark").value) {
         showErrorToast("Make sure that you've selected a benchmark");
@@ -134,6 +103,7 @@ function checkAccessForm() {
     return true;
 }
 
+/** Check the automatic grant access settings before starting it. */
 function checkAutoAccessForm() {
     if (!getSelectedBenchmarkId()) {
         showErrorToast("Make sure that you've selected a benchmark");
@@ -148,12 +118,14 @@ function checkAutoAccessForm() {
     return true;
 }
 
+/** Warn in the confirmation message when no email filters the data owners. */
 function emptyAllowListWarning(allowListArr, message) {
     if (allowListArr.length) return message;
     return message + " <strong>Note: no emails were added - this will grant access to ALL " +
         "eligible data owners, with no email filtering.</strong>";
 }
 
+/** Start granting access automatically at the chosen interval. */
 function startAutoGrant(startBtn) {
     disableElements(".card button, .card input, .card select");
     var panel = document.getElementById("auto-access-panel");
@@ -169,6 +141,7 @@ function startAutoGrant(startBtn) {
     }, "Failed to start auto grant access");
 }
 
+/** Stop the automatic grant access of the selected benchmark. */
 function stopAutoGrant(stopBtn) {
     disableElements(".card button, .card input, .card select");
     var panel = document.getElementById("auto-access-panel");
@@ -181,6 +154,7 @@ function stopAutoGrant(stopBtn) {
     }, "Failed to stop auto grant access");
 }
 
+/** Show the logs of the automatic grant access of the selected benchmark. */
 function viewAutoAccessLogs() {
     var panel = document.getElementById("auto-access-panel");
     var modelId = panel ? panel.getAttribute("data-model-id") : "";
@@ -198,34 +172,10 @@ function viewAutoAccessLogs() {
     }, "Failed to fetch automatic grant access logs");
 }
 
-function showErrorToast(message) {
-    showToast("Validation Error", message, "text-bg-danger");
-}
-
-function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
+/** Bind the page forms, email lists and buttons. */
 function init() {
     parseEmails(document.getElementById("allowed-email-list"));
-    document.querySelectorAll(".email-input").forEach(function (input) {
-        input.addEventListener("keydown", function (e) {
-            if (e.key === "Enter" || e.key === " " || e.key === ",") {
-                e.preventDefault();
-                var email = this.value.trim().replace(/,$/, "");
-                if (email && isValidEmail(email)) { createEmailChip(email, this); this.value = ""; }
-            }
-        });
-        input.addEventListener("paste", function (e) {
-            e.preventDefault();
-            var clipboardData = (e.clipboardData || window.clipboardData).getData("text");
-            clipboardData.split(/[\s,]+/).forEach(function (email) {
-                email = email.trim();
-                if (email && isValidEmail(email)) createEmailChip(email, input);
-            });
-            input.value = "";
-        });
-    });
+    bindEmailInputs();
     document.querySelectorAll("form[id$='-form']").forEach(function (form) {
         form.addEventListener("submit", function (e) {
             if (form.id === "grant-access-form") {
