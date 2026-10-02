@@ -30,6 +30,7 @@ from medperf.web_ui.security_check import router as login_router
 from medperf.web_ui.events import router as events_router
 from medperf.web_ui.medperf_login import router as medperf_login
 from medperf.web_ui.settings import router as settings_router
+from medperf.web_ui.support import router as support_router
 from medperf.web_ui.auth import wrap_openapi, NotAuthenticatedException, security_token
 import medperf.help_texts as help_texts
 
@@ -69,6 +70,7 @@ web_app.include_router(login_router)
 web_app.include_router(events_router)
 web_app.include_router(medperf_login)
 web_app.include_router(settings_router, prefix="/settings")
+web_app.include_router(support_router, prefix="/api/support")
 
 static_folder_path = Path(resources.files("medperf.web_ui")) / "static"
 

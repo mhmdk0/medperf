@@ -42,6 +42,7 @@ ALLOWED_PATHS = [
     "/api/running_tasks",
     "/api/task_history",
     "/api/stop_task",
+    "/api/support",
     "/containers/auto_access_logs",
 ]
 
