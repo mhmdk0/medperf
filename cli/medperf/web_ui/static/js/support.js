@@ -42,14 +42,9 @@ function buildSupportEmailBody(info, description) {
     return body;
 }
 
-/** The support recipients configured on the server (config.webui_support_email, comma-separated). */
-function getSupportRecipients(info) {
-    return (info.email || "").split(",").map(function (email) { return email.trim(); }).filter(Boolean);
-}
-
 function buildSupportMailto(info, description) {
     // Each address is encoded separately: the commas separating them (and the @) must stay literal
-    var to = getSupportRecipients(info).map(function (email) { return encodeURIComponent(email).replace(/%40/g, "@"); }).join(",");
+    var to = (info.emails || []).map(function (email) { return encodeURIComponent(email).replace(/%40/g, "@"); }).join(",");
     return "mailto:" + to +
         "?subject=" + encodeURIComponent(SUPPORT_EMAIL_SUBJECT) +
         "&body=" + encodeURIComponent(buildSupportEmailBody(info, description));
@@ -57,7 +52,7 @@ function buildSupportMailto(info, description) {
 
 function showSupportModal(info) {
     var logText = (info.log_lines || []).join("\n") || "No web UI logs were found.";
-    var recipients = getSupportRecipients(info);
+    var recipients = info.emails || [];
     var recipientNote = recipients.length
         ? "The draft will be addressed to <strong>" + escapeHtml(recipients.join(", ")) + "</strong>."
         : "No support email is configured: enter the recipient in the draft.";

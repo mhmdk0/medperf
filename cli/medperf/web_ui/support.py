@@ -58,7 +58,7 @@ def support_info(current_user: bool = Depends(check_user_api)):
         logger.exception(e)
         log_lines = []
     return {
-        "email": config.webui_support_email,
+        "emails": config.webui_support_emails,
         "environment": get_environment_details(),
         "log_file": log_file,
         "log_lines": [strip_ansi(line) for line in log_lines],

@@ -20,13 +20,13 @@ def test_read_last_lines_of_missing_file_is_empty(fs):
 def test_support_info_returns_clean_latest_log_lines(fs, mocker):
     mocker.patch.object(config, "logs_storage", "/logs")
     mocker.patch.object(config, "webui_support_log_lines", 2)
-    mocker.patch.object(config, "webui_support_email", "support@example.com")
+    mocker.patch.object(config, "webui_support_emails", ["support@example.com"])
     log_file = os.path.join("/logs", config.webui_log_file)
     fs.create_file(log_file, contents="old\n\x1b[31merror\x1b[0m\nlast\n")
 
     info = support.support_info(current_user=True)
 
-    assert info["email"] == "support@example.com"
+    assert info["emails"] == ["support@example.com"]
     assert info["log_file"] == log_file
     assert info["log_lines"] == ["error", "last"]
     assert info["environment"]["MedPerf version"]
