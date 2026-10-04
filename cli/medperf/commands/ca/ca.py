@@ -16,25 +16,25 @@ app = typer.Typer()
 @app.command("submit")
 @clean_except
 def submit(
-    name: str = typer.Option(..., "--name", "-n", help=help_texts.ca.name),
+    name: str = typer.Option(..., "--name", "-n", help=help_texts.CA.name),
     config_path: str = typer.Option(
         ...,
         "--config-path",
         "-c",
-        help=help_texts.ca.config_path,
+        help=help_texts.CA.config_path,
     ),
     ca_mlcube: int = typer.Option(
-        ..., "--ca-container", help=help_texts.ca.ca_container
+        ..., "--ca-container", help=help_texts.CA.ca_container
     ),
     client_mlcube: int = typer.Option(
         ...,
         "--client-container",
-        help=help_texts.ca.client_container,
+        help=help_texts.CA.client_container,
     ),
     server_mlcube: int = typer.Option(
         ...,
         "--server-container",
-        help=help_texts.ca.server_container,
+        help=help_texts.CA.server_container,
     ),
 ):
     """Submits a ca"""
@@ -46,9 +46,9 @@ def submit(
 @clean_except
 def list(
     unregistered: bool = typer.Option(
-        False, "--unregistered", help=help_texts.ca.ls_unregistered
+        False, "--unregistered", help=help_texts.CA.ls_unregistered
     ),
-    mine: bool = typer.Option(False, "--mine", help=help_texts.ca.ls_mine),
+    mine: bool = typer.Option(False, "--mine", help=help_texts.CA.ls_mine),
 ):
     """List CAs"""
     EntityList.run(
@@ -62,28 +62,28 @@ def list(
 @app.command("view")
 @clean_except
 def view(
-    entity_id: Optional[int] = typer.Argument(None, help=help_texts.ca.id),
+    entity_id: Optional[int] = typer.Argument(None, help=help_texts.CA.id),
     format: str = typer.Option(
         "yaml",
         "-f",
         "--format",
-        help=help_texts.common.format,
+        help=help_texts.Common.format,
     ),
     unregistered: bool = typer.Option(
         False,
         "--unregistered",
-        help=help_texts.ca.view_unregistered,
+        help=help_texts.CA.view_unregistered,
     ),
     mine: bool = typer.Option(
         False,
         "--mine",
-        help=help_texts.ca.view_mine,
+        help=help_texts.CA.view_mine,
     ),
     output: str = typer.Option(
         None,
         "--output",
         "-o",
-        help=help_texts.common.output,
+        help=help_texts.Common.output,
     ),
 ):
     """Displays the information of one or more CAs"""

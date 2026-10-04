@@ -15,15 +15,15 @@ app = typer.Typer()
 @clean_except
 def list(
     benchmark: bool = typer.Option(
-        False, "-b", help=help_texts.association.ls_benchmark
+        False, "-b", help=help_texts.Association.ls_benchmark
     ),
     training_exp: bool = typer.Option(
-        False, "-t", help=help_texts.association.ls_training_exp
+        False, "-t", help=help_texts.Association.ls_training_exp
     ),
-    dataset: bool = typer.Option(False, "-d", help=help_texts.association.ls_dataset),
-    model: bool = typer.Option(False, "-m", help=help_texts.association.ls_model),
+    dataset: bool = typer.Option(False, "-d", help=help_texts.Association.ls_dataset),
+    model: bool = typer.Option(False, "-m", help=help_texts.Association.ls_model),
     approval_status: str = typer.Option(
-        None, "--approval-status", help=help_texts.association.approval_status
+        None, "--approval-status", help=help_texts.Association.approval_status
     ),
 ):
     """Display all associations related to the current user.
@@ -39,15 +39,15 @@ def list(
 @clean_except
 def approve(
     benchmark_uid: int = typer.Option(
-        None, "--benchmark", "-b", help=help_texts.benchmark.uid
+        None, "--benchmark", "-b", help=help_texts.Benchmark.uid
     ),
     training_exp_uid: int = typer.Option(
-        None, "--training_exp", "-t", help=help_texts.training.uid
+        None, "--training_exp", "-t", help=help_texts.Training.uid
     ),
     dataset_uid: int = typer.Option(
-        None, "--dataset", "-d", help=help_texts.dataset.uid
+        None, "--dataset", "-d", help=help_texts.Dataset.uid
     ),
-    model_uid: int = typer.Option(None, "--model", "-m", help=help_texts.model.uid),
+    model_uid: int = typer.Option(None, "--model", "-m", help=help_texts.Model.uid),
 ):
     """Approves an association between a benchmark or a training experiment
     and a dataset or model
@@ -72,15 +72,15 @@ def approve(
 @clean_except
 def reject(
     benchmark_uid: int = typer.Option(
-        None, "--benchmark", "-b", help=help_texts.benchmark.uid
+        None, "--benchmark", "-b", help=help_texts.Benchmark.uid
     ),
     training_exp_uid: int = typer.Option(
-        None, "--training_exp", "-t", help=help_texts.training.uid
+        None, "--training_exp", "-t", help=help_texts.Training.uid
     ),
     dataset_uid: int = typer.Option(
-        None, "--dataset", "-d", help=help_texts.dataset.uid
+        None, "--dataset", "-d", help=help_texts.Dataset.uid
     ),
-    model_uid: int = typer.Option(None, "--model", "-m", help=help_texts.model.uid),
+    model_uid: int = typer.Option(None, "--model", "-m", help=help_texts.Model.uid),
 ):
     """Rejects an association between a benchmark or a training experiment
     and a dataset or model
@@ -105,11 +105,11 @@ def reject(
 @clean_except
 def set_priority(
     benchmark_uid: int = typer.Option(
-        ..., "--benchmark", "-b", help=help_texts.benchmark.uid
+        ..., "--benchmark", "-b", help=help_texts.Benchmark.uid
     ),
-    model_uid: int = typer.Option(..., "--model", "-m", help=help_texts.model.uid),
+    model_uid: int = typer.Option(..., "--model", "-m", help=help_texts.Model.uid),
     priority: int = typer.Option(
-        ..., "--priority", "-p", help=help_texts.association.priority
+        ..., "--priority", "-p", help=help_texts.Association.priority
     ),
 ):
     """Updates the priority of a benchmark-model association. Model priorities within

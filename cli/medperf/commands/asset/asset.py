@@ -14,12 +14,12 @@ app = typer.Typer()
 @clean_except
 def list(
     unregistered: bool = typer.Option(
-        False, "--unregistered", help=help_texts.asset.ls_unregistered
+        False, "--unregistered", help=help_texts.Asset.ls_unregistered
     ),
-    mine: bool = typer.Option(False, "--mine", help=help_texts.asset.ls_mine),
-    name: str = typer.Option(None, "--name", "-n", help=help_texts.asset.name_filter),
-    owner: int = typer.Option(None, "--owner", help=help_texts.common.owner_filter),
-    state: str = typer.Option(None, "--state", help=help_texts.common.state_filter),
+    mine: bool = typer.Option(False, "--mine", help=help_texts.Asset.ls_mine),
+    name: str = typer.Option(None, "--name", "-n", help=help_texts.Asset.name_filter),
+    owner: int = typer.Option(None, "--owner", help=help_texts.Common.owner_filter),
+    state: str = typer.Option(None, "--state", help=help_texts.Common.state_filter),
 ):
     """List assets"""
     EntityList.run(
@@ -36,28 +36,28 @@ def list(
 @app.command("view")
 @clean_except
 def view(
-    entity_id: Optional[int] = typer.Argument(None, help=help_texts.asset.id),
+    entity_id: Optional[int] = typer.Argument(None, help=help_texts.Asset.id),
     format: str = typer.Option(
         "yaml",
         "-f",
         "--format",
-        help=help_texts.common.format,
+        help=help_texts.Common.format,
     ),
     unregistered: bool = typer.Option(
         False,
         "--unregistered",
-        help=help_texts.asset.view_unregistered,
+        help=help_texts.Asset.view_unregistered,
     ),
     mine: bool = typer.Option(
         False,
         "--mine",
-        help=help_texts.asset.view_mine,
+        help=help_texts.Asset.view_mine,
     ),
     output: str = typer.Option(
         None,
         "--output",
         "-o",
-        help=help_texts.common.output,
+        help=help_texts.Common.output,
     ),
 ):
     """Displays the information of one or more assets"""

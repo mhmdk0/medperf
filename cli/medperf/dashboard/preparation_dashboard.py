@@ -531,19 +531,19 @@ def build_app(
 @t_app.command()
 def main(
     benchmark_id: int = Option(
-        ..., "-b", "--benchmark", help=help_texts.dashboard.benchmark_id
+        ..., "-b", "--benchmark", help=help_texts.Dashboard.benchmark_id
     ),
     stages_path: str = Option(
-        ..., "-s", "--stages", help=help_texts.dashboard.stages_path
+        ..., "-s", "--stages", help=help_texts.Dashboard.stages_path
     ),
     institutions_path: str = Option(
         ...,
         "-i",
         "--institutions",
-        help=help_texts.dashboard.institutions_path,
+        help=help_texts.Dashboard.institutions_path,
     ),
     out_path: str = Option(
-        None, "-o", "--out-path", help=help_texts.dashboard.out_path
+        None, "-o", "--out-path", help=help_texts.Dashboard.out_path
     ),
 ):
     app = build_app(benchmark_id, stages_path, institutions_path, out_path)

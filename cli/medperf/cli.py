@@ -30,53 +30,53 @@ from medperf.logging.utils import log_machine_details
 import medperf.help_texts as help_texts
 
 app = typer.Typer()
-app.add_typer(mlcube.app, name="mlcube", help=help_texts.groups.mlcube)
-app.add_typer(mlcube.app, name="container", help=help_texts.groups.container)
-app.add_typer(execution.app, name="result", help=help_texts.groups.result)
-app.add_typer(dataset.app, name="dataset", help=help_texts.groups.dataset)
-app.add_typer(benchmark.app, name="benchmark", help=help_texts.groups.benchmark)
-app.add_typer(association.app, name="association", help=help_texts.groups.association)
-app.add_typer(profile.app, name="profile", help=help_texts.groups.profile)
-app.add_typer(compatibility_test.app, name="test", help=help_texts.groups.test)
-app.add_typer(auth.app, name="auth", help=help_texts.groups.auth)
-app.add_typer(storage.app, name="storage", help=help_texts.groups.storage)
-app.add_typer(training.app, name="training", help=help_texts.groups.training)
-app.add_typer(aggregator.app, name="aggregator", help=help_texts.groups.aggregator)
-app.add_typer(ca.app, name="ca", help=help_texts.groups.ca)
-app.add_typer(certificate.app, name="certificate", help=help_texts.groups.certificate)
-app.add_typer(asset.app, name="asset", help=help_texts.groups.asset)
-app.add_typer(model_cmds.app, name="model", help=help_texts.groups.model)
-app.add_typer(cc_cmds.app, name="confidential", help=help_texts.groups.confidential)
-app.add_typer(web_ui.app, name="web-ui", help=help_texts.groups.web_ui)
+app.add_typer(mlcube.app, name="mlcube", help=help_texts.Groups.mlcube)
+app.add_typer(mlcube.app, name="container", help=help_texts.Groups.container)
+app.add_typer(execution.app, name="result", help=help_texts.Groups.result)
+app.add_typer(dataset.app, name="dataset", help=help_texts.Groups.dataset)
+app.add_typer(benchmark.app, name="benchmark", help=help_texts.Groups.benchmark)
+app.add_typer(association.app, name="association", help=help_texts.Groups.association)
+app.add_typer(profile.app, name="profile", help=help_texts.Groups.profile)
+app.add_typer(compatibility_test.app, name="test", help=help_texts.Groups.test)
+app.add_typer(auth.app, name="auth", help=help_texts.Groups.auth)
+app.add_typer(storage.app, name="storage", help=help_texts.Groups.storage)
+app.add_typer(training.app, name="training", help=help_texts.Groups.training)
+app.add_typer(aggregator.app, name="aggregator", help=help_texts.Groups.aggregator)
+app.add_typer(ca.app, name="ca", help=help_texts.Groups.ca)
+app.add_typer(certificate.app, name="certificate", help=help_texts.Groups.certificate)
+app.add_typer(asset.app, name="asset", help=help_texts.Groups.asset)
+app.add_typer(model_cmds.app, name="model", help=help_texts.Groups.model)
+app.add_typer(cc_cmds.app, name="confidential", help=help_texts.Groups.confidential)
+app.add_typer(web_ui.app, name="web-ui", help=help_texts.Groups.web_ui)
 
 
 @app.command("run")
 @clean_except
 def execute(
     benchmark_uid: int = typer.Option(
-        ..., "--benchmark", "-b", help=help_texts.benchmark.uid
+        ..., "--benchmark", "-b", help=help_texts.Benchmark.uid
     ),
     data_uid: int = typer.Option(
-        ..., "--data_uid", "-d", help=help_texts.dataset.registered_uid
+        ..., "--data_uid", "-d", help=help_texts.Dataset.registered_uid
     ),
     model_uid: int = typer.Option(
-        ..., "--model_uid", "-m", help=help_texts.result.model_uid
+        ..., "--model_uid", "-m", help=help_texts.Result.model_uid
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
     ignore_model_errors: bool = typer.Option(
         False,
         "--ignore-model-errors",
-        help=help_texts.common.ignore_model_errors,
+        help=help_texts.Common.ignore_model_errors,
     ),
     no_cache: bool = typer.Option(
         False,
         "--no-cache",
-        help=help_texts.common.no_cache,
+        help=help_texts.Common.no_cache,
     ),
     new_result: bool = typer.Option(
         False,
         "--new-result",
-        help=help_texts.result.new_result,
+        help=help_texts.Result.new_result,
     ),
 ):
     """Runs the benchmark execution step for a given benchmark, prepared dataset and model"""

@@ -1,13 +1,13 @@
 """Help texts of the MedPerf CLI and web UI.
 
-This module is the single source of truth for the help texts of CLI commands
+This module is the single source of truth for the help texts of CLI commands'
 options and arguments. The web UI uses the same texts for its tooltips (the
 module is available in the templates as `help_texts`), together with the
 web-UI-only tooltips and form placeholders defined at the end of this file.
 
 Usage:
-    from medperf import help_texts
-    typer.Option(..., "--name", help=help_texts.benchmark.name)
+    import medperf.help_texts as help_texts
+    typer.Option(..., "--name", help=help_texts.Benchmark.name)
 """
 
 import medperf.config as config
@@ -29,7 +29,7 @@ def _view_mine(entities: str, entity: str) -> str:
     return f"Display current-user {entities} if {entity} ID is not provided"
 
 
-class groups:
+class Groups:
     """Help texts of the CLI command groups"""
 
     mlcube = "Manage containers (deprecated alias of 'container')"
@@ -52,7 +52,7 @@ class groups:
     web_ui = "Local web UI to manage MedPerf entities"
 
 
-class common:
+class Common:
     """Help texts shared by many commands"""
 
     format = "Format to display contents. Available formats: [yaml, json]"
@@ -73,7 +73,7 @@ class common:
     )
 
 
-class global_options:
+class GlobalOptions:
     """Help texts of the configuration options available to all commands"""
 
     server = "URL of a hosted MedPerf API instance"
@@ -121,7 +121,7 @@ class global_options:
     )
 
 
-class benchmark:
+class Benchmark:
     uid = "UID of the desired benchmark"
     id = "Benchmark ID"
     # ls
@@ -180,7 +180,7 @@ class benchmark:
     committee_emails = "Space-separated list of committee member emails"
 
 
-class dataset:
+class Dataset:
     uid = "Dataset UID"
     registered_uid = "Registered dataset UID"
     id = "Dataset ID"
@@ -236,7 +236,7 @@ class dataset:
     )
 
 
-class access:
+class Access:
     """Help texts of the access management commands of private models/containers"""
 
     model_id = "Private model for which access will be granted"
@@ -256,7 +256,7 @@ class access:
     key_id = "ID of the key to delete"
 
 
-class container:
+class Container:
     id = "Container ID"
     # run_test
     run_test_config = "Path to the container config file"
@@ -309,7 +309,7 @@ class container:
     check_access_id = "ID of the container to check your access to"
 
 
-class asset:
+class Asset:
     id = "Asset ID"
     # web UI registration
     name = "Name of the asset"
@@ -324,18 +324,18 @@ class asset:
     view_mine = _view_mine("assets", "asset")
 
 
-class model:
+class Model:
     uid = "Model UID"
     id = "Model ID"
     # submit
     name = "Name of the model"
     operational = "Submit the model as OPERATIONAL"
     additional_file_cli = (
-        f"{container.additional_file}. "
+        f"{Container.additional_file}. "
         "See `medperf container submit --help` for the supported identifier formats"
     )
-    asset_path = asset.path
-    asset_url = asset.url
+    asset_path = Asset.path
+    asset_url = Asset.url
     # ls
     ls_unregistered = _ls_unregistered("models")
     ls_mine = _ls_mine("models")
@@ -351,7 +351,7 @@ class model:
     check_access_id = "ID of the model to check your access to"
 
 
-class result:
+class Result:
     uid = "UID of the result"
     id = "Result ID"
     model_uid = "UID of the model to execute"
@@ -370,7 +370,7 @@ class result:
     view_mine = _view_mine("results", "result")
 
 
-class association:
+class Association:
     # ls
     ls_benchmark = "List benchmark associations"
     ls_training_exp = "List training experiment associations"
@@ -384,7 +384,7 @@ class association:
     )
 
 
-class aggregator:
+class Aggregator:
     id = "Aggregator ID"
     # submit
     name = "Name of the aggregator"
@@ -408,7 +408,7 @@ class aggregator:
     view_mine = _view_mine("aggregators", "aggregator")
 
 
-class ca:
+class CA:
     id = "CA ID"
     # submit
     name = "Name of the CA"
@@ -424,7 +424,7 @@ class ca:
     view_mine = _view_mine("CAs", "CA")
 
 
-class certificate:
+class Certificate:
     get_key_type = "Type of certificate to get"
     submit_key_type = "Type of certificate to submit"
     delete_key_type = "Type of certificate to delete"
@@ -433,7 +433,7 @@ class certificate:
     aggregator_id = "UID of the aggregator you wish to get a certificate for"
 
 
-class compatibility_test:
+class CompatibilityTest:
     id = "Test report ID"
     benchmark_uid = "UID of the benchmark to test. Optional"
     data_uid = (
@@ -462,25 +462,25 @@ class compatibility_test:
     )
 
 
-class confidential:
+class Confidential:
     config_file = "Path to the confidential computing configuration file"
     policy_file = "Path to the confidential computing policy file"
 
 
-class auth:
+class Auth:
     synapse_token = "Personal access token to login with"
     email = "The email associated with your account"
 
 
-class profile:
+class Profile:
     name = "Name of the profile"
 
 
-class storage:
+class Storage:
     target_path = "Target path"
 
 
-class training:
+class Training:
     uid = "UID of the training experiment"
     id = "Training experiment ID"
     # submit
@@ -523,18 +523,18 @@ class training:
     view_mine = _view_mine("training experiments", "experiment")
 
 
-class dashboard:
+class Dashboard:
     benchmark_id = "Benchmark ID to inspect preparation from"
     stages_path = "Path to the stages CSV file"
     institutions_path = "Path to a CSV file containing institution-email information"
     out_path = "Location to store progress CSVs"
 
 
-class web_ui:
+class WebUI:
     port = "Port to use"
 
 
-class webui_tooltips:
+class WebUITooltips:
     """Tooltips used only by the web UI (the others reuse the CLI help texts)"""
 
     dataset_submit_as_prepared = "Check this box if the dataset is already prepared"
@@ -551,7 +551,7 @@ class webui_tooltips:
     )
 
 
-class webui_placeholders:
+class WebUIPlaceholders:
     """Placeholders of the web UI forms inputs"""
 
     # benchmarks

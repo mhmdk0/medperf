@@ -179,7 +179,7 @@ app = typer.Typer()
 @app.command("run")
 @clean_except
 def run(
-    port: int = typer.Option(8100, "--port", help=help_texts.web_ui.port),
+    port: int = typer.Option(8100, "--port", help=help_texts.WebUI.port),
 ):
     """Runs a local web UI"""
     import uvicorn

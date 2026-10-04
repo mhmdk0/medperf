@@ -23,20 +23,20 @@ app = typer.Typer()
 @clean_except
 def list(
     unregistered: bool = typer.Option(
-        False, "--unregistered", help=help_texts.dataset.ls_unregistered
+        False, "--unregistered", help=help_texts.Dataset.ls_unregistered
     ),
-    mine: bool = typer.Option(False, "--mine", help=help_texts.dataset.ls_mine),
+    mine: bool = typer.Option(False, "--mine", help=help_texts.Dataset.ls_mine),
     mlcube: int = typer.Option(
         None,
         "--data-preparation-container",
         "-m",
-        help=help_texts.dataset.data_preparation_container_filter,
+        help=help_texts.Dataset.data_preparation_container_filter,
     ),
-    name: str = typer.Option(None, "--name", help=help_texts.common.name_filter),
-    owner: int = typer.Option(None, "--owner", help=help_texts.common.owner_filter),
-    state: str = typer.Option(None, "--state", help=help_texts.common.state_filter),
+    name: str = typer.Option(None, "--name", help=help_texts.Common.name_filter),
+    owner: int = typer.Option(None, "--owner", help=help_texts.Common.owner_filter),
+    state: str = typer.Option(None, "--state", help=help_texts.Common.state_filter),
     is_valid: bool = typer.Option(
-        None, "--valid/--invalid", help=help_texts.common.valid_filter
+        None, "--valid/--invalid", help=help_texts.Common.valid_filter
     ),
 ):
     """List datasets"""
@@ -64,33 +64,33 @@ def list(
 @clean_except
 def submit(
     benchmark_uid: int = typer.Option(
-        None, "--benchmark", "-b", help=help_texts.dataset.benchmark_uid
+        None, "--benchmark", "-b", help=help_texts.Dataset.benchmark_uid
     ),
     data_prep_uid: int = typer.Option(
-        None, "--data_prep", "-p", help=help_texts.dataset.data_preparation_container
+        None, "--data_prep", "-p", help=help_texts.Dataset.data_preparation_container
     ),
     data_path: str = typer.Option(
-        ..., "--data_path", "-d", help=help_texts.dataset.data_path
+        ..., "--data_path", "-d", help=help_texts.Dataset.data_path
     ),
     labels_path: str = typer.Option(
-        ..., "--labels_path", "-l", help=help_texts.dataset.labels_path
+        ..., "--labels_path", "-l", help=help_texts.Dataset.labels_path
     ),
     metadata_path: str = typer.Option(
         None,
         "--metadata_path",
         "-m",
-        help=help_texts.dataset.metadata_path,
+        help=help_texts.Dataset.metadata_path,
     ),
-    name: str = typer.Option(..., "--name", help=help_texts.dataset.name),
+    name: str = typer.Option(..., "--name", help=help_texts.Dataset.name),
     description: str = typer.Option(
-        None, "--description", help=help_texts.dataset.description
+        None, "--description", help=help_texts.Dataset.description
     ),
-    location: str = typer.Option(None, "--location", help=help_texts.dataset.location),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    location: str = typer.Option(None, "--location", help=help_texts.Dataset.location),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
     submit_as_prepared: bool = typer.Option(
         False,
         "--submit-as-prepared",
-        help=help_texts.dataset.submit_as_prepared,
+        help=help_texts.Dataset.submit_as_prepared,
     ),
 ):
     """Submits a Dataset instance to the backend"""
@@ -113,11 +113,11 @@ def submit(
 @app.command("prepare")
 @clean_except
 def prepare(
-    data_uid: str = typer.Option(..., "--data_uid", "-d", help=help_texts.dataset.uid),
+    data_uid: str = typer.Option(..., "--data_uid", "-d", help=help_texts.Dataset.uid),
     approval: bool = typer.Option(
         False,
         "-y",
-        help=help_texts.dataset.prepare_approval,
+        help=help_texts.Dataset.prepare_approval,
     ),
 ):
     """Runs the Data preparation step for a raw dataset"""
@@ -129,7 +129,7 @@ def prepare(
 @app.command("check")
 @clean_except
 def check(
-    data_uid: str = typer.Option(..., "--data_uid", "-d", help=help_texts.dataset.uid),
+    data_uid: str = typer.Option(..., "--data_uid", "-d", help=help_texts.Dataset.uid),
 ):
     """Checks if the hash of the dataset matches the one registered on the server"""
     ui = config.ui
@@ -140,9 +140,9 @@ def check(
 @app.command("set_operational")
 @clean_except
 def set_operational(
-    data_uid: str = typer.Option(..., "--data_uid", "-d", help=help_texts.dataset.uid),
+    data_uid: str = typer.Option(..., "--data_uid", "-d", help=help_texts.Dataset.uid),
     approval: bool = typer.Option(
-        False, "-y", help=help_texts.dataset.set_operational_approval
+        False, "-y", help=help_texts.Dataset.set_operational_approval
     ),
 ):
     """Marks a dataset as Operational"""
@@ -155,19 +155,19 @@ def set_operational(
 @clean_except
 def associate(
     data_uid: int = typer.Option(
-        ..., "--data_uid", "-d", help=help_texts.dataset.registered_uid
+        ..., "--data_uid", "-d", help=help_texts.Dataset.registered_uid
     ),
     benchmark_uid: int = typer.Option(
-        None, "--benchmark_uid", "-b", help=help_texts.benchmark.uid
+        None, "--benchmark_uid", "-b", help=help_texts.Benchmark.uid
     ),
     training_exp_uid: int = typer.Option(
-        None, "--training_exp_uid", "-t", help=help_texts.training.uid
+        None, "--training_exp_uid", "-t", help=help_texts.Training.uid
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
     no_cache: bool = typer.Option(
         False,
         "--no-cache",
-        help=help_texts.dataset.associate_no_cache,
+        help=help_texts.Dataset.associate_no_cache,
     ),
 ):
     """Associate a registered dataset with a specific benchmark or experiment."""
@@ -182,24 +182,24 @@ def associate(
 @clean_except
 def train(
     training_exp_id: int = typer.Option(
-        ..., "--training_exp_id", "-t", help=help_texts.training.uid
+        ..., "--training_exp_id", "-t", help=help_texts.Training.uid
     ),
     data_uid: int = typer.Option(
-        ..., "--data_uid", "-d", help=help_texts.dataset.registered_uid
+        ..., "--data_uid", "-d", help=help_texts.Dataset.registered_uid
     ),
     overwrite: bool = typer.Option(
-        False, "--overwrite", help=help_texts.common.overwrite
+        False, "--overwrite", help=help_texts.Common.overwrite
     ),
     restart_on_failure: bool = typer.Option(
         False,
         "--restart_on_failure",
-        help=help_texts.dataset.restart_on_failure,
+        help=help_texts.Dataset.restart_on_failure,
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
     skip_restart_on_failure_prompt: bool = typer.Option(
         False,
         "--skip_restart_on_failure_prompt",
-        help=help_texts.dataset.skip_restart_on_failure_prompt,
+        help=help_texts.Dataset.skip_restart_on_failure_prompt,
     ),
 ):
     """Runs training"""
@@ -217,28 +217,28 @@ def train(
 @app.command("view")
 @clean_except
 def view(
-    entity_id: Optional[str] = typer.Argument(None, help=help_texts.dataset.id),
+    entity_id: Optional[str] = typer.Argument(None, help=help_texts.Dataset.id),
     format: str = typer.Option(
         "yaml",
         "-f",
         "--format",
-        help=help_texts.common.format,
+        help=help_texts.Common.format,
     ),
     unregistered: bool = typer.Option(
         False,
         "--unregistered",
-        help=help_texts.dataset.view_unregistered,
+        help=help_texts.Dataset.view_unregistered,
     ),
     mine: bool = typer.Option(
         False,
         "--mine",
-        help=help_texts.dataset.view_mine,
+        help=help_texts.Dataset.view_mine,
     ),
     output: str = typer.Option(
         None,
         "--output",
         "-o",
-        help=help_texts.common.output,
+        help=help_texts.Common.output,
     ),
 ):
     """Displays the information of one or more datasets"""
@@ -249,18 +249,18 @@ def view(
 @clean_except
 def import_dataset(
     data_uid: str = typer.Option(
-        ..., "--data_uid", "-d", help=help_texts.dataset.import_uid
+        ..., "--data_uid", "-d", help=help_texts.Dataset.import_uid
     ),
     input_path: str = typer.Option(
         ...,
         "--input",
         "-i",
-        help=help_texts.dataset.import_input_path,
+        help=help_texts.Dataset.import_input_path,
     ),
     raw_path: str = typer.Option(
         None,
         "--raw_dataset_path",
-        help=help_texts.dataset.import_raw_path,
+        help=help_texts.Dataset.import_raw_path,
     ),
 ):
     """Imports dataset files from specified tar.gz file."""
@@ -272,13 +272,13 @@ def import_dataset(
 @clean_except
 def export_dataset(
     data_uid: str = typer.Option(
-        ..., "--data_uid", "-d", help=help_texts.dataset.export_uid
+        ..., "--data_uid", "-d", help=help_texts.Dataset.export_uid
     ),
     output: str = typer.Option(
         ...,
         "--output",
         "-o",
-        help=help_texts.dataset.export_output_path,
+        help=help_texts.Dataset.export_output_path,
     ),
 ):
     """Exports dataset files to a tar.gz file in the specified output folder."""

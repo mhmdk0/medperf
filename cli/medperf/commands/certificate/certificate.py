@@ -17,10 +17,10 @@ app = typer.Typer()
 @clean_except
 def get_client_certificate(
     key_type: CryptoKeyType = typer.Option(
-        ..., "--key_type", help=help_texts.certificate.get_key_type
+        ..., "--key_type", help=help_texts.Certificate.get_key_type
     ),
     overwrite: bool = typer.Option(
-        False, "--overwrite", help=help_texts.certificate.overwrite
+        False, "--overwrite", help=help_texts.Certificate.overwrite
     ),
 ):
     """Get a client certificate."""
@@ -35,10 +35,10 @@ def get_server_certificate(
         ...,
         "--aggregator_id",
         "-a",
-        help=help_texts.certificate.aggregator_id,
+        help=help_texts.Certificate.aggregator_id,
     ),
     overwrite: bool = typer.Option(
-        False, "--overwrite", help=help_texts.certificate.overwrite
+        False, "--overwrite", help=help_texts.Certificate.overwrite
     ),
 ):
     """Get a server certificate."""
@@ -50,9 +50,9 @@ def get_server_certificate(
 @clean_except
 def submit_client_certificate(
     key_type: CryptoKeyType = typer.Option(
-        ..., "--key_type", help=help_texts.certificate.submit_key_type
+        ..., "--key_type", help=help_texts.Certificate.submit_key_type
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
 ):
     """
     Upload a client certificate to the Medperf Server.
@@ -67,9 +67,9 @@ def submit_client_certificate(
 @clean_except
 def delete_client_certificate(
     key_type: CryptoKeyType = typer.Option(
-        ..., "--key_type", help=help_texts.certificate.delete_key_type
+        ..., "--key_type", help=help_texts.Certificate.delete_key_type
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
 ):
     """
     Invalidate a client certificate.
@@ -82,7 +82,7 @@ def delete_client_certificate(
 @clean_except
 def check_client_certificate(
     key_type: CryptoKeyType = typer.Option(
-        ..., "--key_type", help=help_texts.certificate.check_key_type
+        ..., "--key_type", help=help_texts.Certificate.check_key_type
     ),
 ):
     """

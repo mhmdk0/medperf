@@ -62,102 +62,102 @@ def configurable(func: Callable) -> Callable:
     def wrapper(
         *args,
         server: str = typer.Option(
-            config.server, "--server", help=help_texts.global_options.server
+            config.server, "--server", help=help_texts.GlobalOptions.server
         ),
         auth_class: str = typer.Option(
             config.auth_class,
             "--auth_class",
-            help=help_texts.global_options.auth_class,
+            help=help_texts.GlobalOptions.auth_class,
         ),
         auth_domain: str = typer.Option(
             config.auth_domain,
             "--auth_domain",
-            help=help_texts.global_options.auth_domain,
+            help=help_texts.GlobalOptions.auth_domain,
         ),
         auth_jwks_url: str = typer.Option(
             config.auth_jwks_url,
             "--auth_jwks_url",
-            help=help_texts.global_options.auth_jwks_url,
+            help=help_texts.GlobalOptions.auth_jwks_url,
         ),
         auth_idtoken_issuer: str = typer.Option(
             config.auth_idtoken_issuer,
             "--auth_idtoken_issuer",
-            help=help_texts.global_options.auth_idtoken_issuer,
+            help=help_texts.GlobalOptions.auth_idtoken_issuer,
         ),
         auth_client_id: str = typer.Option(
             config.auth_client_id,
             "--auth_client_id",
-            help=help_texts.global_options.auth_client_id,
+            help=help_texts.GlobalOptions.auth_client_id,
         ),
         auth_audience: str = typer.Option(
             config.auth_audience,
             "--auth_audience",
-            help=help_texts.global_options.auth_audience,
+            help=help_texts.GlobalOptions.auth_audience,
         ),
         certificate: str = typer.Option(
             config.certificate,
             "--certificate",
-            help=help_texts.global_options.certificate,
+            help=help_texts.GlobalOptions.certificate,
         ),
         loglevel: str = typer.Option(
             config.loglevel,
             "--loglevel",
-            help=help_texts.global_options.loglevel,
+            help=help_texts.GlobalOptions.loglevel,
         ),
         prepare_timeout: int = typer.Option(
             config.prepare_timeout,
             "--prepare_timeout",
-            help=help_texts.global_options.prepare_timeout,
+            help=help_texts.GlobalOptions.prepare_timeout,
         ),
         sanity_check_timeout: int = typer.Option(
             config.sanity_check_timeout,
             "--sanity_check_timeout",
-            help=help_texts.global_options.sanity_check_timeout,
+            help=help_texts.GlobalOptions.sanity_check_timeout,
         ),
         statistics_timeout: int = typer.Option(
             config.statistics_timeout,
             "--statistics_timeout",
-            help=help_texts.global_options.statistics_timeout,
+            help=help_texts.GlobalOptions.statistics_timeout,
         ),
         infer_timeout: int = typer.Option(
             config.infer_timeout,
             "--infer_timeout",
-            help=help_texts.global_options.infer_timeout,
+            help=help_texts.GlobalOptions.infer_timeout,
         ),
         evaluate_timeout: int = typer.Option(
             config.evaluate_timeout,
             "--evaluate_timeout",
-            help=help_texts.global_options.evaluate_timeout,
+            help=help_texts.GlobalOptions.evaluate_timeout,
         ),
         container_loglevel: str = typer.Option(
             config.container_loglevel,
             "--container-loglevel",
-            help=help_texts.global_options.container_loglevel,
+            help=help_texts.GlobalOptions.container_loglevel,
         ),
         platform: str = typer.Option(
             config.platform,
             "--platform",
-            help=help_texts.global_options.platform,
+            help=help_texts.GlobalOptions.platform,
         ),
         gpus: str = typer.Option(
             config.gpus,
             "--gpus",
-            help=help_texts.global_options.gpus,
+            help=help_texts.GlobalOptions.gpus,
         ),
         cleanup: bool = typer.Option(
             config.cleanup,
             "--cleanup/--no-cleanup",
-            help=help_texts.global_options.cleanup,
+            help=help_texts.GlobalOptions.cleanup,
         ),
         certificate_authority_id: int = typer.Option(
             config.certificate_authority_id,
             "--certificate_authority_id",
-            help=help_texts.global_options.certificate_authority_id,
+            help=help_texts.GlobalOptions.certificate_authority_id,
         ),
         certificate_authority_fingerprint: str = typer.Option(
             config.certificate_authority_fingerprint,
             "--certificate_authority_fingerprint",
-            help=help_texts.global_options.certificate_authority_fingerprint,
+            help=help_texts.GlobalOptions.certificate_authority_fingerprint,
         ),
         **kwargs,
     ):
@@ -184,57 +184,57 @@ def add_inline_parameters(func: Callable) -> Callable:
         loglevel: str = typer.Option(
             config.loglevel,
             "--loglevel",
-            help=help_texts.global_options.loglevel,
+            help=help_texts.GlobalOptions.loglevel,
         ),
         prepare_timeout: int = typer.Option(
             config.prepare_timeout,
             "--prepare_timeout",
-            help=help_texts.global_options.prepare_timeout,
+            help=help_texts.GlobalOptions.prepare_timeout,
         ),
         sanity_check_timeout: int = typer.Option(
             config.sanity_check_timeout,
             "--sanity_check_timeout",
-            help=help_texts.global_options.sanity_check_timeout,
+            help=help_texts.GlobalOptions.sanity_check_timeout,
         ),
         statistics_timeout: int = typer.Option(
             config.statistics_timeout,
             "--statistics_timeout",
-            help=help_texts.global_options.statistics_timeout,
+            help=help_texts.GlobalOptions.statistics_timeout,
         ),
         infer_timeout: int = typer.Option(
             config.infer_timeout,
             "--infer_timeout",
-            help=help_texts.global_options.infer_timeout,
+            help=help_texts.GlobalOptions.infer_timeout,
         ),
         evaluate_timeout: int = typer.Option(
             config.evaluate_timeout,
             "--evaluate_timeout",
-            help=help_texts.global_options.evaluate_timeout,
+            help=help_texts.GlobalOptions.evaluate_timeout,
         ),
         container_loglevel: str = typer.Option(
             config.container_loglevel,
             "--container-loglevel",
-            help=help_texts.global_options.container_loglevel,
+            help=help_texts.GlobalOptions.container_loglevel,
         ),
         platform: str = typer.Option(
             config.platform,
             "--platform",
-            help=help_texts.global_options.platform,
+            help=help_texts.GlobalOptions.platform,
         ),
         gpus: str = typer.Option(
             config.gpus,
             "--gpus",
-            help=help_texts.global_options.gpus_inline,
+            help=help_texts.GlobalOptions.gpus_inline,
         ),
         shm_size: str = typer.Option(
             config.shm_size,
             "--shm-size",
-            help=help_texts.global_options.shm_size,
+            help=help_texts.GlobalOptions.shm_size,
         ),
         cleanup: bool = typer.Option(
             config.cleanup,
             "--cleanup/--no-cleanup",
-            help=help_texts.global_options.cleanup,
+            help=help_texts.GlobalOptions.cleanup,
         ),
         **kwargs,
     ):

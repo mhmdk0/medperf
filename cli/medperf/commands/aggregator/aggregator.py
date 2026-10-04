@@ -17,21 +17,21 @@ app = typer.Typer()
 @app.command("submit")
 @clean_except
 def submit(
-    name: str = typer.Option(..., "--name", "-n", help=help_texts.aggregator.name),
+    name: str = typer.Option(..., "--name", "-n", help=help_texts.Aggregator.name),
     address: str = typer.Option(
-        ..., "--address", "-a", help=help_texts.aggregator.address
+        ..., "--address", "-a", help=help_texts.Aggregator.address
     ),
-    port: int = typer.Option(..., "--port", "-p", help=help_texts.aggregator.port),
+    port: int = typer.Option(..., "--port", "-p", help=help_texts.Aggregator.port),
     admin_port: int = typer.Option(
         ...,
         "--admin-port",
-        help=help_texts.aggregator.admin_port,
+        help=help_texts.Aggregator.admin_port,
     ),
     aggregation_mlcube: int = typer.Option(
         ...,
         "--aggregation-container",
         "-m",
-        help=help_texts.aggregator.aggregation_container,
+        help=help_texts.Aggregator.aggregation_container,
     ),
 ):
     """Submits an aggregator"""
@@ -46,16 +46,16 @@ def run(
         ...,
         "--training_exp_id",
         "-t",
-        help=help_texts.aggregator.start_training_exp_id,
+        help=help_texts.Aggregator.start_training_exp_id,
     ),
     publish_on: str = typer.Option(
         "127.0.0.1",
         "--publish_on",
         "-p",
-        help=help_texts.aggregator.publish_on,
+        help=help_texts.Aggregator.publish_on,
     ),
     overwrite: bool = typer.Option(
-        False, "--overwrite", help=help_texts.common.overwrite
+        False, "--overwrite", help=help_texts.Common.overwrite
     ),
 ):
     """Starts the aggregation server of a training experiment"""
@@ -67,9 +67,9 @@ def run(
 @clean_except
 def list(
     unregistered: bool = typer.Option(
-        False, "--unregistered", help=help_texts.aggregator.ls_unregistered
+        False, "--unregistered", help=help_texts.Aggregator.ls_unregistered
     ),
-    mine: bool = typer.Option(False, "--mine", help=help_texts.aggregator.ls_mine),
+    mine: bool = typer.Option(False, "--mine", help=help_texts.Aggregator.ls_mine),
 ):
     """List aggregators"""
     EntityList.run(
@@ -83,28 +83,28 @@ def list(
 @app.command("view")
 @clean_except
 def view(
-    entity_id: Optional[int] = typer.Argument(None, help=help_texts.aggregator.id),
+    entity_id: Optional[int] = typer.Argument(None, help=help_texts.Aggregator.id),
     format: str = typer.Option(
         "yaml",
         "-f",
         "--format",
-        help=help_texts.common.format,
+        help=help_texts.Common.format,
     ),
     unregistered: bool = typer.Option(
         False,
         "--unregistered",
-        help=help_texts.aggregator.view_unregistered,
+        help=help_texts.Aggregator.view_unregistered,
     ),
     mine: bool = typer.Option(
         False,
         "--mine",
-        help=help_texts.aggregator.view_mine,
+        help=help_texts.Aggregator.view_mine,
     ),
     output: str = typer.Option(
         None,
         "--output",
         "-o",
-        help=help_texts.common.output,
+        help=help_texts.Common.output,
     ),
 ):
     """Displays the information of one or more aggregators"""

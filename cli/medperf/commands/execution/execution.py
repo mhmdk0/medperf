@@ -18,28 +18,28 @@ app = typer.Typer()
 @clean_except
 def create(
     benchmark_uid: int = typer.Option(
-        ..., "--benchmark", "-b", help=help_texts.benchmark.uid
+        ..., "--benchmark", "-b", help=help_texts.Benchmark.uid
     ),
     data_uid: int = typer.Option(
-        ..., "--data_uid", "-d", help=help_texts.dataset.registered_uid
+        ..., "--data_uid", "-d", help=help_texts.Dataset.registered_uid
     ),
     model_uid: int = typer.Option(
-        ..., "--model_uid", "-m", help=help_texts.result.model_uid
+        ..., "--model_uid", "-m", help=help_texts.Result.model_uid
     ),
     ignore_model_errors: bool = typer.Option(
         False,
         "--ignore-model-errors",
-        help=help_texts.common.ignore_model_errors,
+        help=help_texts.Common.ignore_model_errors,
     ),
     no_cache: bool = typer.Option(
         False,
         "--no-cache",
-        help=help_texts.common.no_cache,
+        help=help_texts.Common.no_cache,
     ),
     new_result: bool = typer.Option(
         False,
         "--new-result",
-        help=help_texts.result.new_result,
+        help=help_texts.Result.new_result,
     ),
 ):
     """Runs the benchmark execution step for a given benchmark, prepared dataset and model"""
@@ -57,17 +57,17 @@ def create(
 @app.command("submit")
 @clean_except
 def submit(
-    result_uid: int = typer.Option(None, "--result", "-r", help=help_texts.result.uid),
+    result_uid: int = typer.Option(None, "--result", "-r", help=help_texts.Result.uid),
     benchmark_uid: int = typer.Option(
-        None, "--benchmark", "-b", help=help_texts.benchmark.uid
+        None, "--benchmark", "-b", help=help_texts.Benchmark.uid
     ),
     data_uid: int = typer.Option(
-        None, "--data_uid", "-d", help=help_texts.dataset.registered_uid
+        None, "--data_uid", "-d", help=help_texts.Dataset.registered_uid
     ),
     model_uid: int = typer.Option(
-        None, "--model_uid", "-m", help=help_texts.result.model_uid
+        None, "--model_uid", "-m", help=help_texts.Result.model_uid
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
 ):
     """Submits already obtained results to the server"""
     ResultSubmission.run(
@@ -80,17 +80,17 @@ def submit(
 @clean_except
 def list(
     unregistered: bool = typer.Option(
-        False, "--unregistered", help=help_texts.result.ls_unregistered
+        False, "--unregistered", help=help_texts.Result.ls_unregistered
     ),
-    mine: bool = typer.Option(False, "--mine", help=help_texts.result.ls_mine),
+    mine: bool = typer.Option(False, "--mine", help=help_texts.Result.ls_mine),
     benchmark: int = typer.Option(
-        None, "--benchmark", "-b", help=help_texts.result.benchmark_filter
+        None, "--benchmark", "-b", help=help_texts.Result.benchmark_filter
     ),
     model: int = typer.Option(
-        None, "--model", "-m", help=help_texts.result.model_filter
+        None, "--model", "-m", help=help_texts.Result.model_filter
     ),
     dataset: int = typer.Option(
-        None, "--dataset", "-d", help=help_texts.result.dataset_filter
+        None, "--dataset", "-d", help=help_texts.Result.dataset_filter
     ),
 ):
     """List results"""
@@ -116,31 +116,31 @@ def list(
 @app.command("view")
 @clean_except
 def view(
-    entity_id: Optional[str] = typer.Argument(None, help=help_texts.result.id),
+    entity_id: Optional[str] = typer.Argument(None, help=help_texts.Result.id),
     format: str = typer.Option(
         "yaml",
         "-f",
         "--format",
-        help=help_texts.common.format,
+        help=help_texts.Common.format,
     ),
     unregistered: bool = typer.Option(
         False,
         "--unregistered",
-        help=help_texts.result.view_unregistered,
+        help=help_texts.Result.view_unregistered,
     ),
     mine: bool = typer.Option(
         False,
         "--mine",
-        help=help_texts.result.view_mine,
+        help=help_texts.Result.view_mine,
     ),
     benchmark: int = typer.Option(
-        None, "--benchmark", "-b", help=help_texts.result.benchmark_filter
+        None, "--benchmark", "-b", help=help_texts.Result.benchmark_filter
     ),
     output: str = typer.Option(
         None,
         "--output",
         "-o",
-        help=help_texts.common.output,
+        help=help_texts.Common.output,
     ),
 ):
     """Displays the information of one or more results"""
@@ -152,18 +152,18 @@ def view(
 @app.command("show_local_results")
 @clean_except
 def show_local_results(
-    result_id: int = typer.Argument(..., help=help_texts.result.id),
+    result_id: int = typer.Argument(..., help=help_texts.Result.id),
     format: str = typer.Option(
         "yaml",
         "-f",
         "--format",
-        help=help_texts.common.format,
+        help=help_texts.Common.format,
     ),
     output: str = typer.Option(
         None,
         "--output",
         "-o",
-        help=help_texts.common.output,
+        help=help_texts.Common.output,
     ),
 ):
     """Displays the local results of an execution"""

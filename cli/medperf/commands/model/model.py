@@ -23,48 +23,48 @@ app = typer.Typer()
 @clean_except
 def submit(
     # Model options
-    name: str = typer.Option(..., "--name", "-n", help=help_texts.model.name),
+    name: str = typer.Option(..., "--name", "-n", help=help_texts.Model.name),
     operational: bool = typer.Option(
-        False, "--operational", help=help_texts.model.operational
+        False, "--operational", help=help_texts.Model.operational
     ),
     # Container-backed model options
     container_config_file: str = typer.Option(
         ...,
         "--container-config-file",
         "-m",
-        help=help_texts.container.config_file,
+        help=help_texts.Container.config_file,
     ),
     parameters_file: str = typer.Option(
         None,
         "--parameters-file",
         "-p",
-        help=help_texts.container.parameters_file,
+        help=help_texts.Container.parameters_file,
     ),
     additional_file: str = typer.Option(
         "",
         "--additional-file",
         "-a",
-        help=help_texts.model.additional_file_cli,
+        help=help_texts.Model.additional_file_cli,
     ),
     additional_hash: str = typer.Option(
-        "", "--additional-hash", help=help_texts.container.additional_hash
+        "", "--additional-hash", help=help_texts.Container.additional_hash
     ),
     image_hash: str = typer.Option(
-        "", "--image-hash", help=help_texts.container.image_hash
+        "", "--image-hash", help=help_texts.Container.image_hash
     ),
     decryption_key: Optional[str] = typer.Option(
         None,
         "--decryption-key",
         "--decryption_key",
         "-d",
-        help=help_texts.container.decryption_key,
+        help=help_texts.Container.decryption_key,
     ),
     # Asset-backed model options
     asset_path: Optional[str] = typer.Option(
-        None, "--asset-path", help=help_texts.model.asset_path
+        None, "--asset-path", help=help_texts.Model.asset_path
     ),
     asset_url: Optional[str] = typer.Option(
-        None, "--asset-url", help=help_texts.model.asset_url
+        None, "--asset-url", help=help_texts.Model.asset_url
     ),
 ):
     """Registers a new model to the platform.
@@ -93,9 +93,9 @@ def submit(
 @clean_except
 def list(
     unregistered: bool = typer.Option(
-        False, "--unregistered", help=help_texts.model.ls_unregistered
+        False, "--unregistered", help=help_texts.Model.ls_unregistered
     ),
-    mine: bool = typer.Option(False, "--mine", help=help_texts.model.ls_mine),
+    mine: bool = typer.Option(False, "--mine", help=help_texts.Model.ls_mine),
 ):
     """List models"""
     EntityList.run(
@@ -109,28 +109,28 @@ def list(
 @app.command("view")
 @clean_except
 def view(
-    entity_id: Optional[int] = typer.Argument(None, help=help_texts.model.id),
+    entity_id: Optional[int] = typer.Argument(None, help=help_texts.Model.id),
     format: str = typer.Option(
         "yaml",
         "-f",
         "--format",
-        help=help_texts.common.format,
+        help=help_texts.Common.format,
     ),
     unregistered: bool = typer.Option(
         False,
         "--unregistered",
-        help=help_texts.model.view_unregistered,
+        help=help_texts.Model.view_unregistered,
     ),
     mine: bool = typer.Option(
         False,
         "--mine",
-        help=help_texts.model.view_mine,
+        help=help_texts.Model.view_mine,
     ),
     output: str = typer.Option(
         None,
         "--output",
         "-o",
-        help=help_texts.common.output,
+        help=help_texts.Common.output,
     ),
 ):
     """Displays the information of one or more models"""
@@ -141,14 +141,14 @@ def view(
 @clean_except
 def associate(
     benchmark_uid: int = typer.Option(
-        ..., "--benchmark", "-b", help=help_texts.benchmark.uid
+        ..., "--benchmark", "-b", help=help_texts.Benchmark.uid
     ),
-    model_uid: int = typer.Option(..., "--model_uid", "-m", help=help_texts.model.uid),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    model_uid: int = typer.Option(..., "--model_uid", "-m", help=help_texts.Model.uid),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
     no_cache: bool = typer.Option(
         False,
         "--no-cache",
-        help=help_texts.model.associate_no_cache,
+        help=help_texts.Model.associate_no_cache,
     ),
 ):
     """Associates a model to a benchmark"""
@@ -164,21 +164,21 @@ def grant_access(
         "-m",
         "--model-id",
         "--model_id",
-        help=help_texts.access.model_id,
+        help=help_texts.Access.model_id,
     ),
     benchmark_id: int = typer.Option(
         ...,
         "-b",
         "--benchmark-id",
         "--benchmark_id",
-        help=help_texts.access.benchmark_id,
+        help=help_texts.Access.benchmark_id,
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
     allowed_emails: str = typer.Option(
         None,
         "-a",
         "--allowed_emails",
-        help=help_texts.access.allowed_emails,
+        help=help_texts.Access.allowed_emails,
     ),
 ):
     """
@@ -205,14 +205,14 @@ def auto_grant_access(
         "-m",
         "--model-id",
         "--model_id",
-        help=help_texts.access.model_id,
+        help=help_texts.Access.model_id,
     ),
     benchmark_id: int = typer.Option(
         ...,
         "-b",
         "--benchmark-id",
         "--benchmark_id",
-        help=help_texts.access.benchmark_id,
+        help=help_texts.Access.benchmark_id,
     ),
     interval: int = typer.Option(
         5,
@@ -220,13 +220,13 @@ def auto_grant_access(
         "--interval",
         min=5,
         max=60,
-        help=help_texts.access.interval,
+        help=help_texts.Access.interval,
     ),
     allowed_emails: str = typer.Option(
         None,
         "-a",
         "--allowed_emails",
-        help=help_texts.access.allowed_emails,
+        help=help_texts.Access.allowed_emails,
     ),
 ):
     """
@@ -265,9 +265,9 @@ def revoke_user_access(
         "-k",
         "--key-id",
         "--key_id",
-        help=help_texts.access.key_id,
+        help=help_texts.Access.key_id,
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
 ):
     """
     Revokes access to the model for a user by deleting the user's key.
@@ -284,9 +284,9 @@ def delete_keys(
         "-m",
         "--model-id",
         "--model_id",
-        help=help_texts.model.delete_keys_id,
+        help=help_texts.Model.delete_keys_id,
     ),
-    approval: bool = typer.Option(False, "-y", help=help_texts.common.approval),
+    approval: bool = typer.Option(False, "-y", help=help_texts.Common.approval),
 ):
     """
     Revokes access to the model by deleting all its encrypted keys on the server.
@@ -303,7 +303,7 @@ def check_access(
         "-m",
         "--model-id",
         "--model_id",
-        help=help_texts.model.check_access_id,
+        help=help_texts.Model.check_access_id,
     )
 ):
     """
