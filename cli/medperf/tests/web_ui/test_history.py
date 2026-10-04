@@ -1,7 +1,7 @@
 import pytest
 
 from medperf.ui.web_ui import WebUI
-from medperf.web_ui.history import TaskRecorder, WebUIHistoryStore, strip_ansi
+from medperf.web_ui.history import TaskRecorder, WebUIHistoryStore
 from medperf.web_ui.schemas import GlobalEventsManager, Notification
 
 
@@ -199,7 +199,3 @@ def test_web_ui_records_task_output_without_a_browser_streaming():
     assert task["name"] == "dataset_registration"
     assert task["logs"] == ["Preparing", "❌ It failed"]
     assert task["status"] == "failed"
-
-
-def test_strip_ansi():
-    assert strip_ansi("\x1b[1;31mred\x1b[0m text") == "red text"

@@ -6,7 +6,6 @@ local SQLite database, so they are not lost when the web UI is restarted.
 
 import json
 import logging
-import re
 import sqlite3
 import threading
 import time
@@ -14,15 +13,9 @@ from typing import Dict, List, Optional
 
 from medperf import config
 from medperf.web_ui.schemas import Notification
+from medperf.web_ui.utils import strip_ansi
 
 logger = logging.getLogger(__name__)
-
-_ANSI_ESCAPE_RE = re.compile(r"[\u001b\u009b][\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]")
-
-
-def strip_ansi(text: str) -> str:
-    """Remove terminal color/style escape sequences from a string."""
-    return _ANSI_ESCAPE_RE.sub("", text or "")
 
 
 class WebUIHistoryStore:

@@ -17,10 +17,6 @@ def test_read_last_lines_of_missing_file_is_empty(fs):
     assert support.read_last_lines("/logs/missing.log", 10) == []
 
 
-def test_strip_ansi():
-    assert support.strip_ansi("\x1b[1;31mred\x1b[0m text") == "red text"
-
-
 def test_support_info_returns_clean_latest_log_lines(fs, mocker):
     mocker.patch.object(config, "logs_storage", "/logs")
     mocker.patch.object(config, "webui_support_log_lines", 2)

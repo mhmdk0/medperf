@@ -7,7 +7,6 @@ log, some environment details, and the full logs package to attach to an email.
 import logging
 import os
 import platform
-import re
 from collections import deque
 from typing import List
 
@@ -18,17 +17,11 @@ from medperf import config
 from medperf._version import __version__
 from medperf.logging.utils import package_logs
 from medperf.web_ui.common import check_user_api
+from medperf.web_ui.utils import strip_ansi
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-_ANSI_ESCAPE_RE = re.compile(r"[\u001b\u009b][\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]")
-
-
-def strip_ansi(text: str) -> str:
-    """Remove terminal color/style escape sequences from a string."""
-    return _ANSI_ESCAPE_RE.sub("", text or "")
 
 
 def read_last_lines(path: str, max_lines: int) -> List[str]:
