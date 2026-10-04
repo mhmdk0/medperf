@@ -214,7 +214,7 @@ class TaskRecorder:
     def __init__(
         self,
         max_tasks: int = config.webui_max_saved_tasks,
-        max_log_lines: int = config.webui_max_saved_task_log_lines,
+        max_log_lines: int = config.webui_max_log_messages,
     ):
         self.max_tasks = max_tasks
         self.max_log_lines = max_log_lines

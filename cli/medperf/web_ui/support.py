@@ -53,7 +53,7 @@ def support_info(current_user: bool = Depends(check_user_api)):
     """Return the support email, environment details and the latest web UI log lines."""
     log_file = os.path.join(config.logs_storage, config.webui_log_file)
     try:
-        log_lines = read_last_lines(log_file, config.webui_support_log_lines)
+        log_lines = read_last_lines(log_file, config.webui_max_log_messages)
     except OSError as e:
         logger.exception(e)
         log_lines = []

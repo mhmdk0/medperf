@@ -306,10 +306,8 @@ webui_max_chunk_length = 20  # Max 20 events in a chunk
 webui_max_chunk_size = 64 * 1024  # Max 64 Bytes as chunk size
 webui_max_saved_notifications = 50  # Max nb of notifications kept in the WebUI database
 webui_max_saved_tasks = 10  # Max nb of finished tasks kept in the WebUI database
-webui_max_saved_task_log_lines = 500  # Max nb of log lines kept per saved task
 # Recipients of the "Get support" email drafts (if empty, the user fills them in)
 webui_support_emails = ["mohammad.kassem@mlcommons.org", "hasan.kassem@mlcommons.org"]
-webui_support_log_lines = 200  # Nb of latest log lines shown in "Get support"
 
 
 default_profile_name = "default"
