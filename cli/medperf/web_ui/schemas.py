@@ -148,6 +148,8 @@ class GlobalEventsManager:
         with self._notifs_lock:
             self.store = store
             self.notifications = store.load_notifications()[-self.max_notifications:]
+            # Notifications not shown yet belong to the previous profile/user
+            self.new_notifications.clear()
 
     def _persist(self, method_name: str, *args) -> None:
         """Call a method of the attached store, if any. Failures are only logged,

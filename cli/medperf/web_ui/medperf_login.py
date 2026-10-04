@@ -54,6 +54,7 @@ def login(
             )
         validate_email(email, check_deliverability=False)
         config.auth.login(email)
+        config.ui.load_history()
     task.notify(
         success_message="Successfully Logged In",
         failure_message="Error Logging In",
@@ -75,7 +76,7 @@ def logout(
 
     with UITask(request, "medperf_logout") as task:
         config.auth.logout()
-        config.ui.clear_notifications()
+        config.ui.load_history()
     task.notify(
         success_message="Successfully Logged Out",
         failure_message="Error Logging Out",

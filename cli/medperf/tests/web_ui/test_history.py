@@ -1,8 +1,12 @@
 import pytest
 
 from medperf.ui.web_ui import WebUI
-from medperf.web_ui.history import TaskRecorder, WebUIHistoryStore
+from medperf.web_ui.history import TaskRecorder, WebUIHistoryStore, get_history_scope
 from medperf.web_ui.schemas import GlobalEventsManager, Notification
+
+
+PATCH_HISTORY = "medperf.web_ui.history.{}"
+PATCH_WEB_UI = "medperf.ui.web_ui.{}"
 
 
 @pytest.fixture
@@ -67,6 +71,82 @@ class TestWebUIHistoryStore:
 
         assert [t["id"] for t in loaded] == ["2", "3"]
         assert loaded[0]["logs"] == ["line 1", "line 2"]
+
+
+class TestHistoryScope:
+    def test_each_profile_and_user_only_sees_its_own_history(self, store):
+        # Arrange
+        store.set_scope("default", "alice@example.com")
+        store.save_notification(make_notification("a", 1))
+        store.save_task(make_task("task-a", 10))
+
+        # Act
+        store.set_scope("default", "bob@example.com")
+        store.save_notification(make_notification("b", 2))
+
+        # Assert
+        assert [n.id for n in store.load_notifications()] == ["b"]
+        assert store.load_tasks() == []
+        store.set_scope("default", "alice@example.com")
+        assert [n.id for n in store.load_notifications()] == ["a"]
+        assert [t["id"] for t in store.load_tasks()] == ["task-a"]
+
+    def test_limits_and_clearing_apply_per_scope(self, store):
+        # Arrange
+        store.set_scope("default", "alice@example.com")
+        store.save_notification(make_notification("a", 1))
+        store.set_scope("other", "alice@example.com")
+        for i in range(5):
+            store.save_notification(make_notification(str(i), i + 10))
+
+        # Act
+        store.clear_notifications()
+
+        # Assert
+        assert store.load_notifications() == []
+        store.set_scope("default", "alice@example.com")
+        assert [n.id for n in store.load_notifications()] == ["a"]
+
+    def test_scope_is_the_active_profile_and_its_user(self, mocker):
+        # Arrange
+        config_p = mocker.MagicMock(active_profile_name="default")
+        mocker.patch(PATCH_HISTORY.format("read_config"), return_value=config_p)
+        mocker.patch(
+            PATCH_HISTORY.format("read_user_account"),
+            return_value={"email": "alice@example.com"},
+        )
+
+        # Act & Assert
+        assert get_history_scope() == ("default", "alice@example.com")
+
+    def test_scope_email_is_empty_when_logged_out(self, mocker):
+        # Arrange
+        config_p = mocker.MagicMock(active_profile_name="default")
+        mocker.patch(PATCH_HISTORY.format("read_config"), return_value=config_p)
+        mocker.patch(PATCH_HISTORY.format("read_user_account"), return_value=None)
+
+        # Act & Assert
+        assert get_history_scope() == ("default", "")
+
+    def test_web_ui_loads_the_history_of_the_new_scope(self, mocker, store):
+        # Arrange
+        scope = mocker.patch(
+            PATCH_WEB_UI.format("get_history_scope"),
+            return_value=("default", "alice@example.com"),
+        )
+        ui = WebUI()
+        ui.attach_history_store(store)
+        ui.add_notification("Alice's task finished", {"status": "success"})
+        ui.start_task("t1", "benchmark_registration")
+        ui.end_task({"status": "success"})
+
+        # Act
+        scope.return_value = ("default", "bob@example.com")
+        ui.load_history()
+
+        # Assert
+        assert ui.get_all_notifications() == []
+        assert ui.get_finished_tasks() == []
 
 
 class TestTaskRecorder:

@@ -95,6 +95,7 @@ def activate_profile(
     config_p.activate(profile)
     write_config(config_p)
     initialize(for_webui=True)
+    config.ui.load_history()
     return {"status": "success", "error": ""}
 
 

@@ -5,7 +5,7 @@ from yaspin import yaspin
 import typer
 
 from medperf.ui.cli import CLI
-from medperf.web_ui.history import TaskRecorder
+from medperf.web_ui.history import TaskRecorder, get_history_scope
 from medperf.web_ui.schemas import Event, EventsManager, GlobalEventsManager
 
 
@@ -19,14 +19,25 @@ class WebUI(CLI):
         self.events_manager = EventsManager()
         self.global_events_manager = GlobalEventsManager()
         self.task_recorder = TaskRecorder()
+        self.history_store = None
         self._silenced = threading.local()
 
     def attach_history_store(self, store):
         """Persist notifications and finished tasks in the given store
         (web_ui.history.WebUIHistoryStore), loading what was saved before.
         """
-        self.global_events_manager.attach_store(store)
-        self.task_recorder.attach_store(store)
+        self.history_store = store
+        self.load_history()
+
+    def load_history(self):
+        """Load the notifications and finished tasks of the active profile and
+        user. Must be called whenever either changes (login, logout, profile switch).
+        """
+        if self.history_store is None:
+            return
+        self.history_store.set_scope(*get_history_scope())
+        self.global_events_manager.attach_store(self.history_store)
+        self.task_recorder.attach_store(self.history_store)
 
     def get_finished_tasks(self):
         """Return the most recent finished tasks with their logs, most recent first."""
