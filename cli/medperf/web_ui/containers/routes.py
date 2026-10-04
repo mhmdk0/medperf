@@ -19,6 +19,7 @@ from medperf.commands.mlcube.submit import SubmitCube
 from medperf.commands.mlcube.utils import check_access_to_container
 import medperf.config as config
 from medperf.entities.encrypted_key import EncryptedKey
+from medperf.exceptions import CleanExit
 from medperf.web_ui.common import (
     check_user_api,
     UITask,
@@ -291,6 +292,10 @@ def grant_access_worker(
                     approved=True,
                     allowed_emails=emails,
                 )
+        except CleanExit as exp:
+            # Normal outcome, e.g. no new data owners need a key on this run
+            messages.append(str(exp))
+            logger.info(str(exp))
         except Exception as exp:
             messages.append(f"Error: {exp}")
             logger.exception(exp)
