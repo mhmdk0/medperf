@@ -50,7 +50,7 @@ class TestWebUIHistoryStore:
 
         assert [n.id for n in store.load_notifications()] == ["2", "3", "4"]
 
-    def test_notification_can_be_marked_read_deleted_and_cleared(self, store):
+    def test_notification_can_be_marked_read_and_deleted(self, store):
         store.save_notification(make_notification("a", 1))
         store.save_notification(make_notification("b", 2))
 
@@ -59,9 +59,6 @@ class TestWebUIHistoryStore:
 
         loaded = store.load_notifications()
         assert [(n.id, n.read) for n in loaded] == [("a", True)]
-
-        store.clear_notifications()
-        assert store.load_notifications() == []
 
     def test_only_most_recent_tasks_are_kept(self, store):
         for i in range(4):
@@ -91,19 +88,18 @@ class TestHistoryScope:
         assert [n.id for n in store.load_notifications()] == ["a"]
         assert [t["id"] for t in store.load_tasks()] == ["task-a"]
 
-    def test_limits_and_clearing_apply_per_scope(self, store):
+    def test_limits_apply_per_scope(self, store):
         # Arrange
         store.set_scope("default", "alice@example.com")
         store.save_notification(make_notification("a", 1))
         store.set_scope("other", "alice@example.com")
+
+        # Act
         for i in range(5):
             store.save_notification(make_notification(str(i), i + 10))
 
-        # Act
-        store.clear_notifications()
-
         # Assert
-        assert store.load_notifications() == []
+        assert [n.id for n in store.load_notifications()] == ["2", "3", "4"]
         store.set_scope("default", "alice@example.com")
         assert [n.id for n in store.load_notifications()] == ["a"]
 
@@ -235,7 +231,7 @@ class TestGlobalEventsManagerPersistence:
         # Restored notifications are not shown again as new ones
         assert new_manager.get_new_notification() is None
 
-    def test_deleted_and_cleared_notifications_are_removed_from_store(self, store):
+    def test_deleted_notifications_are_removed_from_store(self, store):
         manager = GlobalEventsManager()
         manager.attach_store(store)
         manager.add_notification("One", {"status": "success"}, url="")
@@ -244,9 +240,6 @@ class TestGlobalEventsManagerPersistence:
 
         manager.delete_notification(first.id)
         assert [n.message for n in store.load_notifications()] == ["Two"]
-
-        manager.clear_notifications()
-        assert store.load_notifications() == []
 
     def test_in_memory_notifications_are_capped(self):
         manager = GlobalEventsManager()

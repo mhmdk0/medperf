@@ -295,10 +295,6 @@ class WebUI(CLI):
     def add_notification(self, message, return_response, url=""):
         self.global_events_manager.add_notification(message, return_response, url)
 
-    def clear_notifications(self):
-        self.global_events_manager.clear_notifications()
-        self.global_events_manager.clear_new_notifications()
-
     def delete_notification(self, notification_id: str):
         self.global_events_manager.delete_notification(notification_id)
 

@@ -128,13 +128,6 @@ class WebUIHistoryStore:
                 "DELETE FROM notifications WHERE id = ?", (notification_id,)
             )
 
-    def clear_notifications(self):
-        with self._lock, self._db:
-            self._db.execute(
-                "DELETE FROM notifications WHERE profile = ? AND email = ?",
-                self._scope(),
-            )
-
     def load_notifications(self) -> List[Notification]:
         """Return the saved notifications, oldest first."""
         with self._lock:

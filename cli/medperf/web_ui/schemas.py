@@ -238,15 +238,6 @@ class GlobalEventsManager:
         if excess > 0:
             del self.notifications[:excess]
 
-    def clear_notifications(self) -> None:
-        with self._notifs_lock:
-            self.notifications.clear()
-        self._persist("clear_notifications")
-
-    def clear_new_notifications(self) -> None:
-        with self._notifs_lock:
-            self.new_notifications.clear()
-
     def get_new_notification(self) -> Optional[Notification]:
         with self._notifs_lock:
             if not self.new_notifications:
