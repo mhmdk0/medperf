@@ -246,9 +246,10 @@ class Access:
         "granted access to the model"
     )
     allowed_emails = (
-        "Space-separated list of emails to restrict the data owners who will be "
-        "granted access"
+        "Emails to restrict the data owners who will be granted access. If not "
+        "provided, all eligible data owners of the benchmark are granted access"
     )
+    allowed_emails_cli = f"{allowed_emails}. Separate the emails with spaces"
     interval = (
         "Time in minutes to check for updates. Minimum 5 minutes, maximum 60 "
         "minutes (an hour). Defaults to 5 minutes if not provided"

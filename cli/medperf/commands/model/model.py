@@ -178,7 +178,7 @@ def grant_access(
         None,
         "-a",
         "--allowed_emails",
-        help=help_texts.Access.allowed_emails,
+        help=help_texts.Access.allowed_emails_cli,
     ),
 ):
     """
@@ -226,7 +226,7 @@ def auto_grant_access(
         None,
         "-a",
         "--allowed_emails",
-        help=help_texts.Access.allowed_emails,
+        help=help_texts.Access.allowed_emails_cli,
     ),
 ):
     """
