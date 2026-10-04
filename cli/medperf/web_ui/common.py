@@ -14,6 +14,7 @@ from starlette.responses import RedirectResponse
 from pydantic.datetime_parse import parse_datetime
 
 from medperf.enums import Status
+from medperf.exceptions import CleanExit
 from medperf.web_ui.auth import (
     security_token,
     AUTH_COOKIE_NAME,
@@ -74,9 +75,16 @@ class UITask:
 
     Replaces the boilerplate shared by the routes that run a MedPerf command:
     it starts the task (so its logs are streamed to the page), catches and logs
-    any exception raised by the block, marks the task as successful or failed,
-    and ends it. The exception is not propagated: the route then sends the
-    notification and returns the task response, whatever the outcome.
+    any exception raised by the block, sets the task status and ends it. The
+    exception is not propagated: the route then sends the notification and
+    returns the task response, whatever the outcome.
+
+    The task status is one of:
+        "success": the block finished.
+        "info": the block stopped with a CleanExit, which, as in the CLI
+            (see decorators.clean_except), is not an error: e.g. the user
+            declined a prompt, or there was nothing to do.
+        "failed": the block raised any other exception.
 
     Example:
         with UITask(request, "register_container", response={"entity_id": None}) as task:
@@ -90,7 +98,8 @@ class UITask:
 
     Attributes:
         response (dict): the task response ("status", "error" and any extra field),
-            returned to the page and passed to the notification.
+            returned to the page and passed to the notification. "error" holds
+            the error, or the reason the task stopped.
     """
 
     def __init__(self, request: Request, task_name: str, response: dict = None):
@@ -107,35 +116,41 @@ class UITask:
         return self
 
     def __exit__(self, exc_type, exc, traceback):
-        if exc is not None and not isinstance(exc, Exception):
-            # e.g. KeyboardInterrupt/SystemExit: end the task but don't swallow it
-            self.response["status"] = "failed"
-            self.response["error"] = str(exc)
-            self._end()
-            return False
-
         if exc is None:
             self.response["status"] = "success"
+        elif isinstance(exc, CleanExit) and exc.medperf_status_code == 0:
+            self.response["status"] = "info"
+            self.response["error"] = str(exc)
+            logger.info(str(exc))
         else:
             self.response["status"] = "failed"
             self.response["error"] = str(exc)
-            logger.exception(exc, exc_info=(exc_type, exc, traceback))
+            if isinstance(exc, Exception):
+                logger.exception(exc, exc_info=(exc_type, exc, traceback))
         self._end()
-        return True  # the failure is reported in the response instead
+        # Exceptions are reported in the response instead of being raised;
+        # anything else (e.g. KeyboardInterrupt) still propagates
+        return exc is None or isinstance(exc, Exception)
 
     def _end(self):
         config.ui.end_task(self.response)
         reset_state_task(self.request)
 
     def notify(self, success_message: str, failure_message: str, url: str = ""):
-        """Notify the user of the task outcome (a failure also shows its error).
+        """Notify the user of the task outcome: a failure also shows its error,
+        and a task stopped with a CleanExit shows the reason it stopped.
 
         Args:
             success_message (str): message shown if the task succeeded.
             failure_message (str): message shown if the task failed.
             url (str, optional): page opened from the notification.
         """
-        message = success_message if self.succeeded else failure_message
+        if self.response["status"] == "info":
+            message = self.response["error"]
+        elif self.succeeded:
+            message = success_message
+        else:
+            message = failure_message
         config.ui.add_notification(
             message=message, return_response=self.response, url=url
         )

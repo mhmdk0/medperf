@@ -205,6 +205,7 @@ function buildTaskHistoryItem(task) {
     var statusClasses = {
         success: "bg-success-muted text-success border-success",
         failed: "bg-danger-muted text-danger-fg border-danger",
+        info: "bg-info-muted text-info-fg border-info",
     };
     var badgeClass = statusClasses[task.status] || "bg-muted text-ink border-border";
     var duration = Math.max(0, Math.round(task.finished_at - task.started_at));

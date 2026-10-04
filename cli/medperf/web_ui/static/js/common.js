@@ -236,6 +236,12 @@ function showPanel(title) {
 
 /** Show an error modal with the error of a failed request/task response. */
 function showErrorModal(errorTitle, response) {
+    // A task stopped with a CleanExit (status "info") isn't an error,
+    // e.g. the user declined a prompt: show its reason instead
+    if (response && response.status === "info") {
+        showInfoModal("Task stopped", response.error);
+        return;
+    }
     var responseError = (response && response.error) || "";
     var responseStatus = (response && response.status) || "";
     // Server errors are plain text: escape them, keeping their line breaks
@@ -244,6 +250,15 @@ function showErrorModal(errorTitle, response) {
     var modalBody = "<p id=\"error-text\" class=\"text-lg font-bold text-danger\">" + errorText + "</p><p class=\"text-end mt-3\"><button type=\"button\" class=\"btn btn-xs btn-secondary\" onclick=\"reloadPage();\">Click here to reload</button></p>";
     var modalFooter = "<button type=\"button\" class=\"btn btn-sm btn-danger close-modal-btn\">Hide</button>";
     showModal({ title: errorTitle, body: modalBody, footer: modalFooter });
+}
+
+/**
+ * Show an informative (non-error) message in a modal, with a way to reload the page.
+ */
+function showInfoModal(title, message) {
+    var modalBody = "<p id=\"info-text\" class=\"text-lg font-bold text-ink\">" + escapeHtml(message || "") + "</p><p class=\"text-end mt-3\"><button type=\"button\" class=\"btn btn-xs btn-secondary\" onclick=\"reloadPage();\">Click here to reload</button></p>";
+    var modalFooter = "<button type=\"button\" class=\"btn btn-sm btn-secondary close-modal-btn\">Hide</button>";
+    showModal({ title: title, body: modalBody, footer: modalFooter });
 }
 
 /**
@@ -511,7 +526,8 @@ async function submitActionFormWithForm(form) {
         "POST",
         formData,
         function (response) {
-            if (response && (response.status === "success" || response.status === "failed")) {
+            // Task responses have a status: "success", "failed" or "info"
+            if (response && response.status) {
                 if (typeof window.onPromptComplete === "function") {
                     window.onPromptComplete(response);
                     window.onPromptComplete = null;
