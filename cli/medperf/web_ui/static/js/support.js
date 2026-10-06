@@ -81,7 +81,7 @@ function showSupportModal(info) {
         extra_func: function () {
             document.getElementById("support-email-btn").addEventListener("click", function () {
                 var description = document.getElementById("support-description").value.trim();
-                window.location.href = buildSupportMailto(info, description);
+                window.open(buildSupportMailto(info, description), "_blank");
             });
             document.getElementById("support-copy-btn").addEventListener("click", function () {
                 navigator.clipboard.writeText(logText).then(
