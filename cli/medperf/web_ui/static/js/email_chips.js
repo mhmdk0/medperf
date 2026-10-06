@@ -81,7 +81,8 @@ function parseEmails(container) {
     if (!container || !container.getAttribute) return;
     var emails = [];
     try { emails = JSON.parse(container.getAttribute("data-allowed-list") || "[]"); } catch (_) {}
-    setEmailChips(container, emails);
+    // Anything but a list (e.g. "{}") means no emails: it must not break the page
+    setEmailChips(container, Array.isArray(emails) ? emails : []);
 }
 
 /**

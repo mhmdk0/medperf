@@ -28,7 +28,7 @@
         </div>
         <div class="mb-4" id="email-chip-container">
             <label for="email-input" class="block text-secondary font-semibold mb-2">Allowed emails (optional)</label>
-            <div class="email-container" id="allowed-email-list" data-allowed-list='{}'>
+            <div class="email-container" id="allowed-email-list" data-allowed-list='[]'>
                 <input type="text" id="email-input" class="email-input w-full px-4 py-3 rounded-xl border-2 border-border-strong dark:border-border dark:bg-card-muted dark:text-ink mt-2 focus:outline-none focus:border-brand-accent" placeholder="{{ help_texts.WebUIPlaceholders.emails_input }}" {% if task_running %}disabled{% endif %}>
             </div>
             <p class="text-sm text-muted-fg mt-2">{{ help_texts.Access.allowed_emails }}</p>
