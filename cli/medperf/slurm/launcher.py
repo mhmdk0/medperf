@@ -39,6 +39,10 @@ STATUS_FILENAME = "medperf_status.json"
 EXIT_CODE_FILE_ATTEMPTS = 5
 EXIT_CODE_FILE_DELAY = 2
 
+# Seconds between reads of the job log while waiting for the next status check, so
+# container output appears as it is written rather than once per poll interval.
+LOG_STREAM_INTERVAL = 2
+
 # A job's stdout is a file, not a terminal, so Python would block-buffer print()
 # output and the log would arrive in bursts. Container configs can override this.
 DEFAULT_CONTAINER_ENV = {"SINGULARITYENV_PYTHONUNBUFFERED": "1"}
@@ -266,8 +270,20 @@ class SlurmJob:
                 self._check_missing_job(status)
 
             self._check_timeout(timeout)
-            if self._wake.wait(poll_interval):
+            self._sleep_streaming_logs(poll_interval)
+
+    def _sleep_streaming_logs(self, poll_interval: int):
+        # Waits until the next status check while printing new log lines every second.
+        # Returns early if cancel() wakes it.
+        deadline = time.monotonic() + poll_interval
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            if self._wake.wait(min(LOG_STREAM_INTERVAL, remaining)):
                 self._wake.clear()
+                return
+            self.stream_new_log_output()
 
     def _check_missing_job(self, status: JobStatus):
         # A job can be briefly invisible: between leaving squeue and appearing in
