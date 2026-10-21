@@ -4,6 +4,7 @@ from django.conf import settings
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 from time import time
+from uuid import uuid4
 import jwt
 
 
@@ -91,12 +92,23 @@ def mock_dataset(data_preparation_mlcube, **kwargs):
         "generated_metadata": {"key": "value"},
         "user_metadata": {"key2": "value2"},
         "report": {"key3": "value3"},
+        "asset": None,
     }
 
     for key, val in kwargs.items():
         if key not in data:
             raise ValueError(f"Invalid argument: {key}")
         data[key] = val
+
+    if data["asset"] is None:
+        # Asset names are globally unique, while tests create
+        # several datasets with the same name
+        data["asset"] = mock_asset(
+            name=f"dataset_asset_{uuid4().hex}",
+            asset_hash=data["input_data_hash"],
+            asset_url="local",
+            is_valid=data["is_valid"],
+        )
 
     return data
 

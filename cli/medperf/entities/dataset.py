@@ -6,10 +6,11 @@ from typing import List
 from medperf.utils import get_folders_hash, remove_path
 from medperf.entities.interface import Entity
 from medperf.entities.schemas import DatasetSchema
+from medperf.entities.asset import Asset
 import medperf.config as config
 from medperf.account_management import get_medperf_user_data
 from medperf.entities.utils import handle_validation_error
-from medperf.exceptions import InvalidEntityError
+from medperf.exceptions import InvalidEntityError, MedperfException
 import logging
 from datetime import datetime, timezone
 
@@ -63,6 +64,7 @@ class Dataset(Entity):
         self.user_metadata = self._model.user_metadata
         self.report = self._model.report
         self.submitted_as_prepared = self._model.submitted_as_prepared
+        self.asset = self._model.asset
 
         self._set_helper_attributes()
 
@@ -76,6 +78,16 @@ class Dataset(Entity):
     @property
     def local_id(self):
         return self.generated_uid
+
+    @property
+    def asset_obj(self):
+        if self.asset is None:
+            raise MedperfException("Dataset has no asset")
+        return Asset(**self.asset.dict())
+
+    def is_public(self) -> bool:
+        # Locally stored datasets from before assets were introduced have no asset
+        return self.asset is not None and not self.asset_obj.is_local()
 
     def get_cc_config(self):
         cc_values = self.user_metadata.get("cc", {})
@@ -238,6 +250,7 @@ class Dataset(Entity):
             "Created At": self.created_at,
             "Registered": self.is_registered,
             "Submitted as Prepared": self.submitted_as_prepared,
+            "Public": self.is_public(),
             "Status": "\n".join([f"{k}: {v}" for k, v in self.report.items()]),
             "Owner": self.owner,
         }

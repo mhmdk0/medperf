@@ -55,8 +55,88 @@ class DatasetPostTest(DatasetTest):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         for k, v in response.data.items():
-            if k in testdataset:
+            if k in testdataset and k != "asset":
                 self.assertEqual(testdataset[k], v, f"Unexpected value for {k}")
+        for k, v in testdataset["asset"].items():
+            self.assertEqual(
+                v, response.data["asset"][k], f"Unexpected value for asset {k}"
+            )
+
+    def test_asset_is_owned_by_dataset_owner(self):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+
+        # Act
+        response = self.client.post(self.url, testdataset, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["asset"]["owner"], response.data["owner"])
+
+    def test_public_dataset_asset_is_saved_with_url(self):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+        testdataset["asset"]["asset_url"] = "https://example.com/data.tar.gz"
+        testdataset["asset"]["asset_hash"] = "tarball_hash"
+
+        # Act
+        response = self.client.post(self.url, testdataset, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        asset_id = response.data["asset"]["id"]
+        asset = self.client.get(self.api_prefix + f"/assets/{asset_id}/").data
+        self.assertEqual(asset["asset_url"], "https://example.com/data.tar.gz")
+        self.assertEqual(asset["asset_hash"], "tarball_hash")
+
+    def test_creation_fails_without_asset(self):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+        del testdataset["asset"]
+
+        # Act
+        response = self.client.post(self.url, testdataset, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @parameterized.expand([("state", "OPERATION"), ("is_valid", False)])
+    def test_creation_fails_if_asset_does_not_match_dataset(self, field, value):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+        testdataset["asset"][field] = value
+
+        # Act
+        response = self.client.post(self.url, testdataset, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_creation_fails_atomically_if_asset_name_exists(self):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+        self.create_asset(self.mock_asset(name=testdataset["asset"]["name"]))
+        assets_count = self.client.get(self.api_prefix + "/assets/").data["count"]
+
+        # Act
+        response = self.client.post(self.url, testdataset, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.client.get(self.url).data["count"], 0)
+        self.assertEqual(
+            self.client.get(self.api_prefix + "/assets/").data["count"], assets_count
+        )
 
     def test_default_values_are_as_expected(self):
         """Testing the model fields rules"""

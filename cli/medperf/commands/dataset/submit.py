@@ -5,12 +5,15 @@ from medperf.entities.dataset import Dataset
 import medperf.config as config
 from medperf.entities.cube import Cube
 from medperf.entities.benchmark import Benchmark
+from medperf.comms.entity_resources.utils import download_resource
 from medperf.utils import (
     approval_prompt,
     dict_pretty_print,
+    generate_tmp_path,
     get_folders_hash,
     sanitize_path,
     remove_path,
+    untar,
 )
 from medperf.exceptions import CleanExit, InvalidArgumentError
 
@@ -30,6 +33,7 @@ class DataCreation:
         approved: bool = False,
         submit_as_prepared: bool = False,
         for_test: bool = False,
+        data_url: str = None,
     ):
         preparation = cls(
             benchmark_uid,
@@ -43,11 +47,16 @@ class DataCreation:
             approved,
             submit_as_prepared,
             for_test,
+            data_url,
         )
         preparation.validate()
         preparation.validate_prep_cube()
+        if preparation.is_public():
+            with preparation.ui.interactive():
+                preparation.ui.text = "Downloading dataset"
+                preparation.get_public_data()
         preparation.create_dataset_object()
-        if submit_as_prepared:
+        if submit_as_prepared and not preparation.is_public():
             preparation.make_dataset_prepared()
         updated_dataset_dict = preparation.upload()
         preparation.to_permanent_path(updated_dataset_dict)
@@ -68,6 +77,7 @@ class DataCreation:
         approved: bool,
         submit_as_prepared: bool,
         for_test: bool,
+        data_url: str = None,
     ):
         self.ui = config.ui
         self.data_path = sanitize_path(data_path)
@@ -81,8 +91,37 @@ class DataCreation:
         self.approved = approved
         self.submit_as_prepared = submit_as_prepared
         self.for_test = for_test
+        self.data_url = data_url
+        self.asset_hash = None
+
+    def is_public(self):
+        return bool(self.data_url)
 
     def validate(self):
+        if self.is_public():
+            if self.data_path or self.labels_path or self.metadata_path:
+                raise InvalidArgumentError(
+                    "Data, labels, and metadata paths shouldn't be provided "
+                    "when the dataset is submitted with a URL"
+                )
+        else:
+            self.validate_local_paths()
+
+        # TODO: should we check the prep mlcube and accordingly check if metadata path
+        #       is required? For now, we will anyway create an empty metadata folder
+        #       (in self.make_dataset_prepared)
+        too_many_resources = self.benchmark_uid and self.prep_cube_uid
+        no_resource = self.benchmark_uid is None and self.prep_cube_uid is None
+        if no_resource or too_many_resources:
+            raise InvalidArgumentError(
+                "Must provide either a benchmark or a preparation container"
+            )
+
+    def validate_local_paths(self):
+        if not self.data_path or not self.labels_path:
+            raise InvalidArgumentError(
+                "Must provide either data and labels paths, or a data URL"
+            )
         if not os.path.exists(self.data_path):
             raise InvalidArgumentError("The provided data path doesn't exist")
         if not os.path.exists(self.labels_path):
@@ -97,25 +136,37 @@ class DataCreation:
             if not os.path.exists(self.metadata_path):
                 raise InvalidArgumentError("The provided metadata path doesn't exist")
 
-        # TODO: should we check the prep mlcube and accordingly check if metadata path
-        #       is required? For now, we will anyway create an empty metadata folder
-        #       (in self.make_dataset_prepared)
-        too_many_resources = self.benchmark_uid and self.prep_cube_uid
-        no_resource = self.benchmark_uid is None and self.prep_cube_uid is None
-        if no_resource or too_many_resources:
-            raise InvalidArgumentError(
-                "Must provide either a benchmark or a preparation container"
-            )
-
     def validate_prep_cube(self):
         if self.prep_cube_uid is None:
             benchmark = Benchmark.get(self.benchmark_uid)
             self.prep_cube_uid = benchmark.data_preparation_mlcube
         Cube.get(self.prep_cube_uid)
 
+    def get_public_data(self):
+        """Downloads and extracts the public dataset tarball to temporary storage,
+        only to calculate its hashes. The tarball is expected to contain a
+        `data` and a `labels` folder at its root."""
+        tmp_folder = generate_tmp_path()
+        tarball_path = os.path.join(tmp_folder, config.tarball_filename)
+        self.asset_hash = download_resource(self.data_url, tarball_path)
+        untar(tarball_path)
+
+        self.data_path = os.path.join(tmp_folder, "data")
+        self.labels_path = os.path.join(tmp_folder, "labels")
+        if not os.path.isdir(self.data_path) or not os.path.isdir(self.labels_path):
+            raise InvalidArgumentError(
+                "The dataset tarball must contain a 'data' and a 'labels' folder"
+            )
+
     def create_dataset_object(self):
         """generates dataset UIDs for both input path"""
         in_uid = get_folders_hash([self.data_path, self.labels_path])
+        if self.is_public():
+            asset_url = self.data_url
+            asset_hash = self.asset_hash
+        else:
+            asset_url = "local"
+            asset_hash = in_uid
         dataset = Dataset(
             name=self.name,
             description=self.description,
@@ -128,13 +179,20 @@ class DataCreation:
             state="DEVELOPMENT",
             submitted_as_prepared=self.submit_as_prepared,
             for_test=self.for_test,
+            asset={
+                "name": self.name,
+                "asset_hash": asset_hash,
+                "asset_url": asset_url,
+                "state": "DEVELOPMENT",
+            },
         )
         dataset.write()
         config.tmp_paths.append(dataset.path)
-        dataset.set_raw_paths(
-            raw_data_path=self.data_path,
-            raw_labels_path=self.labels_path,
-        )
+        if not self.is_public():
+            dataset.set_raw_paths(
+                raw_data_path=self.data_path,
+                raw_labels_path=self.labels_path,
+            )
         self.dataset = dataset
 
     def make_dataset_prepared(self):
@@ -157,6 +215,11 @@ class DataCreation:
             + " Owner for traceability and debugging purposes."
         )
         self.ui.print_warning(warning)
+        if self.is_public():
+            self.ui.print_warning(
+                "This dataset will be registered as public. Its URL will be "
+                "visible to all MedPerf users."
+            )
         self.approved = self.approved or approval_prompt(msg)
 
         if self.approved:

@@ -17,6 +17,7 @@ class DatasetAdmin(admin.ModelAdmin):
         "generated_metadata",
         "user_metadata",
         "report",
+        "asset",
         "created_at",
         "modified_at",
     )

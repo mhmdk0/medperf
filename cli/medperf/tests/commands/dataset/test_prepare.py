@@ -42,6 +42,23 @@ def test_validate_fails_if_dataset_already_in_operation(mocker, data_preparation
         data_preparation.validate()
 
 
+def test_validate_fails_if_dataset_is_public(mocker, data_preparation):
+    # Arrange
+    data_preparation.dataset = TestDataset(
+        id=None,
+        state="DEVELOPMENT",
+        asset={
+            "name": "name",
+            "asset_hash": "hash",
+            "asset_url": "https://example.com/data.tar.gz",
+        },
+    )
+
+    # Act & Assert
+    with pytest.raises(InvalidArgumentError):
+        data_preparation.validate()
+
+
 def test_get_prep_cube_downloads_cube_file(mocker, data_preparation, cube):
     # Arrange
     data_preparation.cube = None

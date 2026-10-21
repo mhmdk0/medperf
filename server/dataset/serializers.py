@@ -1,20 +1,52 @@
 from rest_framework import serializers
 from .models import Dataset
 from user.serializers import UserSerializer
+from asset.serializers import AssetSerializer
+from asset.models import Asset
+from django.db import transaction
 
 
 class DatasetFullSerializer(serializers.ModelSerializer):
     """A private serializer. used for users who are permitted to see
     "sensitive" information. This serializer is also used for POST"""
 
+    asset = AssetSerializer()
+
     class Meta:
         model = Dataset
         fields = "__all__"
         read_only_fields = ["owner", "state"]
 
+    def validate(self, attrs):
+        asset = attrs["asset"]
+
+        state = attrs.get("state", "DEVELOPMENT")
+        asset_state = asset.get("state", "DEVELOPMENT")
+        if state != asset_state:
+            raise serializers.ValidationError(
+                "Dataset state must match the state of its asset."
+            )
+
+        is_valid = attrs.get("is_valid", True)
+        asset_is_valid = asset.get("is_valid", True)
+        if is_valid != asset_is_valid:
+            raise serializers.ValidationError(
+                "Dataset validity must match the validity of its asset."
+            )
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        asset_data = validated_data.pop("asset")
+        asset = Asset.objects.create(**asset_data, owner=validated_data["owner"])
+        validated_data["asset"] = asset
+        return Dataset.objects.create(**validated_data)
+
 
 class DatasetPublicSerializer(serializers.ModelSerializer):
     """A restrictive serializer"""
+
+    asset = AssetSerializer(read_only=True)
 
     class Meta:
         model = Dataset
@@ -23,6 +55,8 @@ class DatasetPublicSerializer(serializers.ModelSerializer):
 
 class DatasetDetailSerializer(serializers.ModelSerializer):
     """This is a private serializer like DatasetFullSerializer"""
+
+    asset = AssetSerializer(read_only=True)
 
     class Meta:
         model = Dataset
@@ -72,6 +106,20 @@ class DatasetDetailSerializer(serializers.ModelSerializer):
         self._validate_guid(data)
 
         return data
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        asset = instance.asset
+        asset.state = validated_data.get("state", asset.state)
+        asset.is_valid = validated_data.get("is_valid", asset.is_valid)
+        if asset.asset_url == "local":
+            # A local asset is identified by the hash of the raw data
+            asset.asset_hash = validated_data.get(
+                "input_data_hash", asset.asset_hash
+            )
+        asset.save()
+
+        return super().update(instance, validated_data)
 
 
 class DatasetWithOwnerInfoSerializer(serializers.ModelSerializer):

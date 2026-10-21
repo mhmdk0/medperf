@@ -224,6 +224,65 @@ class DatasetPutTest(DatasetTest):
         for k, v in newtestdataset.items():
             self.assertNotEqual(v, response.data[k], f"{k} was modified")
 
+    def test_put_propagates_state_and_validity_to_asset(self):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+        testdataset = self.create_dataset(testdataset).data
+        url = self.url.format(testdataset["id"])
+
+        # Act
+        response = self.client.put(
+            url, {"state": "OPERATION", "is_valid": False}, format="json"
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["asset"]["state"], "OPERATION")
+        self.assertEqual(response.data["asset"]["is_valid"], False)
+
+    @parameterized.expand(
+        [
+            ("local", "new_hash"),
+            ("https://example.com/data.tar.gz", "tarball_hash"),
+        ]
+    )
+    def test_put_input_data_hash_updates_only_local_asset_hash(
+        self, asset_url, expected_asset_hash
+    ):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+        testdataset["asset"]["asset_url"] = asset_url
+        testdataset["asset"]["asset_hash"] = "tarball_hash"
+        testdataset = self.create_dataset(testdataset).data
+        url = self.url.format(testdataset["id"])
+
+        # Act
+        response = self.client.put(url, {"input_data_hash": "new_hash"}, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["asset"]["asset_hash"], expected_asset_hash)
+
+    def test_put_does_not_modify_asset(self):
+        # Arrange
+        testdataset = self.mock_dataset(
+            data_preparation_mlcube=self.data_preproc_mlcube_id
+        )
+        testdataset = self.create_dataset(testdataset).data
+        other_asset = self.create_asset(self.mock_asset()).data
+        url = self.url.format(testdataset["id"])
+
+        # Act
+        response = self.client.put(url, {"asset": other_asset["id"]}, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["asset"]["id"], testdataset["asset"]["id"])
+
     def test_put_respects_unique_generated_uid_when_state_is_updated_to_operation(
         self,
     ):

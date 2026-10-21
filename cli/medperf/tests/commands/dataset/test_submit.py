@@ -158,6 +158,133 @@ class TestWithDefaultUID:
         rename_spy.assert_called_once_with(old_path, new_path)
 
 
+class TestPublicDataset:
+    DATA_URL = "https://example.com/data.tar.gz"
+    TMP_PATH = "/tmp_dataset"
+
+    @pytest.fixture
+    def public_creation(self, creation):
+        creation.data_path = None
+        creation.labels_path = None
+        creation.data_url = self.DATA_URL
+        return creation
+
+    def test_validate_fails_if_url_and_paths_are_provided(self, creation):
+        # Arrange
+        creation.data_url = self.DATA_URL
+
+        # Act & Assert
+        with pytest.raises(InvalidArgumentError):
+            creation.validate()
+
+    def test_validate_fails_if_neither_url_nor_paths_are_provided(self, creation):
+        # Arrange
+        creation.data_path = None
+        creation.labels_path = None
+
+        # Act & Assert
+        with pytest.raises(InvalidArgumentError):
+            creation.validate()
+
+    def test_validate_passes_with_url_only(self, public_creation):
+        public_creation.validate()
+
+    @pytest.mark.parametrize("data_exists", [True, False])
+    @pytest.mark.parametrize("labels_exist", [True, False])
+    def test_get_public_data_checks_tarball_layout(
+        self, mocker, public_creation, data_exists, labels_exist, fs
+    ):
+        # Arrange
+        mocker.patch(
+            PATCH_DATAPREP.format("generate_tmp_path"), return_value=self.TMP_PATH
+        )
+        mocker.patch(
+            PATCH_DATAPREP.format("download_resource"), return_value="tarball_hash"
+        )
+        untar_spy = mocker.patch(PATCH_DATAPREP.format("untar"))
+        if data_exists:
+            fs.create_dir(f"{self.TMP_PATH}/data")
+        if labels_exist:
+            fs.create_dir(f"{self.TMP_PATH}/labels")
+
+        # Act & Assert
+        if data_exists and labels_exist:
+            public_creation.get_public_data()
+            untar_spy.assert_called_once()
+            assert public_creation.asset_hash == "tarball_hash"
+            assert public_creation.data_path == f"{self.TMP_PATH}/data"
+            assert public_creation.labels_path == f"{self.TMP_PATH}/labels"
+        else:
+            with pytest.raises(InvalidArgumentError):
+                public_creation.get_public_data()
+
+    def test_create_dataset_object_creates_public_asset(
+        self, mocker, public_creation, fs
+    ):
+        # Arrange
+        mocker.patch(PATCH_DATAPREP.format("get_folders_hash"), return_value="in_uid")
+        raw_paths_spy = mocker.patch(PATCH_DATAPREP.format("Dataset.set_raw_paths"))
+        public_creation.prep_cube_uid = 1
+        public_creation.asset_hash = "tarball_hash"
+
+        # Act
+        public_creation.create_dataset_object()
+
+        # Assert
+        dataset = public_creation.dataset
+        assert dataset.input_data_hash == "in_uid"
+        assert dataset.asset.name == NAME
+        assert dataset.asset.asset_url == self.DATA_URL
+        assert dataset.asset.asset_hash == "tarball_hash"
+        assert dataset.is_public()
+        raw_paths_spy.assert_not_called()
+
+    def test_run_does_not_copy_public_data_when_submitted_as_prepared(
+        self, mocker, comms, ui
+    ):
+        # Arrange
+        mocker.patch(PATCH_DATAPREP.format("DataCreation.validate"))
+        mocker.patch(PATCH_DATAPREP.format("DataCreation.validate_prep_cube"))
+        get_data_spy = mocker.patch(PATCH_DATAPREP.format("DataCreation.get_public_data"))
+        mocker.patch(PATCH_DATAPREP.format("DataCreation.create_dataset_object"))
+        prepared_spy = mocker.patch(
+            PATCH_DATAPREP.format("DataCreation.make_dataset_prepared")
+        )
+        mocker.patch(PATCH_DATAPREP.format("DataCreation.upload"), return_value={"id": 1})
+        mocker.patch(PATCH_DATAPREP.format("DataCreation.to_permanent_path"))
+        mocker.patch(PATCH_DATAPREP.format("DataCreation.write"))
+
+        # Act
+        DataCreation.run(
+            "", 1, None, None, None, "", "", "", False,
+            submit_as_prepared=True, data_url=self.DATA_URL,
+        )
+
+        # Assert
+        get_data_spy.assert_called_once()
+        prepared_spy.assert_not_called()
+
+
+def test_create_dataset_object_creates_local_asset(mocker, creation, fs):
+    # Arrange
+    mocker.patch(PATCH_DATAPREP.format("get_folders_hash"), return_value="in_uid")
+    raw_paths_spy = mocker.patch(PATCH_DATAPREP.format("Dataset.set_raw_paths"))
+    creation.prep_cube_uid = 1
+
+    # Act
+    creation.create_dataset_object()
+
+    # Assert
+    dataset = creation.dataset
+    assert dataset.asset.name == NAME
+    assert dataset.asset.asset_url == "local"
+    assert dataset.asset.asset_hash == "in_uid"
+    assert not dataset.is_public()
+    raw_paths_spy.assert_called_once_with(
+        raw_data_path=DATA_PATH, raw_labels_path=LABELS_PATH
+    )
+
+
 @pytest.mark.parametrize("uid", [67342, 236, 1570])
 def test_run_returns_generated_uid(mocker, comms, ui, uid):
     # Arrange

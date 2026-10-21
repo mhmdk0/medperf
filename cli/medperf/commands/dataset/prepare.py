@@ -145,6 +145,8 @@ class DataPreparation:
     def validate(self):
         if self.dataset.state == "OPERATION":
             raise InvalidArgumentError("This dataset is in operation mode")
+        if self.dataset.is_public():
+            raise InvalidArgumentError("Preparing public datasets is not supported yet")
 
     def get_prep_cube(self):
         if self.cube is not None:

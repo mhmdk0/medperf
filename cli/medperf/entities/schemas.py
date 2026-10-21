@@ -118,6 +118,7 @@ class DatasetSchema(MedperfSchema):
     user_metadata: dict = {}
     report: dict = {}
     submitted_as_prepared: bool
+    asset: Optional[AssetSchema]
 
 
 class EncryptedKeySchema(MedperfSchema):

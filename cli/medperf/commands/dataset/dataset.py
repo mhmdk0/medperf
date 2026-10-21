@@ -70,9 +70,16 @@ def submit(
     data_prep_uid: int = typer.Option(
         None, "--data_prep", "-p", help="UID of the desired preparation container"
     ),
-    data_path: str = typer.Option(..., "--data_path", "-d", help="Path to the data"),
+    data_path: str = typer.Option(
+        None, "--data_path", "-d", help="Path to the data (for private datasets)"
+    ),
     labels_path: str = typer.Option(
-        ..., "--labels_path", "-l", help="Path to the labels"
+        None, "--labels_path", "-l", help="Path to the labels (for private datasets)"
+    ),
+    data_url: str = typer.Option(
+        None,
+        "--data_url",
+        help="URL of a public dataset tarball containing a 'data' and a 'labels' folder",
     ),
     metadata_path: str = typer.Option(
         None,
@@ -96,7 +103,11 @@ def submit(
         help="Use this flag if the dataset is already prepared",
     ),
 ):
-    """Submits a Dataset instance to the backend"""
+    """Submits a Dataset instance to the backend.
+
+    For a private dataset, provide --data_path and --labels_path.
+    For a public dataset, provide --data_url.
+    """
     ui = config.ui
     DataCreation.run(
         benchmark_uid,
@@ -109,6 +120,7 @@ def submit(
         location=location,
         approved=approval,
         submit_as_prepared=submit_as_prepared,
+        data_url=data_url,
     )
     ui.print("✅ Done!")
 

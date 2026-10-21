@@ -12,7 +12,7 @@ class Asset(models.Model):
 
     name = models.CharField(max_length=128, unique=True)
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
-    asset_hash = models.CharField(max_length=100)
+    asset_hash = models.CharField(max_length=128)
     asset_url = models.CharField(max_length=256)
     state = models.CharField(choices=ASSET_STATE, max_length=100, default="DEVELOPMENT")
     is_valid = models.BooleanField(default=True)
