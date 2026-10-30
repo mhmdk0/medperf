@@ -69,6 +69,9 @@ def start_llm_server(llm, env, log_path):
         *llm.get("extra_args", []),
     ]
     print("Starting the LLM server:", " ".join(command), flush=True)
+    # vLLM only: see vllm_shims/torchcodec
+    shims = str(PROJECT_PATH / "vllm_shims")
+    env = dict(env, PYTHONPATH=os.pathsep.join(filter(None, [shims, env.get("PYTHONPATH")])))
     with open(log_path, "w") as log:
         return subprocess.Popen(command, env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
 
